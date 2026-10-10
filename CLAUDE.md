@@ -11,10 +11,10 @@ Speed tracker for Wear OS (OnePlus Watch 2 and newer) with a companion Android p
 
 ## Build, test, run
 
-`java` is not on PATH. Use Android Studio's JDK:
+`java` is not on PATH. Use Android Studio's JDK (JDK 25). Note the folder name: the 2026.2.1 update installed into `Android Studio1`, and the old `Android Studio` folder holds a broken leftover JDK that must not be used:
 
 ```bash
-export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"
+export JAVA_HOME="/c/Program Files/Android/Android Studio1/jbr"
 ./gradlew :wear:assembleDebug :mobile:assembleDebug
 ./gradlew test
 ```

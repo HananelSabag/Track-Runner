@@ -9,7 +9,7 @@
 | Gradle | 9.8.1 |
 | Android Gradle Plugin | 9.4.1 (עם Kotlin מובנה) |
 | Kotlin | 2.4.21 |
-| JDK | 21 (ה-JBR של Android Studio) |
+| JDK | 25 (ה-JBR של Android Studio 2026.2.1) |
 | compileSdk | 37 (Android 17) |
 | targetSdk | 36 — הגרסה הגבוהה ביותר שהאפליקציה באמת הורצה עליה |
 | minSdk | 34 שעון · 31 טלפון |
@@ -38,13 +38,14 @@
 
 סך הכול כ-**7.7GB**, רובם האמולטור (יותר ממה שהערכתי קודם). להסרה: מחיקת ה-AVD ב-Device Manager ושל ה-system image ב-SDK Manager.
 
-## הדבר האחד שנשאר לך: לעדכן את Android Studio
+## Android Studio עודכן — ומה זה שינה
 
-הפרויקט נבנה משורת הפקודה בלי בעיה, אבל **ה-Android Studio שמותקן אצלך (2025.2.2) לא יוכל לפתוח אותו** — הוא תומך ב-AGP עד 8.13, והפרויקט עכשיו על 9.4.1.
+עדכנת ל-**Rabbit 1 (2026.2.1)**, שתומך ב-AGP 9.4.1 של הפרויקט. שני דברים השתנו בעקבות זה:
 
-צריך **Quail 4 (2026.1.4)** או **Rabbit 1 (2026.2.1)**: ‏Help ← Check for Updates.
+- **התיקייה זזה.** העדכון הותקן ל-`C:\Program Files\Android\Android Studio1`. התיקייה הישנה `Android Studio` נשארה עם שארית JDK שבורה. כל פקודות הבנייה במסמכים עודכנו לנתיב החדש.
+- **ה-JDK המובנה הוא עכשיו 25** (היה 21). הפרויקט הזה נבנה איתו בלי בעיה.
 
-לא עדכנתי אותו בעצמי כי זו התקנת תוכנה על המחשב שלך, לא רכיב של הפרויקט. זה לא שובר את Workout-Tracker: הגרסאות החדשות תומכות ב-AGP 7.1 עד 9.4, והוא על 8.13.2.
+**השפעה על Workout-Tracker — טעיתי כאן.** כתבתי שהעדכון לא ישבור אותו, כי Studio החדש תומך ב-AGP שלו. זה נכון, אבל לא לקחתי בחשבון את ה-JDK: הוא על Gradle 8.13 + Kotlin 2.0.21, שלא רצים על JDK 25, ואין JDK אחר במחשב. בדקתי — הבנייה שלו נכשלת עכשיו. התיקון קטן (JDK 21 דרך הגדרות Gradle ב-Studio, או שדרוג ה-wrapper שלו), והוא לא נגע בקוד שלו.
 
 ## מה השתנה במעבר ל-AGP 9
 
@@ -85,7 +86,7 @@
 `java` לא ב-PATH אצלך, אז צריך להצביע על ה-JBR:
 
 ```bash
-export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"
+export JAVA_HOME="/c/Program Files/Android/Android Studio1/jbr"
 ./gradlew :wear:assembleDebug :mobile:assembleDebug
 ./gradlew test
 ```

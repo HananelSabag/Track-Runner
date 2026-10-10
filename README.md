@@ -30,10 +30,10 @@ Both apps share the application id `com.hananel.fast`, which the Wearable Data L
 
 ## Build
 
-Needs Android Studio Quail 4 (2026.1.4) or newer to open in the IDE. From the command line, `java` is not on the PATH on the development machine, so point Gradle at Android Studio's bundled JDK:
+Needs Android Studio Quail 4 (2026.1.4) or newer to open in the IDE. From the command line, `java` is not on the PATH on the development machine, so point Gradle at Android Studio's bundled JDK. The updated Studio installed itself into `Android Studio1`; the old `Android Studio` folder is an empty leftover.
 
 ```bash
-export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"
+export JAVA_HOME="/c/Program Files/Android/Android Studio1/jbr"
 ./gradlew :wear:assembleDebug :mobile:assembleDebug
 ./gradlew test
 ```
