@@ -44,7 +44,10 @@
             android:exported="false"
             android:foregroundServiceType="location|health" />
 
-        <!-- Woken by Play services when the phone confirms a session or asks for them again. -->
+        <!--
+            Woken by Play services when the phone confirms a session or asks for them again.
+            Only those two paths: the sessions this watch writes itself would wake it too.
+        -->
         <service
             android:name=".sync.PhoneListenerService"
             android:exported="true">
@@ -52,7 +55,11 @@
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <data
                     android:host="*"
-                    android:pathPrefix="/fast/"
+                    android:pathPrefix="/fast/ack/"
+                    android:scheme="wear" />
+                <data
+                    android:host="*"
+                    android:path="/fast/resync"
                     android:scheme="wear" />
             </intent-filter>
         </service>

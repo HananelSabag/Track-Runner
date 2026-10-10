@@ -55,8 +55,11 @@ private fun FastWearApp() {
     val recordingKind = (recording as? RecordingUiState.Recording)?.kind
 
     // Opened from the watch face while a training is being recorded: go straight back to it.
+    // If the recording screen is already on top (a restored activity), it is not opened twice.
     LaunchedEffect(Unit) {
-        (RecordingSession.state.value as? RecordingUiState.Recording)?.let { navController.navigate(Route.record(it.kind)) }
+        (RecordingSession.state.value as? RecordingUiState.Recording)?.let {
+            navController.navigate(Route.record(it.kind)) { launchSingleTop = true }
+        }
     }
 
     AppScaffold {
