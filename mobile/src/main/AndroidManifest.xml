@@ -8,6 +8,19 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Fast">
 
+        <!-- Woken by Play services when the watch offers a session, whether or not the app is open. -->
+        <service
+            android:name=".sync.SessionReceiverService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/fast/session/"
+                    android:scheme="wear" />
+            </intent-filter>
+        </service>
+
         <activity
             android:name=".MainActivity"
             android:exported="true">

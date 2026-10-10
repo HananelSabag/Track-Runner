@@ -6,4 +6,138 @@
     <string name="device_check_loading">Reading sensors…</string>
     <string name="device_check_share">Share</string>
     <string name="device_check_share_subject">FAST device report</string>
+
+    <!-- Kinds and units -->
+    <string name="mode_run">Run</string>
+    <string name="mode_football">Football</string>
+    <string name="mode_sprint_test">Sprint test</string>
+    <string name="unit_kmh">km/h</string>
+    <string name="unit_km">km</string>
+    <string name="unit_seconds">s</string>
+    <string name="value_kmh">%1$s km/h</string>
+    <string name="value_km">%1$s km</string>
+    <string name="value_meters">%1$d m</string>
+    <string name="value_meters_text">m</string>
+    <string name="value_seconds">%1$s s</string>
+    <string name="value_plus_minus_kmh">±%1$s km/h</string>
+    <string name="zone_walk">Walk</string>
+    <string name="zone_jog">Jog</string>
+    <string name="zone_run">Run</string>
+    <string name="zone_high_speed">Fast run</string>
+    <string name="zone_sprint">Sprint</string>
+    <plurals name="sprints">
+        <item quantity="one">%1$d sprint</item>
+        <item quantity="other">%1$d sprints</item>
+    </plurals>
+
+    <!-- Actions -->
+    <string name="action_back">Back</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_cancel">Cancel</string>
+
+    <!-- History -->
+    <string name="home_top_speed">Your top speed</string>
+    <string name="home_top_speed_held">Held for 3 seconds</string>
+    <string name="home_top_speed_held_test">Held for 2 seconds</string>
+    <string name="home_top_speed_none">No top speed yet. It appears after your first fast run or sprint test.</string>
+    <string name="home_last_30_days">Last 30 days</string>
+    <string name="home_sessions">Sessions</string>
+    <string name="week_this">This week</string>
+    <string name="week_last">Last week</string>
+    <string name="card_work">%1$s work</string>
+    <string name="confidence_value">Confidence %1$d%%</string>
+    <string name="sprint_not_measured">Not measured</string>
+    <string name="badge_demo">Demo</string>
+    <string name="badge_recovered">Recovered</string>
+    <string name="watch_connected">%1$s connected</string>
+    <string name="watch_not_connected">Watch not connected</string>
+    <string name="empty_title">No sessions yet</string>
+    <string name="empty_text">Start a run, a football session or a sprint test on the watch. It shows up here by itself once the watch and the phone are near each other.</string>
+
+    <!-- Session -->
+    <string name="stat_top_speed">Top speed</string>
+    <string name="stat_best_3s">Best 3 seconds</string>
+    <string name="stat_work">Work</string>
+    <string name="stat_rest">Rest</string>
+    <string name="stat_sprints">Sprints</string>
+    <string name="stat_work_average">Avg while working</string>
+    <string name="stat_average">Average</string>
+    <string name="stat_distance">Distance</string>
+    <string name="stat_fast_running">Fast running</string>
+    <string name="stat_running">Running</string>
+    <string name="stat_stopped">Stopped</string>
+    <string name="stat_hr_work">Avg at work</string>
+    <string name="stat_hr_max">Maximum</string>
+    <string name="stat_load">Load</string>
+    <string name="stat_fastest_reading">Fastest reading</string>
+    <string name="stat_time_at_speed">Time at speed</string>
+    <string name="stat_distance_at_speed">Distance at speed</string>
+    <string name="section_timeline">Timeline</string>
+    <string name="section_speed">Speed</string>
+    <string name="section_zones">Speed zones</string>
+    <string name="section_minutes">Minute by minute</string>
+    <string name="section_heart_rate">Heart rate</string>
+    <string name="section_recovery">Recovery in the first minute of each rest</string>
+    <string name="column_at">At</string>
+    <string name="column_peak">Peak</string>
+    <string name="column_duration">Duration</string>
+    <string name="column_minute">Minute</string>
+    <string name="column_average_max">Average / fastest</string>
+    <string name="recovery_at">Rest at %1$s</string>
+    <string name="recovery_drop">−%1$d</string>
+    <string name="hr_zone_below">Below 50%</string>
+    <string name="hr_zone_1">50–60%</string>
+    <string name="hr_zone_2">60–70%</string>
+    <string name="hr_zone_3">70–80%</string>
+    <string name="hr_zone_4">80–90% · threshold</string>
+    <string name="hr_zone_5">90%+ · maximal</string>
+    <string name="chart_hint">Drag across the chart to read any moment</string>
+    <string name="note_recovered">This recording was cut off — the app or the watch stopped mid-session — and was recovered up to that point.</string>
+    <string name="note_auto_ended">The watch ended this session by itself after 20 minutes without movement. That time is not counted.</string>
+    <string name="note_demo">Demo data, made up to show what the app does.</string>
+    <string name="session_source">Measured by %1$s (FAST %2$s) · analysis v%3$d</string>
+    <string name="delete_title">Delete this session?</string>
+    <string name="delete_text">It is removed from the phone for good. The watch keeps its own copy.</string>
+    <string name="level_high">High</string>
+    <string name="level_medium">Medium</string>
+    <string name="level_low">Low</string>
+    <string name="issue_few_samples">Too few GPS readings at speed</string>
+    <string name="issue_weak_signal">The GPS signal was weak</string>
+    <string name="issue_not_held">Top speed was not held long enough</string>
+    <string name="issue_spike">One reading jumped, likely a glitch</string>
+    <string name="issue_distance_mismatch">Distance covered does not match the speed</string>
+    <string name="rejected_no_sprint">No sprint detected</string>
+    <string name="rejected_no_data">Not enough GPS data</string>
+    <string name="rejected_too_fast">That was not a run</string>
+    <string name="sprint_not_measured_text">This test did not produce a top speed.</string>
+
+    <!-- Replay -->
+    <string name="replay_open">Replay</string>
+    <string name="replay_title">Replay</string>
+    <string name="replay_play">Play</string>
+    <string name="replay_next_sprint">Next sprint</string>
+    <string name="replay_mode_track">Track</string>
+    <string name="replay_mode_heat">Heat map</string>
+    <string name="replay_mode_sprints">Sprints</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_speed_zones">Speed zones</string>
+    <string name="settings_zones_personal">Football sessions are read with zones scaled to your own top speed, %1$s km/h. A sprint starts at 85%% of it.</string>
+    <string name="settings_zones_standard">No top speed on record yet, so football sessions use the standard zones, set on professional players. They adjust to you after your first fast session.</string>
+    <string name="settings_zone_from">from %1$s km/h</string>
+    <string name="settings_zone_up_to">up to %1$s km/h</string>
+    <string name="settings_heart_rate">Heart rate</string>
+    <string name="settings_age_explain">Your age gives an estimate of your maximum heart rate. It is used for sessions that arrive without one from the watch.</string>
+    <string name="settings_age">Age</string>
+    <string name="settings_max_bpm">Maximum heart rate about %1$d</string>
+    <string name="settings_watch">Watch</string>
+    <string name="settings_resync_explain">Sessions arrive by themselves. If something is missing, the watch can be asked to send everything again; nothing is duplicated.</string>
+    <string name="settings_resync">Ask the watch for all sessions</string>
+    <string name="settings_resync_sent">Asked. Sessions arrive when the watch is in reach.</string>
+    <string name="settings_version">FAST %1$s</string>
+    <string name="demo_title">Demo data</string>
+    <string name="demo_explain">Debug builds only. Made-up sessions for trying the app; they do not count towards your top speed once you have real ones.</string>
+    <string name="demo_load">Load demo sessions</string>
+    <string name="demo_remove">Remove them</string>
 </resources>

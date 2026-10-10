@@ -5,4 +5,139 @@
     <string name="device_check_loading">קורא חיישנים…</string>
     <string name="device_check_share">שיתוף</string>
     <string name="device_check_share_subject">דוח מכשיר FAST</string>
+
+    <!-- Kinds and units -->
+    <string name="mode_run">ריצה</string>
+    <string name="mode_football">כדורגל</string>
+    <string name="mode_sprint_test">מבחן ספרינט</string>
+    <string name="unit_kmh">קמ״ש</string>
+    <string name="unit_km">ק״מ</string>
+    <string name="unit_seconds">שנ׳</string>
+    <string name="value_kmh">%1$s קמ״ש</string>
+    <string name="value_km">%1$s ק״מ</string>
+    <string name="value_meters">%1$d מ׳</string>
+    <string name="value_meters_text">מ׳</string>
+    <string name="value_seconds">%1$s שנ׳</string>
+    <string name="value_plus_minus_kmh">±%1$s קמ״ש</string>
+    <string name="zone_walk">הליכה</string>
+    <string name="zone_jog">ג׳וג</string>
+    <string name="zone_run">ריצה</string>
+    <string name="zone_high_speed">ריצה מהירה</string>
+    <string name="zone_sprint">ספרינט</string>
+    <plurals name="sprints">
+        <item quantity="one">ספרינט אחד</item>
+        <item quantity="two">%1$d ספרינטים</item>
+        <item quantity="other">%1$d ספרינטים</item>
+    </plurals>
+
+    <!-- Actions -->
+    <string name="action_back">חזרה</string>
+    <string name="action_delete">מחיקה</string>
+    <string name="action_cancel">ביטול</string>
+
+    <!-- History -->
+    <string name="home_top_speed">מהירות השיא שלך</string>
+    <string name="home_top_speed_held">הוחזקה 3 שניות</string>
+    <string name="home_top_speed_held_test">הוחזקה 2 שניות</string>
+    <string name="home_top_speed_none">עוד אין מהירות שיא. היא תופיע אחרי הריצה המהירה או מבחן הספרינט הראשון.</string>
+    <string name="home_last_30_days">30 הימים האחרונים</string>
+    <string name="home_sessions">אימונים</string>
+    <string name="week_this">השבוע</string>
+    <string name="week_last">שבוע שעבר</string>
+    <string name="card_work">%1$s עבודה</string>
+    <string name="confidence_value">אמינות %1$d%%</string>
+    <string name="sprint_not_measured">לא נמדד</string>
+    <string name="badge_demo">דוגמה</string>
+    <string name="badge_recovered">שוחזר</string>
+    <string name="watch_connected">%1$s מחובר</string>
+    <string name="watch_not_connected">השעון לא מחובר</string>
+    <string name="empty_title">עוד אין אימונים</string>
+    <string name="empty_text">התחל ריצה, אימון כדורגל או מבחן ספרינט בשעון. הוא יופיע כאן לבד כשהשעון והטלפון יהיו קרובים זה לזה.</string>
+
+    <!-- Session -->
+    <string name="stat_top_speed">מהירות שיא</string>
+    <string name="stat_best_3s">שיא 3 שניות</string>
+    <string name="stat_work">עבודה</string>
+    <string name="stat_rest">מנוחה</string>
+    <string name="stat_sprints">ספרינטים</string>
+    <string name="stat_work_average">ממוצע בעבודה</string>
+    <string name="stat_average">ממוצע</string>
+    <string name="stat_distance">מרחק</string>
+    <string name="stat_fast_running">ריצה מהירה</string>
+    <string name="stat_running">זמן ריצה</string>
+    <string name="stat_stopped">עצירות</string>
+    <string name="stat_hr_work">ממוצע בעבודה</string>
+    <string name="stat_hr_max">מרבי</string>
+    <string name="stat_load">עומס</string>
+    <string name="stat_fastest_reading">דגימת שיא</string>
+    <string name="stat_time_at_speed">זמן במהירות</string>
+    <string name="stat_distance_at_speed">מרחק במהירות</string>
+    <string name="section_timeline">ציר זמן</string>
+    <string name="section_speed">מהירות</string>
+    <string name="section_zones">אזורי מהירות</string>
+    <string name="section_minutes">דקה אחר דקה</string>
+    <string name="section_heart_rate">דופק</string>
+    <string name="section_recovery">התאוששות בדקה הראשונה של כל מנוחה</string>
+    <string name="column_at">מתי</string>
+    <string name="column_peak">שיא</string>
+    <string name="column_duration">משך</string>
+    <string name="column_minute">דקה</string>
+    <string name="column_average_max">ממוצע / שיא</string>
+    <string name="recovery_at">מנוחה ב-%1$s</string>
+    <string name="recovery_drop">\u2066−%1$d\u2069</string>
+    <string name="hr_zone_below">מתחת ל-50%</string>
+    <string name="hr_zone_1">\u206650–60%\u2069</string>
+    <string name="hr_zone_2">\u206660–70%\u2069</string>
+    <string name="hr_zone_3">\u206670–80%\u2069</string>
+    <string name="hr_zone_4">\u206680–90%\u2069 · סף</string>
+    <string name="hr_zone_5">\u206690%+\u2069 · מרבי</string>
+    <string name="chart_hint">גרור אצבע על הגרף כדי לקרוא כל רגע</string>
+    <string name="note_recovered">ההקלטה נקטעה — האפליקציה או השעון נעצרו באמצע האימון — ושוחזרה עד לאותו רגע.</string>
+    <string name="note_auto_ended">השעון סיים את האימון לבד אחרי 20 דקות בלי תנועה. הזמן הזה לא נספר.</string>
+    <string name="note_demo">נתוני דוגמה, מומצאים כדי להראות מה האפליקציה עושה.</string>
+    <string name="session_source">נמדד ב-%1$s (FAST %2$s) · ניתוח גרסה %3$d</string>
+    <string name="delete_title">למחוק את האימון?</string>
+    <string name="delete_text">הוא יימחק מהטלפון לתמיד. העותק שבשעון נשאר.</string>
+    <string name="level_high">גבוהה</string>
+    <string name="level_medium">בינונית</string>
+    <string name="level_low">נמוכה</string>
+    <string name="issue_few_samples">מעט מדי דגימות GPS במהירות</string>
+    <string name="issue_weak_signal">אות ה-GPS היה חלש</string>
+    <string name="issue_not_held">מהירות השיא לא הוחזקה מספיק זמן</string>
+    <string name="issue_spike">דגימה אחת קפצה, כנראה רעש</string>
+    <string name="issue_distance_mismatch">המרחק שנמדד לא תואם למהירות</string>
+    <string name="rejected_no_sprint">לא זוהה ספרינט</string>
+    <string name="rejected_no_data">אין מספיק נתוני GPS</string>
+    <string name="rejected_too_fast">זו לא הייתה ריצה</string>
+    <string name="sprint_not_measured_text">המבחן הזה לא הפיק מהירות שיא.</string>
+
+    <!-- Replay -->
+    <string name="replay_open">שידור חוזר</string>
+    <string name="replay_title">שידור חוזר</string>
+    <string name="replay_play">נגן</string>
+    <string name="replay_next_sprint">הספרינט הבא</string>
+    <string name="replay_mode_track">מסלול</string>
+    <string name="replay_mode_heat">מפת חום</string>
+    <string name="replay_mode_sprints">ספרינטים</string>
+
+    <!-- Settings -->
+    <string name="settings_title">הגדרות</string>
+    <string name="settings_speed_zones">אזורי מהירות</string>
+    <string name="settings_zones_personal">אימוני כדורגל נקראים לפי אזורים שמותאמים למהירות השיא שלך, %1$s קמ״ש. ספרינט מתחיל מ-85%% ממנה.</string>
+    <string name="settings_zones_standard">עוד אין מהירות שיא, אז אימוני כדורגל נקראים לפי האזורים הסטנדרטיים, שנקבעו על שחקנים מקצוענים. הם יותאמו אליך אחרי האימון המהיר הראשון.</string>
+    <string name="settings_zone_from">מ-%1$s קמ״ש</string>
+    <string name="settings_zone_up_to">עד %1$s קמ״ש</string>
+    <string name="settings_heart_rate">דופק</string>
+    <string name="settings_age_explain">הגיל נותן הערכה של הדופק המרבי שלך. היא משמשת לאימונים שהגיעו מהשעון בלי ערך כזה.</string>
+    <string name="settings_age">גיל</string>
+    <string name="settings_max_bpm">דופק מרבי בערך %1$d</string>
+    <string name="settings_watch">שעון</string>
+    <string name="settings_resync_explain">אימונים מגיעים לבד. אם משהו חסר, אפשר לבקש מהשעון לשלוח הכול שוב; שום דבר לא ישוכפל.</string>
+    <string name="settings_resync">בקש מהשעון את כל האימונים</string>
+    <string name="settings_resync_sent">התבקש. האימונים יגיעו כשהשעון יהיה בטווח.</string>
+    <string name="settings_version">FAST %1$s</string>
+    <string name="demo_title">נתוני דוגמה</string>
+    <string name="demo_explain">רק בגרסת פיתוח. אימונים מומצאים לבדיקת האפליקציה; הם לא נספרים למהירות השיא ברגע שיש אימונים אמיתיים.</string>
+    <string name="demo_load">טען אימוני דוגמה</string>
+    <string name="demo_remove">הסר אותם</string>
 </resources>

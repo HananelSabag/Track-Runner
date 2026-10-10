@@ -28,6 +28,9 @@ object FastColors {
     val SurfaceHigh = Color(0xFF1E293B)
     val Outline = Color(0xFF263247)
 
+    /** The ground a track is drawn on: a shade under the cards, so the coloured trail carries. */
+    val Pitch = Color(0xFF0A0F1C)
+
     /**
      * Movement intensity, cool to hot: rest, walk, jog, run, high speed, sprint.
      * One hue sweep from cyan to rose, so a zone is readable without a legend.
@@ -43,16 +46,33 @@ private val FastColorScheme = darkColorScheme(
     onPrimaryContainer = Color(0xFFDBEAFE),
     secondary = FastColors.Cyan,
     onSecondary = FastColors.Navy,
+    // Tonal buttons and selected chips: a quiet blue, clearly a step below the primary action.
+    secondaryContainer = Color(0xFF1D3157),
+    onSecondaryContainer = Color(0xFFDBEAFE),
     tertiary = FastColors.Lilac,
     onTertiary = FastColors.Navy,
+    tertiaryContainer = Color(0xFF3B2A6B),
+    onTertiaryContainer = Color(0xFFEDE9FE),
     background = FastColors.Navy,
     onBackground = FastColors.Ice,
     surface = FastColors.Navy,
     onSurface = FastColors.Ice,
     surfaceVariant = FastColors.SurfaceHigh,
     onSurfaceVariant = FastColors.Mist,
+    // Every surface tone is set: any left to the library default would come out purple-grey.
+    surfaceDim = FastColors.Navy,
+    surfaceBright = FastColors.SurfaceHigh,
+    surfaceContainerLowest = FastColors.Pitch,
+    surfaceContainerLow = Color(0xFF0F172A),
     surfaceContainer = FastColors.Surface,
     surfaceContainerHigh = FastColors.SurfaceHigh,
+    surfaceContainerHighest = Color(0xFF273449),
+    inverseSurface = FastColors.Ice,
+    inverseOnSurface = FastColors.Navy,
+    inversePrimary = FastColors.Electric,
+    errorContainer = Color(0xFF5B1A2A),
+    onErrorContainer = Color(0xFFFFE4E6),
+    scrim = Color.Black,
     outline = FastColors.Slate,
     outlineVariant = FastColors.Outline,
     error = FastColors.Rose,
