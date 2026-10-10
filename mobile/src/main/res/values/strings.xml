@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">FAST</string>
+    <string name="device_check_title">Device check</string>
+    <string name="device_check_subtitle">What this phone can measure</string>
+    <string name="device_check_loading">Reading sensors…</string>
+    <string name="device_check_share">Share</string>
+    <string name="device_check_share_subject">FAST device report</string>
+</resources>

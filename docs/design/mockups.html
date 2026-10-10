@@ -1,0 +1,238 @@
+<!doctype html>
+<!-- Design proposal for discussion: static mockups, not the real UI. Rendered to mockups.png. -->
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>FAST — mockups</title>
+<style>
+  :root {
+    --volt: #C8FF2E; --ink: #0B0D0F; --red: #FF5A36; --ice: #F4F7F5; --mist: #9AA3AD;
+    --graphite: #16191C; --graphite-hi: #1F2327; --line: #2E343A;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 36px 40px 44px; width: 1640px; background: #101214; color: var(--ice);
+         font-family: 'Segoe UI', 'Rubik', sans-serif; }
+  .num { font-family: Bahnschrift, 'Segoe UI', sans-serif; font-stretch: 78%; font-weight: 700;
+         font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+  h1 { font-size: 15px; letter-spacing: .14em; color: var(--mist); font-weight: 600; margin: 0 0 22px; }
+  .row { display: flex; gap: 34px; align-items: flex-start; margin-bottom: 44px; }
+  figure { margin: 0; text-align: center; }
+  figcaption { margin-top: 14px; font-size: 14px; color: var(--mist); }
+  figcaption b { display: block; color: var(--ice); font-size: 15px; margin-bottom: 2px; }
+
+  /* Watch: a 300px round face inside a bezel. */
+  .watch { width: 300px; height: 300px; border-radius: 50%; background: #000; position: relative;
+           box-shadow: 0 0 0 9px #23272c, 0 0 0 11px #3a4047; overflow: hidden; }
+  svg { direction: ltr; }
+  .watch svg { position: absolute; inset: 0; }
+  .c { position: absolute; left: 0; right: 0; text-align: center; }
+  .small { font-size: 13px; color: var(--mist); }
+  .pill { display: inline-block; padding: 3px 11px; border-radius: 99px; background: var(--graphite-hi); font-size: 12px; color: var(--ice); }
+
+  /* Phone */
+  .phone { width: 330px; height: 640px; border-radius: 38px; background: var(--ink); padding: 22px 18px;
+           box-shadow: 0 0 0 8px #23272c, 0 0 0 10px #3a4047; text-align: right; overflow: hidden; }
+  .card { background: var(--graphite); border-radius: 20px; padding: 14px 16px; margin-bottom: 10px; }
+  .label { font-size: 12px; color: var(--mist); }
+  .tiles { display: flex; gap: 8px; margin-bottom: 12px; }
+  .tile { flex: 1; background: var(--graphite); border-radius: 18px; padding: 12px 12px 10px; }
+  .tile .num { font-size: 30px; line-height: 1; display: block; margin-top: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  td { padding: 6px 0; border-top: 1px solid var(--line); }
+  td.bar { width: 46%; }
+  .bar i { display: block; height: 7px; border-radius: 4px; background: var(--volt); }
+</style>
+</head>
+<body>
+
+<h1>שעון · OnePlus Watch 2 · ‏466×466</h1>
+<div class="row">
+
+  <figure>
+    <div class="watch">
+      <svg viewBox="0 0 300 300">
+        <circle cx="150" cy="150" r="138" fill="none" stroke="#1F2327" stroke-width="7"/>
+        <circle cx="150" cy="150" r="138" fill="none" stroke="#C8FF2E" stroke-width="7" stroke-linecap="round"
+                stroke-dasharray="620 867" transform="rotate(-90 150 150)"/>
+      </svg>
+      <div class="c num" style="top:38px;font-size:15px;color:var(--mist)">07:42</div>
+      <div class="c" style="top:66px;font-size:14px;color:var(--volt);font-weight:600">GPS מוכן</div>
+      <div class="c small" style="top:87px"><span class="num" style="font-weight:500">±3</span> מ׳ · <span class="num" style="font-weight:500">17</span> לוויינים · L5</div>
+      <div class="c" style="top:118px">
+        <div style="width:104px;height:104px;border-radius:50%;background:var(--volt);margin:0 auto;display:flex;align-items:center;justify-content:center;color:var(--ink);font-size:25px;font-weight:800">התחל</div>
+      </div>
+      <div class="c" style="top:230px"><span class="pill" style="font-size:11px">ריצה</span> <span class="pill" style="font-size:11px;color:var(--volt)">Duo · טלפון</span></div>
+    </div>
+    <figcaption><b>מוכן</b>הטבעת מתמלאת עם נעילת ה-GPS</figcaption>
+  </figure>
+
+  <figure>
+    <div class="watch">
+      <svg viewBox="0 0 300 300">
+        <!-- 270° gauge, 0–30 km/h. Volt = current speed, red tick = session max. -->
+        <circle cx="150" cy="150" r="138" fill="none" stroke="#1F2327" stroke-width="9" stroke-linecap="round"
+                stroke-dasharray="650 867" transform="rotate(135 150 150)"/>
+        <circle cx="150" cy="150" r="138" fill="none" stroke="#C8FF2E" stroke-width="9" stroke-linecap="round"
+                stroke-dasharray="377 867" transform="rotate(135 150 150)"/>
+        <line x1="150" y1="3" x2="150" y2="23" stroke="#FF5A36" stroke-width="5" stroke-linecap="round" transform="rotate(88 150 150)"/>
+      </svg>
+      <div class="c num" style="top:36px;font-size:15px;color:var(--mist)">07:54</div>
+      <div class="c small" style="top:62px"><span style="color:var(--volt)">●</span> <span class="num" style="font-weight:500">±0.4</span></div>
+      <div class="c num" style="top:70px;font-size:118px;line-height:1.05;font-style:italic">17.4</div>
+      <div class="c small" style="top:190px">קמ״ש</div>
+      <div class="c" style="top:214px;display:flex;justify-content:center;gap:26px;direction:rtl">
+        <span><span class="small">מקס׳ </span><span class="num" style="font-size:22px;color:var(--red)">24.8</span></span>
+        <span><span class="small">ממוצע </span><span class="num" style="font-size:22px">12.9</span></span>
+      </div>
+      <div class="c num" style="top:250px;font-size:16px;color:var(--mist)">12:34 · 2.69 km</div>
+    </div>
+    <figcaption><b>חי</b>מספר אחד גדול. הקשת = מהירות, הקו האדום = שיא</figcaption>
+  </figure>
+
+  <figure>
+    <div class="watch">
+      <div class="c num" style="top:36px;font-size:15px;color:var(--mist)">07:54</div>
+      <div class="c" style="top:74px;display:flex;justify-content:center;gap:18px">
+        <div style="width:96px;height:96px;border-radius:50%;background:var(--graphite-hi);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+          <svg viewBox="0 0 24 24" width="30" height="30" style="position:static"><rect x="5" y="4" width="5" height="16" rx="1.5" fill="#F4F7F5"/><rect x="14" y="4" width="5" height="16" rx="1.5" fill="#F4F7F5"/></svg>
+          <span style="font-size:13px">השהה</span>
+        </div>
+        <div style="width:96px;height:96px;border-radius:50%;background:var(--red);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+          <svg viewBox="0 0 24 24" width="30" height="30" style="position:static"><rect x="5" y="5" width="14" height="14" rx="2.5" fill="#0B0D0F"/></svg>
+          <span style="font-size:13px;font-weight:700">סיום</span>
+        </div>
+      </div>
+      <div class="c small" style="top:182px">סיום בלחיצה ארוכה</div>
+      <div class="c" style="top:210px"><span class="pill" style="padding:8px 22px;font-size:14px">הקפה</span></div>
+      <div class="c" style="top:262px;font-size:9px;color:var(--mist);letter-spacing:5px">● <span style="color:var(--ice)">●</span></div>
+    </div>
+    <figcaption><b>פקדים</b>החלקה הצידה מהמסך החי</figcaption>
+  </figure>
+
+  <figure>
+    <div class="watch">
+      <div class="c small" style="top:34px">מהירות שיא</div>
+      <div class="c num" style="top:46px;font-size:82px;line-height:1.1;color:var(--red);font-style:italic">24.8</div>
+      <div class="c" style="top:142px;display:flex;justify-content:center;gap:24px;direction:rtl">
+        <span><span class="small">שיא 3 שנ׳ </span><span class="num" style="font-size:20px">23.9</span></span>
+        <span><span class="small">ממוצע </span><span class="num" style="font-size:20px">12.9</span></span>
+      </div>
+      <svg viewBox="0 0 300 300"><polyline id="spark-watch" fill="none" stroke="#C8FF2E" stroke-width="2.5" stroke-linejoin="round"/></svg>
+      <div class="c num" style="top:222px;font-size:16px;color:var(--mist)">24:12 · 5.21 km</div>
+      <div class="c" style="top:248px;font-size:13px;color:var(--volt)">✓ סונכרן לטלפון</div>
+    </div>
+    <figcaption><b>סיכום</b>השיא קודם, ומצב הסנכרון תמיד גלוי</figcaption>
+  </figure>
+
+  <figure>
+    <div class="watch">
+      <div class="c num" style="top:40px;font-size:17px;color:#6b737c">07:54</div>
+      <div class="c num" style="top:76px;font-size:118px;line-height:1.05;font-style:italic;font-weight:300;color:#aab2ba">17</div>
+      <div class="c small" style="top:196px;color:#6b737c">קמ״ש</div>
+      <div class="c num" style="top:226px;font-size:19px;color:#8a929b;font-weight:500">12:34</div>
+    </div>
+    <figcaption><b>Ambient</b>יד למטה: קו דק, בלי צבע, עדכון פעם בדקה</figcaption>
+  </figure>
+</div>
+
+<h1>טלפון · OnePlus 13</h1>
+<div class="row">
+
+  <figure>
+    <div class="phone">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <span style="font-size:22px;font-weight:700">היסטוריה</span>
+        <span class="num" style="font-size:22px;font-style:italic;color:var(--volt)">FAST</span>
+      </div>
+      <div class="label" style="margin-bottom:8px">שיאים אישיים</div>
+      <div class="tiles">
+        <div class="tile"><span class="label">מהירות שיא</span><span class="num" style="color:var(--red)">27.3</span></div>
+        <div class="tile"><span class="label">100 מ׳</span><span class="num">14.2s</span></div>
+        <div class="tile"><span class="label">1 ק״מ</span><span class="num">3:58</span></div>
+      </div>
+      <div class="label" style="margin:14px 0 8px">השבוע</div>
+      <div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-end">
+        <div><div style="font-size:15px;font-weight:600">היום · 07:42</div><div class="label"><span class="num" style="font-weight:500">5.21 km · 24:12</span> · Duo</div></div>
+        <div style="text-align:left"><span class="num" style="font-size:32px;color:var(--red)">24.8</span><div class="label">מקס׳ קמ״ש</div></div></div></div>
+      <div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-end">
+        <div><div style="font-size:15px;font-weight:600">שלישי · 18:10</div><div class="label"><span class="num" style="font-weight:500">8.04 km · 41:55</span> · שעון</div></div>
+        <div style="text-align:left"><span class="num" style="font-size:32px">21.6</span><div class="label">מקס׳ קמ״ש</div></div></div></div>
+      <div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-end">
+        <div><div style="font-size:15px;font-weight:600">ראשון · 06:30</div><div class="label"><span class="num" style="font-weight:500">3.10 km · 15:02</span> · שעון</div></div>
+        <div style="text-align:left"><span class="num" style="font-size:32px">22.9</span><div class="label">מקס׳ קמ״ש</div></div></div></div>
+      <div class="card" style="border:1px dashed var(--line);background:transparent"><div class="label">ריצה אחת ממתינה בשעון · תסתנכרן כשיתחבר</div></div>
+    </div>
+    <figcaption><b>היסטוריה</b>שיאים למעלה, מקור המדידה בכל ריצה</figcaption>
+  </figure>
+
+  <figure>
+    <div class="phone">
+      <div style="font-size:20px;font-weight:700">היום · 07:42</div>
+      <div class="label" style="margin-bottom:14px"><span class="num" style="font-weight:500">5.21 km · 24:12</span></div>
+      <div class="tiles">
+        <div class="tile"><span class="label">מקס׳</span><span class="num" style="color:var(--red)">24.8</span></div>
+        <div class="tile"><span class="label">שיא 3 שנ׳</span><span class="num">23.9</span></div>
+        <div class="tile"><span class="label">ממוצע</span><span class="num">12.9</span></div>
+      </div>
+      <div class="card" style="padding:12px 10px 6px">
+        <div class="label" style="padding:0 6px 4px">מהירות לאורך זמן · קמ״ש</div>
+        <svg id="chart" viewBox="0 0 290 150" width="100%" style="display:block"></svg>
+      </div>
+      <div class="card">
+        <div class="label" style="margin-bottom:4px">דקה-דקה</div>
+        <table id="minutes"></table>
+      </div>
+      <div class="label" style="text-align:center;margin-top:10px">מקור: שעון + טלפון (Duo) · <span class="num" style="font-weight:500">±0.4</span> קמ״ש · אלגוריתם v1</div>
+    </div>
+    <figcaption><b>ריצה</b>גרף עם סימון השיא + טבלת דקות + שקיפות על המקור</figcaption>
+  </figure>
+
+  <figure style="align-self:center;max-width:520px;text-align:right">
+    <div style="font-size:17px;line-height:1.75;color:var(--ice)">
+      <b style="color:var(--volt)">שפת העיצוב</b><br>
+      שחור אמיתי ב-OLED · <span style="color:var(--volt)">Volt</span> לפעולה ולמצב תקין ·
+      <span style="color:var(--red)">Redline</span> שמור רק לשיאים ולסיום.<br>
+      ספרות צרות, נטויות ומיושרות-רוחב כדי שהמספר לא "ירקוד" כשהוא מתחלף.<br>
+      מספרים תמיד LTR, גם בממשק עברי.
+    </div>
+    <figcaption style="margin-top:18px">הצעה לדיון — לא ה-UI הסופי. הגופן כאן הוא ממלא-מקום.</figcaption>
+  </figure>
+</div>
+
+<script>
+  // One synthetic speed series (km/h, one point per 20 s) shared by every chart on the board.
+  const speed = [0, 6, 10.5, 12, 12.4, 12.8, 13.1, 12.6, 12.2, 12.9, 13.4, 13, 12.5, 12.8, 13.6, 14.2, 13.3, 12.7,
+    12.4, 12.9, 13.2, 12.8, 12.1, 12.6, 13.9, 17.5, 22.6, 24.8, 23.9, 19.2, 14.1, 12.2, 11.8, 12.4, 12.9, 13.1,
+    12.7, 12.3, 12.8, 13.5, 14, 13.2, 12.6, 12.9, 13.3, 12.8, 12.2, 12.5, 13, 13.4, 12.9, 12.4, 12.7, 13.1, 13.6,
+    14.4, 15.8, 17.2, 16.1, 13.5, 12.8, 12.3, 12.6, 12.9, 13.2, 12.7, 12.1, 11.6, 10.8, 9.2, 6.5, 2.1, 0];
+  const maxI = speed.indexOf(Math.max(...speed));
+  const pts = (x0, y0, w, h, top) => speed.map((v, i) => [x0 + (i / (speed.length - 1)) * w, y0 + h - (v / top) * h]);
+
+  document.getElementById('spark-watch').setAttribute('points', pts(70, 172, 160, 38, 26).map((p) => p.join(',')).join(' '));
+
+  const chart = document.getElementById('chart');
+  const p = pts(26, 8, 258, 118, 28);
+  const line = p.map((q) => q.join(',')).join(' ');
+  const grid = [0, 10, 20].map((v) => {
+    const y = 8 + 118 - (v / 28) * 118;
+    return `<line x1="26" x2="284" y1="${y}" y2="${y}" stroke="#2E343A" stroke-width="1"/>
+            <text x="20" y="${y + 4}" fill="#9AA3AD" font-size="10" text-anchor="end" font-family="Bahnschrift">${v}</text>`;
+  }).join('');
+  const [mx, my] = p[maxI];
+  chart.innerHTML = `${grid}
+    <polygon points="26,126 ${line} 284,126" fill="#C8FF2E" fill-opacity="0.12"/>
+    <polyline points="${line}" fill="none" stroke="#C8FF2E" stroke-width="2" stroke-linejoin="round"/>
+    <line x1="${mx}" x2="${mx}" y1="${my}" y2="126" stroke="#FF5A36" stroke-width="1" stroke-dasharray="3 3"/>
+    <circle cx="${mx}" cy="${my}" r="4.5" fill="#FF5A36"/>
+    <text x="${mx + 9}" y="${my + 5}" fill="#FF5A36" font-size="12" font-weight="700" font-family="Bahnschrift">24.8</text>
+    ${[0, 6, 12, 18, 24].map((m) => `<text x="${26 + (m / 24) * 258}" y="144" fill="#9AA3AD" font-size="10" text-anchor="middle" font-family="Bahnschrift">${m}′</text>`).join('')}`;
+
+  const rows = [[8, 12.9, 14.2], [9, 15.6, 24.8], [10, 16.3, 23.9], [11, 12.4, 13.1], [12, 12.9, 14.0]];
+  document.getElementById('minutes').innerHTML = rows.map(([m, avg, max]) => `<tr>
+    <td class="label">דקה <span class="num" style="font-weight:500">${m}</span></td>
+    <td class="bar"><i style="width:${(avg / 26) * 100}%"></i></td>
+    <td class="num" style="text-align:left;font-weight:500">${avg.toFixed(1)}</td>
+    <td class="num" style="text-align:left;color:${max > 20 ? '#FF5A36' : '#F4F7F5'}">${max.toFixed(1)}</td></tr>`).join('');
+</script>
+</body>
+</html>
