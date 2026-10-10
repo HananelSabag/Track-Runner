@@ -6,8 +6,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.hananel.fast.core.model.Speed
 import com.hananel.fast.core.model.SpeedSample
-import com.hananel.fast.core.tracking.sprint.GnssReadiness
-import com.hananel.fast.core.tracking.sprint.GnssReadinessCheck
+import com.hananel.fast.core.tracking.sprint.AcquisitionStage
+import com.hananel.fast.core.tracking.sprint.GnssAcquisition
+import com.hananel.fast.core.tracking.sprint.GnssAcquisitionCheck
+import com.hananel.fast.core.tracking.sprint.SatelliteView
 import com.hananel.fast.core.tracking.sprint.SprintProgress
 import com.hananel.fast.core.tracking.sprint.SprintTestAnalyzer
 import com.hananel.fast.core.tracking.sprint.SprintTestOutcome
@@ -23,7 +25,8 @@ sealed interface SprintUiState {
     /** [denied] is true once the runner has turned the request down. */
     data class NeedsPermission(val denied: Boolean) : SprintUiState
 
-    data class Locating(val readiness: GnssReadiness) : SprintUiState
+    /** [searchingForMs] is how long the receiver has been on, so a slow search visibly progresses. */
+    data class Locating(val acquisition: GnssAcquisition, val searchingForMs: Long) : SprintUiState
 
     data class Countdown(val secondsLeft: Int) : SprintUiState
 
@@ -33,8 +36,8 @@ sealed interface SprintUiState {
 }
 
 /**
- * Runs one sprint test: wait for a good fix, count down, record until the
- * runner has clearly slowed, then score the readings.
+ * Runs one sprint test: wait for a fix, count down, record until the runner
+ * has clearly slowed, then score the readings.
  *
  * Everything here runs on the main thread — the location callbacks are
  * delivered there too — so the phase and the sample lists need no locking.
@@ -43,6 +46,7 @@ class SprintTestViewModel(application: Application) : AndroidViewModel(applicati
 
     private val haptics = Haptics(application)
     private val log = SprintLog(application)
+    private val acquisitionLog = AcquisitionLog(application)
 
     private val _state = MutableStateFlow<SprintUiState>(SprintUiState.NeedsPermission(denied = false))
     val state: StateFlow<SprintUiState> = _state.asStateFlow()
@@ -56,8 +60,17 @@ class SprintTestViewModel(application: Application) : AndroidViewModel(applicati
     private var listening: Job? = null
     private var test: Job? = null
 
-    /** The last few seconds of readings, for judging whether the fix is good enough to start. */
-    private val recent = ArrayDeque<SpeedSample>()
+    // What the receiver has delivered in the last few seconds, for judging how the search is going.
+    private val recentSamples = ArrayDeque<SpeedSample>()
+    private val recentFixTimes = ArrayDeque<Long>()
+    private var satellites: SatelliteView? = null
+    private var satellitesAtMs = 0L
+    private var searchStartedMs = 0L
+
+    // For the acquisition log: each milestone is recorded once per search.
+    private var loggedSatellites = false
+    private var loggedFirstFix = false
+    private var loggedStage: AcquisitionStage? = null
 
     /** Every fix since "go", and the subset that carried a speed. */
     private val runFixes = mutableListOf<GnssFix>()
@@ -68,8 +81,8 @@ class SprintTestViewModel(application: Application) : AndroidViewModel(applicati
     fun onPermissionResult(granted: Boolean) {
         hasPermission = granted
         if (granted) {
-            if (_state.value is SprintUiState.NeedsPermission) publishReadiness()
             listenIfPossible()
+            if (_state.value is SprintUiState.NeedsPermission) publishAcquisition()
         } else {
             _state.value = SprintUiState.NeedsPermission(denied = true)
         }
@@ -83,19 +96,18 @@ class SprintTestViewModel(application: Application) : AndroidViewModel(applicati
     /** Leaving the screen ends location use at once, and abandons a test in progress. */
     fun onHidden() {
         visible = false
+        if (listening != null) acquisitionLog.record("search stopped after ${searchSeconds()}s at stage $loggedStage")
         listening?.cancel()
         listening = null
         test?.cancel()
         test = null
-        if (phase == Phase.COUNTDOWN || phase == Phase.RUNNING) {
-            phase = Phase.LOCATING
-            recent.clear()
-            if (hasPermission) publishReadiness()
-        }
+        if (phase == Phase.COUNTDOWN || phase == Phase.RUNNING) phase = Phase.LOCATING
+        clearReceiverState()
+        if (hasPermission && phase == Phase.LOCATING) publishAcquisition()
     }
 
     fun start() {
-        if (phase != Phase.LOCATING) return
+        if (phase != Phase.LOCATING || !currentAcquisition().canStart) return
         phase = Phase.COUNTDOWN
         test = viewModelScope.launch {
             for (secondsLeft in COUNTDOWN_SECONDS downTo 1) {
@@ -127,31 +139,54 @@ class SprintTestViewModel(application: Application) : AndroidViewModel(applicati
     fun retry() {
         if (phase != Phase.RESULT) return
         phase = Phase.LOCATING
-        publishReadiness()
+        publishAcquisition()
     }
 
     private fun listenIfPossible() {
         if (!hasPermission || !visible || listening != null) return
+        clearReceiverState()
+        searchStartedMs = SystemClock.elapsedRealtime()
+        acquisitionLog.record("search started")
         listening = viewModelScope.launch {
             launch {
-                // Readiness must also fall back to "searching" when fixes stop arriving,
-                // which no incoming fix can report.
+                // The search must also move when nothing arrives: the clock ticks, and a
+                // fix that stops coming has to fall back to "searching".
                 while (isActive) {
                     delay(1_000)
-                    if (phase == Phase.LOCATING) publishReadiness()
+                    if (phase == Phase.LOCATING) publishAcquisition()
                 }
             }
+            launch { satelliteViews(getApplication<Application>()).collect(::onSatellites) }
             gnssFixes(getApplication<Application>()).collect(::onFix)
         }
     }
 
+    private fun onSatellites(view: SatelliteView) {
+        satellites = view
+        satellitesAtMs = SystemClock.elapsedRealtime()
+        if (!loggedSatellites && view.visible > 0) {
+            loggedSatellites = true
+            acquisitionLog.record("first satellites after ${searchSeconds()}s: visible=${view.visible} strong=${view.strong}")
+        }
+        if (phase == Phase.LOCATING) publishAcquisition()
+    }
+
     private fun onFix(fix: GnssFix) {
+        recentFixTimes.addLast(fix.sample.timeMs)
+        while (recentFixTimes.size > RECENT_CAPACITY) recentFixTimes.removeFirst()
         if (fix.hasSpeed) {
-            recent.addLast(fix.sample)
-            while (recent.size > RECENT_CAPACITY) recent.removeFirst()
+            recentSamples.addLast(fix.sample)
+            while (recentSamples.size > RECENT_CAPACITY) recentSamples.removeFirst()
+        }
+        if (!loggedFirstFix) {
+            loggedFirstFix = true
+            acquisitionLog.record(
+                "first fix after ${searchSeconds()}s: hasSpeed=${fix.hasSpeed} " +
+                    "speedAccuracy=${fix.sample.speedAccuracy?.metersPerSecond} positionAccuracy=${fix.sample.horizontalAccuracyMeters}",
+            )
         }
         when (phase) {
-            Phase.LOCATING -> publishReadiness()
+            Phase.LOCATING -> publishAcquisition()
             Phase.RUNNING -> {
                 runFixes += fix
                 if (!fix.hasSpeed) return
@@ -164,9 +199,24 @@ class SprintTestViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    private fun publishReadiness() {
-        val readiness = GnssReadinessCheck.evaluate(recent.toList(), SystemClock.elapsedRealtime())
-        _state.value = SprintUiState.Locating(readiness)
+    private fun currentAcquisition(): GnssAcquisition {
+        val now = SystemClock.elapsedRealtime()
+        // A satellite report that has stopped being refreshed describes the past.
+        val freshSatellites = satellites?.takeIf { now - satellitesAtMs <= SATELLITE_REPORT_MAX_AGE_MS }
+        return GnssAcquisitionCheck.evaluate(recentSamples.toList(), recentFixTimes.toList(), freshSatellites, now)
+    }
+
+    private fun publishAcquisition() {
+        val acquisition = currentAcquisition()
+        if (listening != null && acquisition.stage != loggedStage) {
+            loggedStage = acquisition.stage
+            acquisitionLog.record(
+                "stage ${acquisition.stage} after ${searchSeconds()}s: satellites=${acquisition.satellites} " +
+                    "positionAccuracy=${acquisition.positionAccuracyMeters}",
+            )
+        }
+        val searchingFor = if (listening != null) SystemClock.elapsedRealtime() - searchStartedMs else 0L
+        _state.value = SprintUiState.Locating(acquisition, searchingFor)
     }
 
     private fun finish() {
@@ -178,6 +228,17 @@ class SprintTestViewModel(application: Application) : AndroidViewModel(applicati
         _state.value = SprintUiState.Result(outcome)
     }
 
+    private fun clearReceiverState() {
+        recentSamples.clear()
+        recentFixTimes.clear()
+        satellites = null
+        loggedSatellites = false
+        loggedFirstFix = false
+        loggedStage = null
+    }
+
+    private fun searchSeconds(): Long = (SystemClock.elapsedRealtime() - searchStartedMs) / 1000
+
     private companion object {
         const val COUNTDOWN_SECONDS = 3
         const val WATCHDOG_INTERVAL_MS = 250L
@@ -188,5 +249,6 @@ class SprintTestViewModel(application: Application) : AndroidViewModel(applicati
         /** Longer than any sprint; a test still going by now is not one. */
         const val MAX_TEST_MS = 40_000L
         const val RECENT_CAPACITY = 12
+        const val SATELLITE_REPORT_MAX_AGE_MS = 5_000L
     }
 }

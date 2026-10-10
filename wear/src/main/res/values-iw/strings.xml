@@ -4,6 +4,7 @@
     <string name="home_sprint_title">מבחן ספרינט</string>
     <string name="home_sprint_subtitle">כמה אתה מהיר?</string>
     <string name="home_device_check">בדיקת מכשיר</string>
+    <string name="home_version">גרסה %1$s</string>
 
     <!-- Units -->
     <string name="unit_kmh">קמ״ש</string>
@@ -14,9 +15,17 @@
     <!-- Sprint test: before the run -->
     <string name="sprint_permission_text">FAST צריך גישה למיקום כדי למדוד מהירות.</string>
     <string name="sprint_permission_button">אפשר מיקום</string>
-    <string name="sprint_gps_searching">מחפש GPS…</string>
-    <string name="sprint_gps_weak">אות חלש. צא לשטח פתוח.</string>
+    <string name="sprint_gps_searching">מחפש לוויינים…</string>
+    <string name="sprint_gps_satellites_found">נמצאו לוויינים</string>
+    <string name="sprint_gps_locking">ננעל על המיקום…</string>
+    <string name="sprint_gps_no_speed">יש מיקום, אין מהירות</string>
+    <string name="sprint_gps_weak">אות חלש</string>
     <string name="sprint_gps_ready">GPS מוכן</string>
+    <string name="sprint_gps_accuracy">±%1$d מ׳</string>
+    <string name="sprint_gps_satellites">%1$d לוויינים, %2$d חזקים</string>
+    <string name="sprint_hint_slow">בפנים זה יכול לקחת דקות. הכי מהר תחת שמיים פתוחים.</string>
+    <string name="sprint_hint_weak">אפשר להתחיל, אבל הציון יהיה נמוך יותר.</string>
+    <string name="sprint_hint_no_speed">ה-GPS לא מדווח כאן מהירות.</string>
     <string name="sprint_instruction_ground">משטח ישר, מישורי ופתוח</string>
     <string name="sprint_instruction_one">ספרינט אחד ארוך</string>
     <string name="sprint_instruction_hold">החזק מהירות שיא 3 שניות</string>

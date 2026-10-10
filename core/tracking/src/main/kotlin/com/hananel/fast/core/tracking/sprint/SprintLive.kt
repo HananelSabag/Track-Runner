@@ -35,9 +35,9 @@ object GnssReadinessCheck {
         return GnssReadiness.READY
     }
 
-    private const val LOOKBACK_MS = 6_000L
+    private const val LOOKBACK_MS = 8_000L
 
-    /** At one reading a second, four in six seconds allows for one or two dropped. */
+    /** At one reading a second, four in eight seconds allows for a few dropped. */
     private const val MIN_RECENT_SAMPLES = 4
     private const val MAX_SPEED_ACCURACY = 1.0
     private const val MAX_POSITION_ACCURACY_METERS = 12.0

@@ -6,6 +6,7 @@
     <string name="home_sprint_title">Sprint test</string>
     <string name="home_sprint_subtitle">How fast are you?</string>
     <string name="home_device_check">Device check</string>
+    <string name="home_version">Version %1$s</string>
 
     <!-- Units -->
     <string name="unit_kmh">km/h</string>
@@ -16,9 +17,17 @@
     <!-- Sprint test: before the run -->
     <string name="sprint_permission_text">FAST needs your location to measure speed.</string>
     <string name="sprint_permission_button">Allow location</string>
-    <string name="sprint_gps_searching">Searching for GPS…</string>
-    <string name="sprint_gps_weak">Weak signal. Move into the open.</string>
+    <string name="sprint_gps_searching">Searching for satellites…</string>
+    <string name="sprint_gps_satellites_found">Satellites found</string>
+    <string name="sprint_gps_locking">Locking on…</string>
+    <string name="sprint_gps_no_speed">Position, but no speed</string>
+    <string name="sprint_gps_weak">Weak signal</string>
     <string name="sprint_gps_ready">GPS ready</string>
+    <string name="sprint_gps_accuracy">±%1$d m</string>
+    <string name="sprint_gps_satellites">%1$d satellites, %2$d strong</string>
+    <string name="sprint_hint_slow">Indoors this can take minutes. Open sky is fastest.</string>
+    <string name="sprint_hint_weak">You can start, but the result will score lower.</string>
+    <string name="sprint_hint_no_speed">The GPS is not reporting speed here.</string>
     <string name="sprint_instruction_ground">Flat, straight, open ground</string>
     <string name="sprint_instruction_one">One long sprint</string>
     <string name="sprint_instruction_hold">Hold top speed for 3 seconds</string>
