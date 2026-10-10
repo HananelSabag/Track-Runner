@@ -8,6 +8,11 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- Countdown and result are signalled on the wrist, so the runner need not look. -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- The test must keep running while the display is off, which on a watch is most of the time. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- Needed to bind to Health Services on the watch. -->
     <queries>
@@ -25,6 +30,11 @@
         <meta-data
             android:name="com.google.android.wearable.standalone"
             android:value="true" />
+
+        <service
+            android:name=".sprint.SprintService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
 
         <activity
             android:name=".MainActivity"

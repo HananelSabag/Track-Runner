@@ -31,6 +31,8 @@
     <string name="sprint_instruction_ground">Flat, straight, open ground</string>
     <string name="sprint_instruction_one">One long sprint</string>
     <string name="sprint_instruction_hold">Hold top speed for 3 seconds</string>
+    <string name="notification_channel">Sprint test</string>
+    <string name="notification_text">Sprint test in progress</string>
     <string name="sprint_start">Start</string>
 
     <!-- Sprint test: during the run -->

@@ -14,8 +14,8 @@ android {
         minSdk = libs.versions.minSdkWear.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         // Offset from the phone's versionCode: Play rejects two APKs of one app with the same code.
-        versionCode = 1_000_002
-        versionName = "0.2.0"
+        versionCode = 1_000_003
+        versionName = "0.3.0"
     }
 
     buildTypes {
@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.androidx.wear.compose.foundation)
     implementation(libs.androidx.wear.compose.navigation)
     implementation(libs.androidx.wear.tooling.preview)
+    implementation(libs.androidx.wear.ongoing)
     // Holds the @WearPreviewDevices annotations used in main sources, so it cannot be debug-only.
     implementation(libs.androidx.wear.compose.ui.tooling)
 

@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
@@ -74,8 +73,10 @@ import java.util.Locale
 fun SprintTestRoute(viewModel: SprintTestViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val permissionRequest = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        viewModel.onPermissionResult(granted)
+    // Location is what the test needs. The notification permission only decides whether the
+    // "test in progress" notice is visible, so the test goes ahead with or without it.
+    val permissionRequest = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
+        viewModel.onPermissionResult(results[Manifest.permission.ACCESS_FINE_LOCATION] == true)
     }
 
     LaunchedEffect(Unit) {
@@ -83,17 +84,19 @@ fun SprintTestRoute(viewModel: SprintTestViewModel = viewModel()) {
             PackageManager.PERMISSION_GRANTED
         if (alreadyGranted) viewModel.onPermissionResult(true)
     }
-    // The receiver is on only while this screen is actually showing.
-    LifecycleStartEffect(viewModel) {
-        viewModel.onVisible()
-        onStopOrDispose { viewModel.onHidden() }
-    }
-    // A screen that dims mid-sprint would hide the result of the one glance the runner takes.
+    // Best effort only: the watch still turns the display off when the wrist drops, which
+    // is why the test itself runs in SprintService and not in this screen.
     KeepScreenOn()
 
     when (val current = state) {
         is SprintUiState.NeedsPermission ->
-            PermissionScreen(onAllow = { permissionRequest.launch(Manifest.permission.ACCESS_FINE_LOCATION) })
+            PermissionScreen(
+                onAllow = {
+                    permissionRequest.launch(
+                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS),
+                    )
+                },
+            )
         is SprintUiState.Locating -> ReadyScreen(current.acquisition, current.searchingForMs, onStart = viewModel::start)
         is SprintUiState.Countdown -> CountdownScreen(current.secondsLeft)
         is SprintUiState.Running -> RunningScreen(current, onStop = viewModel::stop)

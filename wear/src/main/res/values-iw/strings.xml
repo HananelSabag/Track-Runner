@@ -29,6 +29,8 @@
     <string name="sprint_instruction_ground">משטח ישר, מישורי ופתוח</string>
     <string name="sprint_instruction_one">ספרינט אחד ארוך</string>
     <string name="sprint_instruction_hold">החזק מהירות שיא 3 שניות</string>
+    <string name="notification_channel">מבחן ספרינט</string>
+    <string name="notification_text">מבחן ספרינט פעיל</string>
     <string name="sprint_start">התחל</string>
 
     <!-- Sprint test: during the run -->
