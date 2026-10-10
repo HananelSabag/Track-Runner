@@ -10,6 +10,7 @@
 | [03 · סנכרון שעון ↔ טלפון](research/03-watch-phone-sync.md) | הפרוטוקול ומה קורה כשמשהו נשבר |
 | [04 · אפליקציות דומות](research/04-similar-apps.md) | מה קיים ואיפה FAST שונה |
 | [05 · כלים וסקילים](research/05-tooling-and-skills.md) | ערכות מוכנות, דוגמאות של גוגל, ומה צריך להתקין |
+| [06 · מעקב אימון כדורגל](research/06-football-tracking.md) | אזורי מהירות, ספרינטים, זיהוי מנוחה אוטומטי, ומה השעון באמת יכול |
 
 ## אפיון
 | | |
@@ -21,19 +22,20 @@
 | | |
 |---|---|
 | [ארכיטקטורה](architecture/architecture.md) | מודולים, מנוע המעקב, מודל הנתונים, בדיקות |
-| [Tech stack](architecture/tech-stack.md) | גרסאות, ושתי האופציות ל-toolchain |
+| [Tech stack](architecture/tech-stack.md) | גרסאות, מה הותקן, ומה נשאר לעדכן |
 | [יומן החלטות](architecture/decisions.md) | מה הוחלט ולמה, ומה מחכה להחלטה |
 
 ## ניהול
 | | |
 |---|---|
-| [Roadmap](roadmap.md) | אבני הדרך M0–M5 ושיטת העבודה |
+| [Roadmap](roadmap.md) | אבני הדרך M0–M6 ושיטת העבודה |
 
 ## מותג ועיצוב
 | | |
 |---|---|
 | [מותג](brand/brand.md) | שם, לוגו, צבעים, טיפוגרפיה, פרומפט למודל תמונה |
-| [Mockups](design/mockups.png) | הצעת המסכים ([מקור](design/mockups.html)) |
+| [Mockups](design/mockups.png) | הצעת המסכים לריצה ולכדורגל ([מקור](design/mockups.html)) |
+| צילומי מסך אמיתיים | [שעון](design/watch-device-check.png) · [טלפון](design/phone-device-check.png) |
 
 ## מוסכמות
 - מסמכים בעברית, מונחים טכניים באנגלית. קוד והערות בקוד באנגלית.

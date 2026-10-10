@@ -44,6 +44,7 @@ import com.hananel.fast.core.diagnostics.ReportSection
 import com.hananel.fast.core.diagnostics.RowStatus
 import com.hananel.fast.core.diagnostics.toLogText
 import com.hananel.fast.mobile.R
+import com.hananel.fast.mobile.theme.FastColors
 import com.hananel.fast.mobile.theme.FastTheme
 
 @Composable
@@ -157,8 +158,8 @@ private fun ReportRowItem(row: ReportRow) {
 
 @Composable
 private fun RowStatus.color(): Color = when (this) {
-    RowStatus.GOOD -> MaterialTheme.colorScheme.primary
-    RowStatus.WARN -> MaterialTheme.colorScheme.tertiary
+    RowStatus.GOOD -> FastColors.Mint
+    RowStatus.WARN -> MaterialTheme.colorScheme.error
     RowStatus.INFO -> MaterialTheme.colorScheme.onSurface
 }
 

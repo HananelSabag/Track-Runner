@@ -59,7 +59,9 @@
 6. **הרשאות:** `ACCESS_FINE_LOCATION`, ‏`ACTIVITY_RECOGNITION`, ‏`POST_NOTIFICATIONS`. דופק — רק אם נחליט להקליט אותו, ואז `BODY_SENSORS` עד API 35 ו-`READ_HEART_RATE` מ-API 36.
 7. **שתי האפליקציות חייבות אותו `applicationId` ואותה חתימה** — אחרת ה-Data Layer לא מחבר ביניהן.
 
-## סביבת הפיתוח המקומית (נבדקה)
+## סביבת הפיתוח המקומית
+
+> הטבלה מתארת את המצב **לפני** השדרוג. מה הותקן מאז ומה נשאר — ב-[tech-stack.md](../architecture/tech-stack.md).
 
 | רכיב | מצב |
 |---|---|

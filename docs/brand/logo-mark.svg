@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" rx="116" fill="#0B0D0F"/>
-  <path d="M124.18,239.69 L198.14,239.69 L192.48,267.96 L118.52,267.96 Z" fill="#C8FF2E" fill-rule="evenodd" fill-opacity="0.9"/>
-  <path d="M149.41,287.54 L188.57,287.54 L182.91,315.82 L143.76,315.82 Z" fill="#C8FF2E" fill-rule="evenodd" fill-opacity="0.6"/>
-  <path d="M122.44,335.4 L178.99,335.4 L173.34,363.68 L116.78,363.68 Z" fill="#C8FF2E" fill-rule="evenodd" fill-opacity="0.35"/>
-  <path d="M241.64,152.67 L398.26,152.67 L387.82,204.88 L283.41,204.88 L276.45,239.69 L354.76,239.69 L345.19,287.54 L266.88,287.54 L250.34,370.2 L198.14,370.2 Z" fill="#C8FF2E" fill-rule="evenodd"/>
+  <defs><linearGradient id="bg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="512" y2="512"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient></defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <path d="M124.18,239.69 L198.14,239.69 L192.48,267.96 L118.52,267.96 Z" fill="#FFFFFF" fill-rule="evenodd" fill-opacity="0.9"/>
+  <path d="M149.41,287.54 L188.57,287.54 L182.91,315.82 L143.76,315.82 Z" fill="#FFFFFF" fill-rule="evenodd" fill-opacity="0.6"/>
+  <path d="M122.44,335.4 L178.99,335.4 L173.34,363.68 L116.78,363.68 Z" fill="#FFFFFF" fill-rule="evenodd" fill-opacity="0.35"/>
+  <path d="M241.64,152.67 L398.26,152.67 L387.82,204.88 L283.41,204.88 L276.45,239.69 L354.76,239.69 L345.19,287.54 L266.88,287.54 L250.34,370.2 L198.14,370.2 Z" fill="#FFFFFF" fill-rule="evenodd"/>
 </svg>

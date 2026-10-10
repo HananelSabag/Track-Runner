@@ -29,4 +29,5 @@ include(":mobile")
 
 // Shared code. Pure-Kotlin modules stay free of Android so they run in plain JVM tests.
 include(":core:model")
+include(":core:tracking")
 include(":core:diagnostics")

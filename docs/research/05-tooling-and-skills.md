@@ -16,7 +16,7 @@
 | `build-system/agp/agp-9-upgrade` | אם נשדרג toolchain (ראה [tech-stack](../architecture/tech-stack.md)) |
 | `system/edge-to-edge`, ‏`performance/r8-analyzer`, ‏`play` | בהמשך |
 
-התקנה: דרך ה-Android CLI החדש (`android skills add wear-compose-m3 --project=.`) או כ-plugin של Claude Code (בריפו יש `.claude-plugin`). ה-Android CLI לא מותקן אצלך.
+התקנה: דרך ה-Android CLI החדש (`android skills add wear-compose-m3 --project=.`) או כ-plugin של Claude Code (בריפו יש `.claude-plugin`). ה-Android CLI **כבר מותקן אצלך** — הוא הגיע עם כלי ה-SDK בשדרוג — אז זו פקודה אחת.
 
 > קראתי את עיקרי הסקיל של Wear ויישמתי את הכללים הרלוונטיים בשלד. התקנה קבועה תבטיח שכל סשן עתידי יקבל את כולו, כולל קבצי הדוגמה, אוטומטית.
 
@@ -45,7 +45,9 @@
 - **הרצה חוזרת של הקלטות:** ברגע שיש לוגר (M1), כל ריצה אמיתית הופכת לקובץ בדיקה שמוזרם דרך המנוע. זה הכלי החשוב ביותר לדיוק, והוא לא דורש שום מכשיר.
 - **שעון אמיתי:** Wireless debugging (אפשרויות מפתח ← Wireless debugging ← צימוד עם קוד). אחרי צימוד אחד אני יכול להתקין builds ולקרוא לוגים ישירות.
 
-## מה צריך להתקין אצלך
+## מה היה צריך להתקין
+
+> עודכן: האמולטור כבר מותקן והאפליקציה הורצה עליו. נשאר רק עדכון Android Studio עצמו — [tech-stack.md](../architecture/tech-stack.md).
 
 | מה | למה | איך | גודל |
 |---|---|---|---|
