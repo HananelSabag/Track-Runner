@@ -4,7 +4,6 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.hananel.fast.core.diagnostics.DeviceProbe
 import com.hananel.fast.core.diagnostics.ReportSection
 import com.hananel.fast.core.diagnostics.toLogText
 import kotlinx.coroutines.Dispatchers
@@ -24,15 +23,7 @@ class DeviceCheckViewModel(application: Application) : AndroidViewModel(applicat
     init {
         viewModelScope.launch {
             val context = getApplication<Application>()
-            val report = withContext(Dispatchers.Default) {
-                listOf(
-                    DeviceProbe.device(context),
-                    DeviceProbe.gnss(context),
-                    WatchProbe.healthServices(context),
-                    DeviceProbe.motionSensors(context),
-                    WatchProbe.pairedDevices(context),
-                )
-            }
+            val report = withContext(Dispatchers.Default) { WatchProbe.report(context) }
             // A watch has no easy copy/paste, so the report is also readable with `adb logcat -s FastProbe`.
             Log.i(TAG, "\n" + report.toLogText())
             _sections.value = report

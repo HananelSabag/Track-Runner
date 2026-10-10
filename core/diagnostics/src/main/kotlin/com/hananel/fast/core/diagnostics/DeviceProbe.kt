@@ -76,6 +76,29 @@ object DeviceProbe {
         return ReportSection("Motion sensors", rows)
     }
 
+    /**
+     * Every sensor the device declares, including the vendor's own. This is where
+     * extras show up that no standard check asks about — skin temperature, blood
+     * oxygen, off-wrist detection — and that a later feature might use.
+     */
+    fun allSensors(context: Context): ReportSection {
+        val sensors = context.getSystemService(SensorManager::class.java)?.getSensorList(Sensor.TYPE_ALL).orEmpty()
+        val rows = sensors
+            .distinctBy { it.stringType }
+            .sortedBy { it.name }
+            .map { ReportRow(it.name, it.stringType.removePrefix("android.sensor.")) }
+        return ReportSection("All sensors (${rows.size})", rows)
+    }
+
+    /** Whether the accelerometer and gyroscope can both sample at [hz] or faster. */
+    fun motionSensorsReach(context: Context, hz: Int): Boolean {
+        val sm = context.getSystemService(SensorManager::class.java) ?: return false
+        return listOf(Sensor.TYPE_ACCELEROMETER, Sensor.TYPE_GYROSCOPE).all { type ->
+            val minDelayMicros = sm.getDefaultSensor(type)?.minDelay ?: return false
+            minDelayMicros in 1..(1_000_000 / hz)
+        }
+    }
+
     private fun signalRows(caps: GnssCapabilities): List<ReportRow> {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return emptyList()
 

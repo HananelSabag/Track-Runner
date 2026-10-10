@@ -26,7 +26,7 @@ import com.hananel.fast.wear.theme.FastTheme
 import com.hananel.fast.wear.ui.withSideMargins
 
 @Composable
-fun HomeScreen(onSprintTest: () -> Unit, onDeviceCheck: () -> Unit) {
+fun HomeScreen(onSprintTest: () -> Unit, onSprintHistory: () -> Unit, onDeviceCheck: () -> Unit) {
     val listState = rememberTransformingLazyColumnState()
     val spec = rememberTransformationSpec()
 
@@ -59,6 +59,14 @@ fun HomeScreen(onSprintTest: () -> Unit, onDeviceCheck: () -> Unit) {
             }
             item {
                 FilledTonalButton(
+                    onClick = onSprintHistory,
+                    label = { Text(stringResource(R.string.home_sprint_history)) },
+                    modifier = Modifier.fillMaxWidth().transformedHeight(this, spec),
+                    transformation = SurfaceTransformation(spec),
+                )
+            }
+            item {
+                FilledTonalButton(
                     onClick = onDeviceCheck,
                     label = { Text(stringResource(R.string.home_device_check)) },
                     modifier = Modifier.fillMaxWidth().transformedHeight(this, spec),
@@ -72,5 +80,5 @@ fun HomeScreen(onSprintTest: () -> Unit, onDeviceCheck: () -> Unit) {
 @WearPreviewDevices
 @Composable
 private fun HomeScreenPreview() {
-    FastTheme { HomeScreen(onSprintTest = {}, onDeviceCheck = {}) }
+    FastTheme { HomeScreen(onSprintTest = {}, onSprintHistory = {}, onDeviceCheck = {}) }
 }

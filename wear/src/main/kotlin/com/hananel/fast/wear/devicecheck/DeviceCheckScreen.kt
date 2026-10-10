@@ -79,6 +79,7 @@ fun DeviceCheckScreen(sections: List<ReportSection>?) {
                 items(section.rows, key = { "${section.title}/${it.label}" }) { row ->
                     ReportRowItem(
                         row = row,
+                        technical = section.technical,
                         // Same shrink-and-fade the Material components get near the edge of the
                         // round screen; without it a row is simply cut off by the curve.
                         modifier = Modifier
@@ -95,10 +96,12 @@ fun DeviceCheckScreen(sections: List<ReportSection>?) {
 }
 
 @Composable
-private fun ReportRowItem(row: ReportRow, modifier: Modifier = Modifier) {
-    // The report is English technical data. Laying it out RTL in a Hebrew UI
-    // reorders values such as "16 (API 36)", so each row stays LTR.
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+private fun ReportRowItem(row: ReportRow, technical: Boolean, modifier: Modifier = Modifier) {
+    // Technical rows are English data. Laying them out RTL in a Hebrew UI reorders
+    // values such as "16 (API 36)", so they stay LTR. Rows written for the user
+    // follow the language they are written in.
+    val direction = if (technical) LayoutDirection.Ltr else LocalLayoutDirection.current
+    CompositionLocalProvider(LocalLayoutDirection provides direction) {
         Column(
             modifier = modifier
                 .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(18.dp))
@@ -113,6 +116,9 @@ private fun ReportRowItem(row: ReportRow, modifier: Modifier = Modifier) {
                 text = row.value,
                 style = MaterialTheme.typography.bodyMedium,
                 color = row.status.color(),
+                // Full width, not wrap-content: text mixing Hebrew and Latin can measure a
+                // hair narrower than it lays out, and then breaks onto a second line.
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }

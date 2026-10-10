@@ -54,6 +54,36 @@
     <string name="rejected_too_fast_title">That was not running</string>
     <string name="rejected_too_fast_text">The speed is beyond what a person can run.</string>
 
+    <!-- Saved sprint tests -->
+    <string name="home_sprint_history">Saved tests</string>
+    <string name="history_empty">No tests yet. Every test is saved automatically.</string>
+    <string name="history_not_measured">Not measured</string>
+
+    <!-- Device check: the plain-language verdict -->
+    <string name="compat_title">Compatibility</string>
+    <string name="compat_verdict">This watch</string>
+    <string name="compat_verdict_yes">Works with FAST</string>
+    <string name="compat_verdict_no">No GPS. FAST cannot measure speed</string>
+    <string name="compat_gps">Built-in GPS</string>
+    <string name="compat_location">Location services</string>
+    <string name="compat_permission">Location permission</string>
+    <string name="compat_speed_data">Speed and distance data</string>
+    <string name="compat_heart_rate">Heart-rate sensor</string>
+    <string name="compat_motion">Motion sensors</string>
+    <string name="compat_phone">Phone</string>
+    <string name="compat_present">Present</string>
+    <string name="compat_absent">Missing</string>
+    <string name="compat_on">On</string>
+    <string name="compat_location_off">Off. Turn on in Settings</string>
+    <string name="compat_granted">Granted</string>
+    <string name="compat_permission_pending">Asked on the first test</string>
+    <string name="compat_available">Available</string>
+    <string name="compat_unavailable">Not available</string>
+    <string name="compat_motion_fast">100 readings a second</string>
+    <string name="compat_motion_slow">Slower than 100 a second</string>
+    <string name="compat_phone_connected">%1$s connected</string>
+    <string name="compat_phone_missing">Not connected (not needed)</string>
+
     <!-- Device check -->
     <string name="device_check_title">Device check</string>
     <string name="device_check_loading">Reading sensors…</string>

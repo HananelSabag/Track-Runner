@@ -1,7 +1,15 @@
 package com.hananel.fast.core.diagnostics
 
 /** One titled block of the device report, e.g. "GNSS". */
-data class ReportSection(val title: String, val rows: List<ReportRow>)
+data class ReportSection(
+    val title: String,
+    val rows: List<ReportRow>,
+    /**
+     * True for raw technical data, which is always English and laid out left to
+     * right. False for text written for the user in their own language.
+     */
+    val technical: Boolean = true,
+)
 
 data class ReportRow(
     val label: String,

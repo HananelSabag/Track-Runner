@@ -52,6 +52,36 @@
     <string name="rejected_too_fast_title">זו לא הייתה ריצה</string>
     <string name="rejected_too_fast_text">המהירות גבוהה ממה שאדם יכול לרוץ.</string>
 
+    <!-- Saved sprint tests -->
+    <string name="home_sprint_history">מבחנים שמורים</string>
+    <string name="history_empty">עוד אין מבחנים. כל מבחן נשמר אוטומטית.</string>
+    <string name="history_not_measured">לא נמדד</string>
+
+    <!-- Device check: the plain-language verdict -->
+    <string name="compat_title">תאימות</string>
+    <string name="compat_verdict">השעון הזה</string>
+    <string name="compat_verdict_yes">מתאים ל-FAST</string>
+    <string name="compat_verdict_no">אין GPS. ‏FAST לא יכול למדוד מהירות</string>
+    <string name="compat_gps">GPS מובנה</string>
+    <string name="compat_location">שירותי מיקום</string>
+    <string name="compat_permission">הרשאת מיקום</string>
+    <string name="compat_speed_data">נתוני מהירות ומרחק</string>
+    <string name="compat_heart_rate">חיישן דופק</string>
+    <string name="compat_motion">חיישני תנועה</string>
+    <string name="compat_phone">טלפון</string>
+    <string name="compat_present">קיים</string>
+    <string name="compat_absent">חסר</string>
+    <string name="compat_on">פועלים</string>
+    <string name="compat_location_off">כבויים. להפעיל בהגדרות</string>
+    <string name="compat_granted">ניתנה</string>
+    <string name="compat_permission_pending">תתבקש במבחן הראשון</string>
+    <string name="compat_available">זמינים</string>
+    <string name="compat_unavailable">לא זמינים</string>
+    <string name="compat_motion_fast">100 דגימות בשנייה</string>
+    <string name="compat_motion_slow">פחות מ-100 בשנייה</string>
+    <string name="compat_phone_connected">%1$s מחובר</string>
+    <string name="compat_phone_missing">לא מחובר (לא נדרש)</string>
+
     <!-- Device check -->
     <string name="device_check_title">בדיקת מכשיר</string>
     <string name="device_check_loading">קורא חיישנים…</string>

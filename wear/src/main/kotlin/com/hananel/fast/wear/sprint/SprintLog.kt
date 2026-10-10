@@ -7,6 +7,9 @@ import java.io.File
 import java.io.IOException
 import java.util.Locale
 
+/** One line of the saved history. A test that produced no measurement has no speed and no confidence. */
+data class SavedSprint(val startedUtcMs: Long, val topSpeedKmh: Double?, val confidence: Int?)
+
 /**
  * Keeps every test's raw fixes and its verdict on the watch.
  *
@@ -33,6 +36,29 @@ class SprintLog(context: Context) {
             Log.w(TAG, "Could not save sprint log", e)
         }
         Log.i(TAG, outcome.toLogLine(fixes.size))
+    }
+
+    /** Every saved test, newest first. A row that cannot be read is skipped rather than failing the list. */
+    fun readResults(): List<SavedSprint> {
+        val file = File(directory, "results.csv")
+        if (!file.exists()) return emptyList()
+        return try {
+            file.readLines().drop(1).mapNotNull(::parseRow).sortedByDescending { it.startedUtcMs }
+        } catch (e: IOException) {
+            Log.w(TAG, "Could not read sprint log", e)
+            emptyList()
+        }
+    }
+
+    private fun parseRow(line: String): SavedSprint? {
+        val cells = line.split(",")
+        val startedUtcMs = cells.getOrNull(0)?.toLongOrNull() ?: return null
+        val measured = cells.getOrNull(2) == "measured"
+        return SavedSprint(
+            startedUtcMs = startedUtcMs,
+            topSpeedKmh = if (measured) cells.getOrNull(3)?.toDoubleOrNull() else null,
+            confidence = if (measured) cells.getOrNull(6)?.toIntOrNull() else null,
+        )
     }
 
     private fun List<GnssFix>.toCsv(): String = buildString {

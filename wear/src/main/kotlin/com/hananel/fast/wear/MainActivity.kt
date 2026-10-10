@@ -10,6 +10,7 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.hananel.fast.wear.devicecheck.DeviceCheckRoute
 import com.hananel.fast.wear.home.HomeScreen
+import com.hananel.fast.wear.sprint.SprintHistoryRoute
 import com.hananel.fast.wear.sprint.SprintTestRoute
 import com.hananel.fast.wear.theme.FastTheme
 
@@ -35,10 +36,12 @@ private fun FastWearApp() {
             composable(Route.HOME) {
                 HomeScreen(
                     onSprintTest = { navController.navigate(Route.SPRINT_TEST) },
+                    onSprintHistory = { navController.navigate(Route.SPRINT_HISTORY) },
                     onDeviceCheck = { navController.navigate(Route.DEVICE_CHECK) },
                 )
             }
             composable(Route.SPRINT_TEST) { SprintTestRoute() }
+            composable(Route.SPRINT_HISTORY) { SprintHistoryRoute() }
             composable(Route.DEVICE_CHECK) { DeviceCheckRoute() }
         }
     }
@@ -47,5 +50,6 @@ private fun FastWearApp() {
 private object Route {
     const val HOME = "home"
     const val SPRINT_TEST = "sprint-test"
+    const val SPRINT_HISTORY = "sprint-history"
     const val DEVICE_CHECK = "device-check"
 }
