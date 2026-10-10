@@ -38,6 +38,7 @@ android {
 
 dependencies {
     implementation(project(":core:model"))
+    implementation(project(":core:tracking"))
     implementation(project(":core:diagnostics"))
 
     implementation(libs.androidx.core.ktx)
@@ -47,6 +48,7 @@ dependencies {
 
     implementation(libs.androidx.wear.compose.material3)
     implementation(libs.androidx.wear.compose.foundation)
+    implementation(libs.androidx.wear.compose.navigation)
     implementation(libs.androidx.wear.tooling.preview)
     // Holds the @WearPreviewDevices annotations used in main sources, so it cannot be debug-only.
     implementation(libs.androidx.wear.compose.ui.tooling)

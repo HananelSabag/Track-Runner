@@ -9,7 +9,7 @@ A personal speed tracker for Wear OS, with a companion Android app. Two modes:
 
 Built for the OnePlus Watch 2 (and newer Wear OS watches) and the OnePlus 13. Local-only: no backend, no account.
 
-> **Status: M0 complete.** The apps contain one real screen, a device capability check. The football and run analysis lives in `core/tracking` and is tested, but is not yet wired to sensors. See the [roadmap](docs/roadmap.md).
+> **Status: first feature working.** The watch app has a **sprint test** — one sprint, a top speed, and a confidence score — running on the real watch's GPS. The run and football modes are designed and their analysis is tested in `core/tracking`, but they are not yet wired to sensors. See the [roadmap](docs/roadmap.md).
 
 ## Documentation
 
@@ -22,7 +22,7 @@ All project documents are in Hebrew and live in [`docs/`](docs/README.md). Start
 | `wear/` | The watch app (Compose for Wear OS, Material 3) |
 | `mobile/` | The phone app (Jetpack Compose, Material 3) |
 | `core/model/` | Domain types. Pure Kotlin |
-| `core/tracking/` | Session analysis: speed zones, work/rest detection, sprints, heart rate. Pure Kotlin |
+| `core/tracking/` | Sprint-test scoring and session analysis: speed zones, work/rest detection, sprints, heart rate. Pure Kotlin |
 | `core/diagnostics/` | Reads what the device hardware can measure |
 | `tools/brand/` | Generates the logo SVGs and launcher icons from one script |
 

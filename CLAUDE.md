@@ -8,6 +8,7 @@ Speed tracker for Wear OS (OnePlus Watch 2 and newer) with a companion Android p
 - `docs/architecture/decisions.md` — what is decided, and what is still waiting on Hananel. Do not settle an open question (Q*) on your own; ask him.
 - `docs/roadmap.md` — the current milestone.
 - `docs/research/06-football-tracking.md` — the definitions behind the football mode.
+- `docs/spec/sprint-test.md` — the sprint test and how its confidence score is built.
 
 ## Build, test, run
 
@@ -23,6 +24,8 @@ export JAVA_HOME="/c/Program Files/Android/Android Studio1/jbr"
 - Emulators: `Wear_OS_5_Large_Round` (API 34) for the watch, `Pixel_9_Pro_Fold` (API 36) for the phone. Start headless with `emulator -avd <name> -no-window -no-audio`. Run one at a time, or pass `-s <serial>` to adb.
 - The phone AVD has two displays, so screenshots need `adb exec-out screencap -d <displayId> -p` (list ids with `adb shell dumpsys SurfaceFlinger --display-id`). Installs can fail on low emulator storage; retry once.
 - The real watch (OnePlus Watch 2, `OPWWE231`, Wear OS 5 / API 34) is paired with this PC for wireless debugging. Find its current address with `adb mdns services` (the `_adb-tls-connect` line; the port changes whenever wireless debugging restarts), then `adb connect <ip:port>`. While it sits on the charger its charging screen covers every app, so screenshots show only that.
+- Sprint tests are logged on the watch in the app's private storage. Pull them from a debug build with `adb -s <watch> exec-out run-as com.hananel.fast cat files/sprints/results.csv` (one row per test) and `.../files/sprints/sprint-<utc>.csv` (raw fixes). The raw files contain positions: analyse them locally, never paste coordinates into chat, docs or commits.
+- Simulating a sprint on the Wear emulator: `adb -s emulator-5554 emu geo fix <lon> <lat> <alt> <sats> <knots>` once a second; `pm grant com.hananel.fast android.permission.ACCESS_FINE_LOCATION` skips the dialog.
 - SDK packages: use the Android CLI, `"$LOCALAPPDATA/Android/Sdk/cmdline-tools/latest/bin/android.exe" sdk install <package>`, with `/`-separated package names (`platforms/android-37.0`). `sdkmanager.bat` mangles `;` when called from Git Bash.
 
 ## Rules that are easy to break
@@ -35,6 +38,8 @@ export JAVA_HOME="/c/Program Files/Android/Android Studio1/jbr"
 - **Rest is decided from movement, never from heart rate.** Heart rate stays high for minutes after the player stops.
 - **A run and a football session differ only by their `ActivityProfile`.** Add a mode by adding a profile, not a code path.
 - **Do not report a metric the hardware cannot measure.** Acceleration counts from 1 Hz GPS are deliberately absent.
+- **A confidence score must be hard to earn.** A check that cannot be made caps the score; it never counts as passed. Any change to the sprint scoring needs a test for the bad case it guards against.
+- **Read the watch's own GNSS by name (`GPS_PROVIDER`).** The fused provider on a watch can silently return the phone's location.
 - **A session is synced only after the phone acknowledges it is stored.** Never delete an unacknowledged session.
 - **Numbers, units and charts stay LTR in the Hebrew UI.** English technical data (the device-check report) is laid out LTR too.
 - Launcher icons and logo SVGs are generated: edit `tools/brand/generate.mjs` and run it, do not edit the outputs.

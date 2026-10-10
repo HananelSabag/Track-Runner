@@ -1,6 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">FAST</string>
+
+    <!-- Home -->
+    <string name="home_sprint_title">Sprint test</string>
+    <string name="home_sprint_subtitle">How fast are you?</string>
+    <string name="home_device_check">Device check</string>
+
+    <!-- Units -->
+    <string name="unit_kmh">km/h</string>
+    <string name="value_seconds">%1$s s</string>
+    <string name="value_meters">%1$d m</string>
+    <string name="value_plus_minus_kmh">±%1$s km/h</string>
+
+    <!-- Sprint test: before the run -->
+    <string name="sprint_permission_text">FAST needs your location to measure speed.</string>
+    <string name="sprint_permission_button">Allow location</string>
+    <string name="sprint_gps_searching">Searching for GPS…</string>
+    <string name="sprint_gps_weak">Weak signal. Move into the open.</string>
+    <string name="sprint_gps_ready">GPS ready</string>
+    <string name="sprint_instruction_ground">Flat, straight, open ground</string>
+    <string name="sprint_instruction_one">One long sprint</string>
+    <string name="sprint_instruction_hold">Hold top speed for 3 seconds</string>
+    <string name="sprint_start">Start</string>
+
+    <!-- Sprint test: during the run -->
+    <string name="sprint_run">Run!</string>
+    <string name="sprint_peak">Peak %1$s</string>
+    <string name="sprint_stop">Stop</string>
+
+    <!-- Sprint test: result -->
+    <string name="result_top_speed">Top speed</string>
+    <string name="result_confidence">Confidence %1$d%%</string>
+    <string name="level_high">High</string>
+    <string name="level_medium">Medium</string>
+    <string name="level_low">Low</string>
+    <string name="result_low_hint">Worth another try</string>
+    <string name="result_fastest_reading">Fastest reading</string>
+    <string name="result_time_at_speed">Time at speed</string>
+    <string name="result_distance_at_speed">Distance at speed</string>
+    <string name="result_retry">Try again</string>
+
+    <string name="issue_few_samples">Too few GPS readings at speed</string>
+    <string name="issue_weak_signal">The GPS signal was weak</string>
+    <string name="issue_not_held">Top speed was not held long enough</string>
+    <string name="issue_spike">One reading jumped, likely a glitch</string>
+    <string name="issue_distance_mismatch">Distance covered does not match the speed</string>
+
+    <string name="rejected_no_sprint_title">No sprint detected</string>
+    <string name="rejected_no_sprint_text">You did not reach sprinting speed.</string>
+    <string name="rejected_no_data_title">Not enough GPS data</string>
+    <string name="rejected_no_data_text">The signal dropped during the run.</string>
+    <string name="rejected_too_fast_title">That was not running</string>
+    <string name="rejected_too_fast_text">The speed is beyond what a person can run.</string>
+
+    <!-- Device check -->
     <string name="device_check_title">Device check</string>
     <string name="device_check_loading">Reading sensors…</string>
 </resources>

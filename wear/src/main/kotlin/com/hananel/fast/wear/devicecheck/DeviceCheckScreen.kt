@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -42,6 +40,7 @@ import com.hananel.fast.core.diagnostics.RowStatus
 import com.hananel.fast.wear.R
 import com.hananel.fast.wear.theme.FastColors
 import com.hananel.fast.wear.theme.FastTheme
+import com.hananel.fast.wear.ui.withSideMargins
 
 @Composable
 fun DeviceCheckRoute(viewModel: DeviceCheckViewModel = viewModel()) {
@@ -94,23 +93,6 @@ fun DeviceCheckScreen(sections: List<ReportSection>?) {
         }
     }
 }
-
-/**
- * Adds the side margins a round screen needs: 5.2% of the width, the Wear OS
- * layout guideline, so cards are not cut off by the curve of the display.
- */
-@Composable
-private fun PaddingValues.withSideMargins(): PaddingValues {
-    val side = (LocalConfiguration.current.screenWidthDp * SIDE_MARGIN_FRACTION).dp
-    return PaddingValues(
-        start = side,
-        end = side,
-        top = calculateTopPadding(),
-        bottom = calculateBottomPadding(),
-    )
-}
-
-private const val SIDE_MARGIN_FRACTION = 0.052f
 
 @Composable
 private fun ReportRowItem(row: ReportRow, modifier: Modifier = Modifier) {

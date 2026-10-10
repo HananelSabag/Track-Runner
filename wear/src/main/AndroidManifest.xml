@@ -3,6 +3,12 @@
 
     <uses-feature android:name="android.hardware.type.watch" />
 
+    <!-- Speed comes from the watch's own GNSS receiver. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Countdown and result are signalled on the wrist, so the runner need not look. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <!-- Needed to bind to Health Services on the watch. -->
     <queries>
         <package android:name="com.google.android.wearable.healthservices" />

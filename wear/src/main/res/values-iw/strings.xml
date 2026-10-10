@@ -1,5 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Home -->
+    <string name="home_sprint_title">מבחן ספרינט</string>
+    <string name="home_sprint_subtitle">כמה אתה מהיר?</string>
+    <string name="home_device_check">בדיקת מכשיר</string>
+
+    <!-- Units -->
+    <string name="unit_kmh">קמ״ש</string>
+    <string name="value_seconds">%1$s שנ׳</string>
+    <string name="value_meters">%1$d מ׳</string>
+    <string name="value_plus_minus_kmh">±%1$s קמ״ש</string>
+
+    <!-- Sprint test: before the run -->
+    <string name="sprint_permission_text">FAST צריך גישה למיקום כדי למדוד מהירות.</string>
+    <string name="sprint_permission_button">אפשר מיקום</string>
+    <string name="sprint_gps_searching">מחפש GPS…</string>
+    <string name="sprint_gps_weak">אות חלש. צא לשטח פתוח.</string>
+    <string name="sprint_gps_ready">GPS מוכן</string>
+    <string name="sprint_instruction_ground">משטח ישר, מישורי ופתוח</string>
+    <string name="sprint_instruction_one">ספרינט אחד ארוך</string>
+    <string name="sprint_instruction_hold">החזק מהירות שיא 3 שניות</string>
+    <string name="sprint_start">התחל</string>
+
+    <!-- Sprint test: during the run -->
+    <string name="sprint_run">רוץ!</string>
+    <string name="sprint_peak">שיא %1$s</string>
+    <string name="sprint_stop">עצור</string>
+
+    <!-- Sprint test: result -->
+    <string name="result_top_speed">מהירות שיא</string>
+    <string name="result_confidence">אמינות %1$d%%</string>
+    <string name="level_high">גבוהה</string>
+    <string name="level_medium">בינונית</string>
+    <string name="level_low">נמוכה</string>
+    <string name="result_low_hint">כדאי לנסות שוב</string>
+    <string name="result_fastest_reading">דגימת שיא</string>
+    <string name="result_time_at_speed">זמן במהירות</string>
+    <string name="result_distance_at_speed">מרחק במהירות</string>
+    <string name="result_retry">נסה שוב</string>
+
+    <string name="issue_few_samples">מעט מדי דגימות GPS במהירות</string>
+    <string name="issue_weak_signal">אות ה-GPS היה חלש</string>
+    <string name="issue_not_held">מהירות השיא לא הוחזקה מספיק זמן</string>
+    <string name="issue_spike">דגימה אחת קפצה, כנראה רעש</string>
+    <string name="issue_distance_mismatch">המרחק שנמדד לא תואם למהירות</string>
+
+    <string name="rejected_no_sprint_title">לא זוהה ספרינט</string>
+    <string name="rejected_no_sprint_text">לא הגעת למהירות ספרינט.</string>
+    <string name="rejected_no_data_title">אין מספיק נתוני GPS</string>
+    <string name="rejected_no_data_text">האות נפל במהלך הריצה.</string>
+    <string name="rejected_too_fast_title">זו לא הייתה ריצה</string>
+    <string name="rejected_too_fast_text">המהירות גבוהה ממה שאדם יכול לרוץ.</string>
+
+    <!-- Device check -->
     <string name="device_check_title">בדיקת מכשיר</string>
     <string name="device_check_loading">קורא חיישנים…</string>
 </resources>
