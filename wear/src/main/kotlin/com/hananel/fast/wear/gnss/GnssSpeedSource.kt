@@ -1,4 +1,4 @@
-package com.hananel.fast.wear.sprint
+package com.hananel.fast.wear.gnss
 
 import android.annotation.SuppressLint
 import android.content.Context

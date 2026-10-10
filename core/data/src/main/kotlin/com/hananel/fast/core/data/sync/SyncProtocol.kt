@@ -13,6 +13,13 @@ object SyncProtocol {
     const val SESSION_PREFIX = "/fast/session/"
     const val ACK_PREFIX = "/fast/ack/"
 
+    /**
+     * Written by a phone that has lost its sessions — a reinstall, cleared data —
+     * to ask the watch for everything again. The watch then forgets which sessions
+     * were confirmed and offers them all; the phone keeps one copy of each.
+     */
+    const val RESYNC_PATH = "/fast/resync"
+
     /** The packed session, as an asset. */
     const val KEY_PAYLOAD = "payload"
 

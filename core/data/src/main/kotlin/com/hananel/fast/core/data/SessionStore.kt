@@ -125,6 +125,11 @@ class SessionStore(private val directory: File) {
 
     fun unsyncedIds(): List<String> = ids().filterNot(::isSynced)
 
+    /** Treats every session as unconfirmed again, for when the phone has lost its copies. */
+    fun forgetSynced() {
+        directory.listFiles().orEmpty().filter { it.name.endsWith(SYNCED_SUFFIX) }.forEach { it.delete() }
+    }
+
     // ---- Summaries ----
 
     /** Summaries of every session, newest first. Cached ones are reused; the rest are worked out and cached. */
@@ -204,12 +209,13 @@ class SessionStore(private val directory: File) {
     private fun sessionFile(id: String) = File(directory, id + SESSION_SUFFIX)
     private fun partFile(id: String) = File(directory, id + PART_SUFFIX)
     private fun summaryFile(id: String) = File(directory, "$id.summary")
-    private fun syncedFile(id: String) = File(directory, "$id.synced")
+    private fun syncedFile(id: String) = File(directory, id + SYNCED_SUFFIX)
 
     private companion object {
         const val SESSION_SUFFIX = ".fast"
         const val PART_SUFFIX = ".fast.part"
         const val IMPORT_SUFFIX = ".incoming"
+        const val SYNCED_SUFFIX = ".synced"
         val SAFE_ID = Regex("[A-Za-z0-9-]{1,64}")
     }
 }

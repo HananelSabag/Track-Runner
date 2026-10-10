@@ -37,6 +37,8 @@ class SessionInsight(
     /** Only for a sprint test. */
     val sprintOutcome: SprintTestOutcome?,
     val maxBpmUsed: Int?,
+    /** The speed bands and rest rules the session was read with, for drawing it in the same colours. */
+    val profile: ActivityProfile,
 )
 
 /** The one-line view of a session, for lists and personal bests. Always recomputable. */
@@ -81,6 +83,7 @@ object SessionInsights {
     fun of(session: RecordedSession, context: AnalysisContext = AnalysisContext()): SessionInsight {
         val points = TrackAssembler.assemble(session)
         val maxBpm = session.header.maxBpm ?: context.fallbackMaxBpm
+        val profile = profileFor(session.header.kind, context.topSpeed)
 
         if (session.header.kind == ActivityKind.SPRINT_TEST) {
             // The scorer reads the receiver's own readings, not the cleaned track: judging
@@ -88,15 +91,11 @@ object SessionInsights {
             val samples = session.fixes.filter { it.hasSpeed }.map {
                 SpeedSample(it.timeMs, it.speed, it.speedAccuracy, it.position, it.horizontalAccuracyMeters)
             }
-            return SessionInsight(session, points, null, SprintTestAnalyzer.analyze(samples), maxBpm)
+            return SessionInsight(session, points, null, SprintTestAnalyzer.analyze(samples), maxBpm, profile)
         }
 
-        val analysis = SessionAnalyzer.analyze(
-            points = points,
-            profile = profileFor(session.header.kind, context.topSpeed),
-            heartRateZones = maxBpm?.let(::HeartRateZones),
-        )
-        return SessionInsight(session, points, analysis, null, maxBpm)
+        val analysis = SessionAnalyzer.analyze(points, profile, heartRateZones = maxBpm?.let(::HeartRateZones))
+        return SessionInsight(session, points, analysis, null, maxBpm, profile)
     }
 
     fun summarize(insight: SessionInsight): SessionSummary {
@@ -133,11 +132,14 @@ object SessionInsights {
      *
      * Demo sessions count only while there is nothing real to go on.
      */
-    fun personalTopSpeed(summaries: List<SessionSummary>): Speed? {
+    fun personalTopSpeed(summaries: List<SessionSummary>): Speed? = personalBest(summaries)?.peak3s
+
+    /** The session that set [personalTopSpeed], or null when there is no top speed yet. */
+    fun personalBest(summaries: List<SessionSummary>): SessionSummary? {
         val real = summaries.filterNot { it.demo }
         return real.ifEmpty { summaries }
             .filter { it.kind != ActivityKind.SPRINT_TEST || (it.confidence ?: 0) >= SprintTestOutcome.MEDIUM_CONFIDENCE }
-            .maxOfOrNull { it.peak3s }
-            ?.takeIf { it >= MIN_PERSONAL_TOP_SPEED }
+            .maxByOrNull { it.peak3s }
+            ?.takeIf { it.peak3s >= MIN_PERSONAL_TOP_SPEED }
     }
 }

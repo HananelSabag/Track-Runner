@@ -4,36 +4,21 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -63,6 +48,9 @@ import com.hananel.fast.core.tracking.sprint.SprintTestOutcome
 import com.hananel.fast.wear.R
 import com.hananel.fast.wear.theme.FastColors
 import com.hananel.fast.wear.theme.FastTheme
+import com.hananel.fast.wear.ui.DetailRow
+import com.hananel.fast.wear.ui.GnssStatus
+import com.hananel.fast.wear.ui.HeroNumber
 import com.hananel.fast.wear.ui.KeepScreenOn
 import com.hananel.fast.wear.ui.edgeMorphing
 import com.hananel.fast.wear.ui.formatKmh
@@ -141,26 +129,6 @@ private fun ReadyScreen(acquisition: GnssAcquisition, searchingForMs: Long, onSt
     val listState = rememberTransformingLazyColumnState()
     val spec = rememberTransformationSpec()
     val ready = acquisition.stage == AcquisitionStage.READY
-    val satellites = acquisition.satellites
-
-    val status = when (acquisition.stage) {
-        AcquisitionStage.NO_SATELLITES -> stringResource(R.string.sprint_gps_searching)
-        AcquisitionStage.SATELLITES_FOUND -> stringResource(R.string.sprint_gps_satellites_found)
-        AcquisitionStage.LOCKING -> stringResource(R.string.sprint_gps_locking)
-        AcquisitionStage.FIX_WITHOUT_SPEED -> stringResource(R.string.sprint_gps_no_speed)
-        AcquisitionStage.WEAK_FIX -> stringResource(R.string.sprint_gps_weak)
-        AcquisitionStage.READY -> stringResource(R.string.sprint_gps_ready)
-    }
-    val statusColor = when (acquisition.stage) {
-        AcquisitionStage.READY -> FastColors.Mint
-        AcquisitionStage.WEAK_FIX, AcquisitionStage.FIX_WITHOUT_SPEED -> MaterialTheme.colorScheme.error
-        else -> MaterialTheme.colorScheme.primary
-    }
-    // What is known so far, most useful first: the fix's accuracy once there is one, the satellites until then.
-    val detail = listOfNotNull(
-        acquisition.positionAccuracyMeters?.let { stringResource(R.string.sprint_gps_accuracy, it.toInt()) },
-        satellites?.takeIf { it.visible > 0 }?.let { stringResource(R.string.sprint_gps_satellites, it.visible, it.strong) },
-    ).joinToString(" · ")
     val hint = when {
         acquisition.stage == AcquisitionStage.WEAK_FIX -> stringResource(R.string.sprint_hint_weak)
         acquisition.stage == AcquisitionStage.FIX_WITHOUT_SPEED -> stringResource(R.string.sprint_hint_no_speed)
@@ -177,33 +145,7 @@ private fun ReadyScreen(acquisition: GnssAcquisition, searchingForMs: Long, onSt
                 ) { Text(stringResource(R.string.home_sprint_title)) }
             }
             item {
-                Column(modifier = edgeMorphing(spec), horizontalAlignment = Alignment.CenterHorizontally) {
-                    SignalBars(bars = acquisition.bars, color = statusColor, searching = !acquisition.canStart)
-                    Text(
-                        text = status,
-                        color = statusColor,
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-                    )
-                    if (detail.isNotEmpty()) {
-                        Text(
-                            text = detail,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                    if (!acquisition.canStart) {
-                        // A running clock: proof the search is alive even when nothing else changes.
-                        Text(
-                            text = formatElapsed(searchingForMs),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
+                GnssStatus(acquisition, searchingForMs, modifier = edgeMorphing(spec))
             }
             if (hint != null) {
                 item(key = "hint") {
@@ -254,47 +196,6 @@ private fun ReadyScreen(acquisition: GnssAcquisition, searchingForMs: Long, onSt
         }
     }
 }
-
-/**
- * Four bars, like a phone's signal meter. While the receiver is still working
- * towards a usable fix, the next bar pulses, so the screen is visibly alive
- * rather than a label that never changes.
- */
-@Composable
-private fun SignalBars(bars: Int, color: Color, searching: Boolean) {
-    val pulse = rememberInfiniteTransition(label = "signal")
-    val pulseAlpha by pulse.animateFloat(
-        initialValue = 0.25f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(durationMillis = 700), RepeatMode.Reverse),
-        label = "next bar",
-    )
-    val track = MaterialTheme.colorScheme.surfaceContainerHigh
-    // A signal meter reads left to right in every language.
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.Bottom) {
-            for (index in 0 until BAR_COUNT) {
-                val barColor = when {
-                    index < bars -> color
-                    searching && index == bars -> color.copy(alpha = pulseAlpha)
-                    else -> track
-                }
-                Box(
-                    Modifier
-                        .size(width = 9.dp, height = (10 + index * 7).dp)
-                        .background(barColor, RoundedCornerShape(3.dp)),
-                )
-            }
-        }
-    }
-}
-
-private fun formatElapsed(ms: Long): String {
-    val seconds = ms / 1000
-    return String.format(Locale.US, "%d:%02d", seconds / 60, seconds % 60)
-}
-
-private const val BAR_COUNT = 4
 
 /** After this long without a fix, say why it is slow instead of leaving the runner to wonder. */
 private const val SLOW_SEARCH_MS = 20_000L
@@ -482,46 +383,6 @@ private fun RetryButton(onRetry: () -> Unit, prominent: Boolean, modifier: Modif
         Button(onClick = onRetry, label = { label() }, modifier = modifier, transformation = transformation)
     } else {
         FilledTonalButton(onClick = onRetry, label = { label() }, modifier = modifier, transformation = transformation)
-    }
-}
-
-/** The one number the screen exists to show: heavy, slanted, and wide enough to read at a glance. */
-@Composable
-private fun HeroNumber(text: String, fontSize: Int, gradient: Boolean = false) {
-    val style = MaterialTheme.typography.displayLarge.copy(
-        fontSize = fontSize.sp,
-        lineHeight = (fontSize * 1.05f).sp,
-        fontWeight = FontWeight.Bold,
-        fontStyle = FontStyle.Italic,
-    )
-    Text(
-        text = text,
-        style = if (gradient) {
-            style.copy(brush = Brush.horizontalGradient(listOf(FastColors.Cyan, FastColors.Electric, FastColors.Violet)))
-        } else {
-            style
-        },
-        color = if (gradient) Color.Unspecified else MaterialTheme.colorScheme.onSurface,
-    )
-}
-
-@Composable
-private fun DetailRow(label: String, value: String, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(18.dp))
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // The label gives way, never the value: a number broken across two lines is unreadable.
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
-        )
-        Text(value, style = MaterialTheme.typography.titleMedium, maxLines = 1, softWrap = false)
     }
 }
 

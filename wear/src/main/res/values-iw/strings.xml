@@ -96,4 +96,92 @@
     <!-- Device check -->
     <string name="device_check_title">בדיקת מכשיר</string>
     <string name="device_check_loading">קורא חיישנים…</string>
+
+    <!-- Modes -->
+    <string name="mode_run">ריצה</string>
+    <string name="mode_football">כדורגל</string>
+    <string name="home_football_subtitle">עבודה, מנוחה וספרינטים</string>
+    <string name="home_run_subtitle">מהירות, שיא ומרחק</string>
+    <string name="home_recording">אימון מוקלט</string>
+    <string name="home_recording_back">חזרה לאימון</string>
+    <string name="home_history">אימונים</string>
+    <string name="home_settings">הגדרות</string>
+    <string name="recording_channel">אימון</string>
+
+    <!-- Before a session -->
+    <string name="record_permission_text">FAST צריך מיקום כדי למדוד מהירות, וחיישן דופק כדי למדוד עוצמה.</string>
+    <string name="record_permission_denied">בלי הרשאת מיקום אי אפשר למדוד מהירות. אפשר לאשר בהגדרות השעון.</string>
+    <string name="record_permission_button">אפשר</string>
+    <string name="record_start_anyway">התחל בכל זאת</string>
+    <string name="record_hint_no_gps">אפשר להתחיל עכשיו. המדידה תתחיל כשה-GPS יינעל.</string>
+    <string name="record_hint_football">עבודה ומנוחה מזוהות לבד. אין צורך לגעת בשעון.</string>
+    <string name="record_hint_run">עצירות מזוהות לבד.</string>
+    <string name="age_title">בן כמה אתה?</string>
+    <string name="age_explain">כדי להעריך דופק מרבי. נשאל פעם אחת.</string>
+    <string name="age_confirm">אישור</string>
+    <string name="age_skip">דלג</string>
+
+    <!-- During a session -->
+    <string name="live_work">עבודה</string>
+    <string name="live_rest">מנוחה</string>
+    <string name="live_sprint">ספרינט</string>
+    <string name="live_stopped">עצירה</string>
+    <string name="live_no_gps">אין אות GPS</string>
+    <string name="live_average">ממוצע %1$s</string>
+    <string name="live_heart_rate_drop">ירד %1$d</string>
+    <string name="live_last_block">לפני: %1$s ב-%2$s קמ״ש</string>
+    <plurals name="live_sprints">
+        <item quantity="one">ספרינט אחד</item>
+        <item quantity="two">%1$d ספרינטים</item>
+        <item quantity="other">%1$d ספרינטים</item>
+    </plurals>
+    <string name="zone_walk">הליכה</string>
+    <string name="zone_jog">ג׳וג</string>
+    <string name="zone_run">ריצה</string>
+    <string name="zone_high_speed">ריצה מהירה</string>
+    <string name="zone_sprint">ספרינט</string>
+    <string name="intensity_light">קל</string>
+    <string name="intensity_moderate">בינוני</string>
+    <string name="intensity_threshold">סף</string>
+    <string name="intensity_high">עצימות גבוהה</string>
+    <string name="controls_hold">החזק לסיום</string>
+    <string name="controls_finish">סיום</string>
+    <string name="value_km">%1$s ק״מ</string>
+
+    <!-- Summary -->
+    <string name="summary_peak">מהירות שיא</string>
+    <string name="summary_peak3s">שיא 3 שניות</string>
+    <string name="summary_average">מהירות ממוצעת</string>
+    <string name="summary_work_average">ממוצע בעבודה</string>
+    <string name="summary_sprints">ספרינטים</string>
+    <string name="summary_run_time">זמן ריצה</string>
+    <string name="summary_work_time">עבודה</string>
+    <string name="summary_stops_time">עצירות</string>
+    <string name="summary_rest_time">מנוחה</string>
+    <string name="summary_distance">מרחק</string>
+    <string name="summary_high_speed">ריצה מהירה</string>
+    <string name="summary_heart_rate_average">דופק ממוצע</string>
+    <string name="summary_heart_rate_max">דופק שיא</string>
+    <string name="summary_auto_ended">נעצר לבד אחרי 20 דקות בלי תנועה.</string>
+    <string name="summary_cut_off">ההקלטה נקטעה ושוחזרה.</string>
+    <string name="summary_synced">סונכרן לטלפון</string>
+    <string name="summary_pending">ממתין לטלפון</string>
+    <string name="summary_nothing_title">לא נשמר אימון</string>
+    <string name="summary_nothing_text">ה-GPS לא מדד מהירות בכלל.</string>
+    <string name="summary_done">סיום</string>
+    <string name="history_sessions_empty">עוד אין אימונים.</string>
+
+    <!-- Settings -->
+    <string name="settings_age">גיל</string>
+    <string name="settings_age_value">%1$d · דופק מרבי בערך %2$d</string>
+    <string name="settings_age_unset">לא הוגדר</string>
+    <string name="settings_top_speed">מהירות השיא שלך: %1$s קמ״ש. ספרינט מתחיל מ-85%% ממנה.</string>
+    <string name="settings_top_speed_unknown">עוד אין מהירות שיא. ספרינטים נספרים מ-25.2 קמ״ש.</string>
+    <string name="settings_sync_done">הכול נמצא בטלפון</string>
+    <string name="settings_sync_now">סנכרן עכשיו</string>
+    <plurals name="settings_sync_pending">
+        <item quantity="one">אימון אחד ממתין לטלפון</item>
+        <item quantity="two">%1$d אימונים ממתינים לטלפון</item>
+        <item quantity="other">%1$d אימונים ממתינים לטלפון</item>
+    </plurals>
 </resources>

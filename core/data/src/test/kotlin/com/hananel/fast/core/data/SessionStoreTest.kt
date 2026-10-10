@@ -142,6 +142,23 @@ class SessionStoreTest {
     }
 
     @Test
+    fun `a phone that lost everything can be sent everything again`() {
+        val store = store()
+        val first = SessionBuilder(ActivityKind.RUN).apply { run(10.0, 30) }.build("aaaa")
+        val second = SessionBuilder(ActivityKind.RUN).apply { run(10.0, 30) }.build("bbbb")
+        store.record(first)
+        store.record(second)
+        store.markSynced("aaaa")
+        store.markSynced("bbbb")
+
+        store.forgetSynced()
+
+        assertEquals(setOf("aaaa", "bbbb"), store.unsyncedIds().toSet())
+        // The sessions themselves are untouched.
+        assertEquals(30, store.read("aaaa")!!.fixes.size)
+    }
+
+    @Test
     fun `deleting a session removes everything about it`() {
         val store = store()
         val recorded = session { run(10.0, 30) }

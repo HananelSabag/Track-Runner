@@ -3,15 +3,24 @@ package com.hananel.fast.wear.sprint
 import android.content.Context
 import android.os.PowerManager
 import android.os.SystemClock
+import android.util.Log
 import com.hananel.fast.core.model.Speed
 import com.hananel.fast.core.model.SpeedSample
 import com.hananel.fast.core.tracking.sprint.AcquisitionStage
+import com.hananel.fast.core.data.ActivityKind
 import com.hananel.fast.core.tracking.sprint.GnssAcquisition
-import com.hananel.fast.core.tracking.sprint.GnssAcquisitionCheck
 import com.hananel.fast.core.tracking.sprint.SatelliteView
 import com.hananel.fast.core.tracking.sprint.SprintProgress
 import com.hananel.fast.core.tracking.sprint.SprintTestAnalyzer
 import com.hananel.fast.core.tracking.sprint.SprintTestOutcome
+import com.hananel.fast.wear.data.WearData
+import com.hananel.fast.wear.data.toRecord
+import com.hananel.fast.wear.gnss.AcquisitionTracker
+import com.hananel.fast.wear.gnss.GnssFix
+import com.hananel.fast.wear.gnss.gnssFixes
+import com.hananel.fast.wear.gnss.satelliteViews
+import com.hananel.fast.wear.sync.SyncEngine
+import com.hananel.fast.wear.ui.Haptics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,6 +31,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.io.IOException
 
 sealed interface SprintUiState {
     /** [denied] is true once the runner has turned the request down. */
@@ -64,7 +74,7 @@ object SprintSession {
 
     private enum class Phase { LOCATING, COUNTDOWN, RUNNING, RESULT }
 
-    private class Tools(context: Context) {
+    private class Tools(val context: Context) {
         val haptics = Haptics(context)
         val sprintLog = SprintLog(context)
         val acquisitionLog = AcquisitionLog(context)
@@ -79,11 +89,7 @@ object SprintSession {
     private var listening: Job? = null
     private var test: Job? = null
 
-    // What the receiver has delivered in the last few seconds, for judging how the search is going.
-    private val recentSamples = ArrayDeque<SpeedSample>()
-    private val recentFixTimes = ArrayDeque<Long>()
-    private var satellites: SatelliteView? = null
-    private var satellitesAtMs = 0L
+    private val tracker = AcquisitionTracker()
     private var searchStartedMs = 0L
     private var idleSinceMs = 0L
 
@@ -182,8 +188,7 @@ object SprintSession {
     }
 
     private fun onSatellites(view: SatelliteView) {
-        satellites = view
-        satellitesAtMs = SystemClock.elapsedRealtime()
+        tracker.onSatellites(view)
         if (!loggedSatellites && view.visible > 0) {
             loggedSatellites = true
             tools?.acquisitionLog?.record("first satellites after ${searchSeconds()}s: visible=${view.visible} strong=${view.strong}")
@@ -192,12 +197,7 @@ object SprintSession {
     }
 
     private fun onFix(fix: GnssFix) {
-        recentFixTimes.addLast(fix.sample.timeMs)
-        while (recentFixTimes.size > RECENT_CAPACITY) recentFixTimes.removeFirst()
-        if (fix.hasSpeed) {
-            recentSamples.addLast(fix.sample)
-            while (recentSamples.size > RECENT_CAPACITY) recentSamples.removeFirst()
-        }
+        tracker.onFix(fix)
         if (!loggedFirstFix) {
             loggedFirstFix = true
             tools?.acquisitionLog?.record(
@@ -219,12 +219,7 @@ object SprintSession {
         }
     }
 
-    private fun currentAcquisition(): GnssAcquisition {
-        val now = SystemClock.elapsedRealtime()
-        // A satellite report that has stopped being refreshed describes the past.
-        val freshSatellites = satellites?.takeIf { now - satellitesAtMs <= SATELLITE_REPORT_MAX_AGE_MS }
-        return GnssAcquisitionCheck.evaluate(recentSamples.toList(), recentFixTimes.toList(), freshSatellites, now)
-    }
+    private fun currentAcquisition(): GnssAcquisition = tracker.current()
 
     private fun publishAcquisition() {
         val acquisition = currentAcquisition()
@@ -250,9 +245,31 @@ object SprintSession {
         idleSinceMs = SystemClock.elapsedRealtime()
         val outcome = SprintTestAnalyzer.analyze(runSamples.toList())
         tools.sprintLog.save(goUtcMs, runFixes.toList(), outcome)
+        saveForSync(tools.context)
         tools.haptics.done()
         releaseWakeLock()
         _state.value = SprintUiState.Result(outcome)
+    }
+
+    /**
+     * Stores the test as a session too, so it reaches the phone like any training.
+     * Only the raw fixes travel; the phone scores them again for itself.
+     */
+    private fun saveForSync(context: Context) {
+        if (runFixes.isEmpty()) return
+        try {
+            // A fix can be stamped a moment before "go" and still arrive after it; the session starts at whichever is earlier.
+            val origin = minOf(goElapsedMs, runFixes.first().sample.timeMs)
+            val writer = WearData.store(context).newWriter(
+                WearData.newHeader(context, ActivityKind.SPRINT_TEST, goUtcMs, origin),
+            )
+            runFixes.forEach { writer.append(it.toRecord()) }
+            writer.finish(SystemClock.elapsedRealtime())
+            SyncEngine.syncPending(context)
+        } catch (e: IOException) {
+            // The result is already on screen and in the log; only the copy for the phone is lost.
+            Log.w("FastSprint", "Could not store the test for sync", e)
+        }
     }
 
     private fun releaseWakeLock() {
@@ -260,9 +277,7 @@ object SprintSession {
     }
 
     private fun clearReceiverState() {
-        recentSamples.clear()
-        recentFixTimes.clear()
-        satellites = null
+        tracker.reset()
         loggedSatellites = false
         loggedFirstFix = false
         loggedStage = null
@@ -271,8 +286,7 @@ object SprintSession {
 
     private fun searchSeconds(): Long = (SystemClock.elapsedRealtime() - searchStartedMs) / 1000
 
-    private fun idle(): SprintUiState =
-        SprintUiState.Locating(GnssAcquisitionCheck.evaluate(emptyList(), emptyList(), satellites = null, nowMs = 0), 0)
+    private fun idle(): SprintUiState = SprintUiState.Locating(AcquisitionTracker.NOTHING_YET, 0)
 
     private const val COUNTDOWN_SECONDS = 3
     private const val WATCHDOG_INTERVAL_MS = 250L
@@ -286,6 +300,4 @@ object SprintSession {
 
     /** A search or a result left alone this long is abandoned, so a forgotten session cannot drain the battery. */
     private const val IDLE_LIMIT_MS = 10 * 60_000L
-    private const val RECENT_CAPACITY = 12
-    private const val SATELLITE_REPORT_MAX_AGE_MS = 5_000L
 }

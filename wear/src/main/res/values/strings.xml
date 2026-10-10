@@ -98,4 +98,90 @@
     <!-- Device check -->
     <string name="device_check_title">Device check</string>
     <string name="device_check_loading">Reading sensors…</string>
+
+    <!-- Modes -->
+    <string name="mode_run">Run</string>
+    <string name="mode_football">Football</string>
+    <string name="home_football_subtitle">Work, rest and sprints</string>
+    <string name="home_run_subtitle">Speed, peak and distance</string>
+    <string name="home_recording">Recording</string>
+    <string name="home_recording_back">Back to the session</string>
+    <string name="home_history">Sessions</string>
+    <string name="home_settings">Settings</string>
+    <string name="recording_channel">Training</string>
+
+    <!-- Before a session -->
+    <string name="record_permission_text">FAST needs your location to measure speed, and the heart-rate sensor to measure effort.</string>
+    <string name="record_permission_denied">Speed cannot be measured without the location permission. You can allow it in the watch settings.</string>
+    <string name="record_permission_button">Allow</string>
+    <string name="record_start_anyway">Start anyway</string>
+    <string name="record_hint_no_gps">You can start now. Measuring begins when the GPS locks.</string>
+    <string name="record_hint_football">Work and rest are detected for you. No need to touch the watch.</string>
+    <string name="record_hint_run">Stops are detected for you.</string>
+    <string name="age_title">How old are you?</string>
+    <string name="age_explain">To estimate your maximum heart rate. Asked once.</string>
+    <string name="age_confirm">OK</string>
+    <string name="age_skip">Skip</string>
+
+    <!-- During a session -->
+    <string name="live_work">Work</string>
+    <string name="live_rest">Rest</string>
+    <string name="live_sprint">Sprint</string>
+    <string name="live_stopped">Stopped</string>
+    <string name="live_no_gps">No GPS signal</string>
+    <string name="live_average">Avg %1$s</string>
+    <string name="live_heart_rate_drop">down %1$d</string>
+    <string name="live_last_block">Before: %1$s at %2$s km/h</string>
+    <plurals name="live_sprints">
+        <item quantity="one">%1$d sprint</item>
+        <item quantity="other">%1$d sprints</item>
+    </plurals>
+    <string name="zone_walk">Walk</string>
+    <string name="zone_jog">Jog</string>
+    <string name="zone_run">Run</string>
+    <string name="zone_high_speed">Fast run</string>
+    <string name="zone_sprint">Sprint</string>
+    <string name="intensity_light">Light</string>
+    <string name="intensity_moderate">Moderate</string>
+    <string name="intensity_threshold">Threshold</string>
+    <string name="intensity_high">High intensity</string>
+    <string name="controls_hold">Hold to finish</string>
+    <string name="controls_finish">Finish</string>
+    <string name="value_km">%1$s km</string>
+
+    <!-- Summary -->
+    <string name="summary_peak">Top speed</string>
+    <string name="summary_peak3s">Best 3 seconds</string>
+    <string name="summary_average">Average speed</string>
+    <string name="summary_work_average">Average while working</string>
+    <string name="summary_sprints">Sprints</string>
+    <string name="summary_run_time">Running</string>
+    <string name="summary_work_time">Work</string>
+    <string name="summary_stops_time">Stopped</string>
+    <string name="summary_rest_time">Rest</string>
+    <string name="summary_distance">Distance</string>
+    <string name="summary_high_speed">Fast running</string>
+    <string name="summary_heart_rate_average">Avg heart rate</string>
+    <string name="summary_heart_rate_max">Max heart rate</string>
+    <string name="summary_auto_ended">Ended by itself after 20 minutes without movement.</string>
+    <string name="summary_cut_off">The recording was cut off and recovered.</string>
+    <string name="summary_synced">Synced to phone</string>
+    <string name="summary_pending">Waiting for phone</string>
+    <string name="summary_nothing_title">Nothing saved</string>
+    <string name="summary_nothing_text">The GPS never measured a speed.</string>
+    <string name="summary_done">Done</string>
+    <string name="history_sessions_empty">No sessions yet.</string>
+
+    <!-- Settings -->
+    <string name="settings_age">Age</string>
+    <string name="settings_age_value">%1$d · max heart rate about %2$d</string>
+    <string name="settings_age_unset">Not set</string>
+    <string name="settings_top_speed">Your top speed: %1$s km/h. A sprint starts at 85%% of it.</string>
+    <string name="settings_top_speed_unknown">No top speed on record yet. Sprints are counted from 25.2 km/h.</string>
+    <string name="settings_sync_done">Everything is on the phone</string>
+    <string name="settings_sync_now">Sync now</string>
+    <plurals name="settings_sync_pending">
+        <item quantity="one">%1$d session waiting for the phone</item>
+        <item quantity="other">%1$d sessions waiting for the phone</item>
+    </plurals>
 </resources>

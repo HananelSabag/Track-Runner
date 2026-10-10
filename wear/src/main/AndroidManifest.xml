@@ -11,6 +11,9 @@
     <!-- The test must keep running while the display is off, which on a watch is most of the time. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <!-- Heart rate grades how hard the work was, and shows recovery during a rest. A session runs without it. -->
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
@@ -35,6 +38,24 @@
             android:name=".sprint.SprintService"
             android:exported="false"
             android:foregroundServiceType="location" />
+
+        <service
+            android:name=".record.RecordingService"
+            android:exported="false"
+            android:foregroundServiceType="location|health" />
+
+        <!-- Woken by Play services when the phone confirms a session or asks for them again. -->
+        <service
+            android:name=".sync.PhoneListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/fast/"
+                    android:scheme="wear" />
+            </intent-filter>
+        </service>
 
         <activity
             android:name=".MainActivity"
