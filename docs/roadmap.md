@@ -28,7 +28,7 @@
 
 המטרה: **אימון אמיתי אחד מוקלט**, כדי להחליף השערות במספרים לפני שמכווננים את המסנן.
 
-- [ ] צימוד השעון ב-Wireless debugging; התקנה; דוח "בדיקת מכשיר" מהשעון האמיתי
+- [x] צימוד השעון ב-Wireless debugging; התקנה; [דוח "בדיקת מכשיר" מהשעון האמיתי](research/field-tests/2026-10-10-watch-device-report.md)
 - [ ] הרשאות (מיקום, זיהוי פעילות, דופק) עם הסברים
 - [ ] `SpeedSource`: ‏GNSS ישיר + Health Services, מוקלטים במקביל
 - [ ] foreground service שמקליט ל-Room, עם Ongoing Activity

@@ -22,6 +22,7 @@ export JAVA_HOME="/c/Program Files/Android/Android Studio1/jbr"
 - Toolchain: Gradle 9.8.1, AGP 9.4.1 with built-in Kotlin (there is no `kotlin-android` plugin — do not add it back), compileSdk 37, targetSdk 36.
 - Emulators: `Wear_OS_5_Large_Round` (API 34) for the watch, `Pixel_9_Pro_Fold` (API 36) for the phone. Start headless with `emulator -avd <name> -no-window -no-audio`. Run one at a time, or pass `-s <serial>` to adb.
 - The phone AVD has two displays, so screenshots need `adb exec-out screencap -d <displayId> -p` (list ids with `adb shell dumpsys SurfaceFlinger --display-id`). Installs can fail on low emulator storage; retry once.
+- The real watch (OnePlus Watch 2, `OPWWE231`, Wear OS 5 / API 34) is paired with this PC for wireless debugging. Find its current address with `adb mdns services` (the `_adb-tls-connect` line; the port changes whenever wireless debugging restarts), then `adb connect <ip:port>`. While it sits on the charger its charging screen covers every app, so screenshots show only that.
 - SDK packages: use the Android CLI, `"$LOCALAPPDATA/Android/Sdk/cmdline-tools/latest/bin/android.exe" sdk install <package>`, with `/`-separated package names (`platforms/android-37.0`). `sdkmanager.bat` mangles `;` when called from Git Bash.
 
 ## Rules that are easy to break
