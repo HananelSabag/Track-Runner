@@ -1,0 +1,33 @@
+package com.hananel.fast.core.data.sync
+
+/**
+ * The names both apps use on the Wearable Data Layer.
+ *
+ * The watch writes each finished session as a data item at [sessionPath] with
+ * the packed session attached. The phone stores it and answers with an item at
+ * [ackPath]. Only then does the watch consider the session safe: "sent" proves
+ * nothing, "stored on the phone" does.
+ */
+object SyncProtocol {
+
+    const val SESSION_PREFIX = "/fast/session/"
+    const val ACK_PREFIX = "/fast/ack/"
+
+    /** The packed session, as an asset. */
+    const val KEY_PAYLOAD = "payload"
+
+    /**
+     * When this item was last written. A data item rewritten with identical content
+     * is not delivered again, so the timestamp is what lets either side repeat itself
+     * after the other has lost its copy.
+     */
+    const val KEY_WRITTEN_AT = "writtenAt"
+
+    fun sessionPath(id: String): String = SESSION_PREFIX + id
+
+    fun ackPath(id: String): String = ACK_PREFIX + id
+
+    /** The session id a path refers to, or null when the path is not under [prefix]. */
+    fun idFrom(path: String, prefix: String): String? =
+        path.takeIf { it.startsWith(prefix) }?.removePrefix(prefix)?.takeIf { it.isNotEmpty() && '/' !in it }
+}
