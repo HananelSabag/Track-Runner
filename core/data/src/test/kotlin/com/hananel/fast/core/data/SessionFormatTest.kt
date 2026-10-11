@@ -1,5 +1,6 @@
 package com.hananel.fast.core.data
 
+import com.hananel.fast.core.tracking.sprint.SatelliteView
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -37,6 +38,22 @@ class SessionFormatTest {
         assertEquals(written.position!!.longitude, got.position!!.longitude, 1e-7)
         assertEquals(4.0, got.horizontalAccuracyMeters!!, 0.05)
         assertEquals(90f, got.bearingDegrees!!, 0.05f)
+    }
+
+    @Test
+    fun `the satellites the receiver was using are kept with the session`() {
+        val original = SessionBuilder(ActivityKind.SPRINT_TEST).apply {
+            sky = SatelliteView(visible = 29, strong = 6, usedInFix = 12)
+            run(20.0, 3)
+            sky = SatelliteView(visible = 8, strong = 1, usedInFix = 5)
+            run(20.0, 2)
+        }.build()
+
+        val read = SessionFormat.parse(original.toText())!!
+
+        assertEquals(original.satellites, read.satellites)
+        assertEquals(5, read.satellites.size)
+        assertEquals(SatelliteView(8, 1, 5), read.satellites.last().view)
     }
 
     @Test

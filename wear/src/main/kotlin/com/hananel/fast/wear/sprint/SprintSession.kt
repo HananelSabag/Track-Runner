@@ -8,6 +8,7 @@ import com.hananel.fast.core.model.Speed
 import com.hananel.fast.core.model.SpeedSample
 import com.hananel.fast.core.tracking.sprint.AcquisitionStage
 import com.hananel.fast.core.data.ActivityKind
+import com.hananel.fast.core.data.SatelliteRecord
 import com.hananel.fast.core.tracking.sprint.GnssAcquisition
 import com.hananel.fast.core.tracking.sprint.SatelliteView
 import com.hananel.fast.core.tracking.sprint.SprintProgress
@@ -102,6 +103,13 @@ object SprintSession {
     /** Every fix since "go", and the subset that carried a speed. */
     private val runFixes = mutableListOf<GnssFix>()
     private val runSamples = mutableListOf<SpeedSample>()
+
+    /**
+     * What the receiver was using during the test. This watch's receiver rates every
+     * fix with the same placeholder, so the satellites are what the score's signal
+     * check has to go on.
+     */
+    private val runSatellites = mutableListOf<SatelliteRecord>()
     private var goElapsedMs = 0L
     private var goUtcMs = 0L
 
@@ -162,6 +170,7 @@ object SprintSession {
             tools.haptics.go()
             runFixes.clear()
             runSamples.clear()
+            runSatellites.clear()
             goElapsedMs = SystemClock.elapsedRealtime()
             goUtcMs = System.currentTimeMillis()
             phase = Phase.RUNNING
@@ -189,6 +198,7 @@ object SprintSession {
 
     private fun onSatellites(view: SatelliteView) {
         tracker.onSatellites(view)
+        if (phase == Phase.RUNNING) runSatellites += SatelliteRecord(SystemClock.elapsedRealtime(), view)
         if (!loggedSatellites && view.visible > 0) {
             loggedSatellites = true
             tools?.acquisitionLog?.record("first satellites after ${searchSeconds()}s: visible=${view.visible} strong=${view.strong}")
@@ -243,7 +253,7 @@ object SprintSession {
         val tools = tools ?: return
         phase = Phase.RESULT
         idleSinceMs = SystemClock.elapsedRealtime()
-        val outcome = SprintTestAnalyzer.analyze(runSamples.toList())
+        val outcome = SprintTestAnalyzer.analyze(runSamples.toList(), satellites = runSatellites.map { it.view })
         tools.sprintLog.save(goUtcMs, runFixes.toList(), outcome)
         saveForSync(tools.context)
         tools.haptics.done()
@@ -263,7 +273,8 @@ object SprintSession {
             val writer = WearData.store(context).newWriter(
                 WearData.newHeader(context, ActivityKind.SPRINT_TEST, goUtcMs, origin),
             )
-            runFixes.forEach { writer.append(it.toRecord()) }
+            // In time order, as the receiver delivered them.
+            (runFixes.map { it.toRecord() } + runSatellites).sortedBy { it.timeMs }.forEach(writer::append)
             writer.finish(SystemClock.elapsedRealtime())
             SyncEngine.syncPending(context)
         } catch (e: IOException) {

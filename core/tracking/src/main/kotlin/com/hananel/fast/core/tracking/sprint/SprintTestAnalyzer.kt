@@ -110,7 +110,15 @@ sealed interface SprintTestOutcome {
  */
 object SprintTestAnalyzer {
 
-    fun analyze(samples: List<SpeedSample>, config: SprintTestConfig = SprintTestConfig()): SprintTestOutcome {
+    /**
+     * @param satellites what the receiver was using during the test, one view per report.
+     *   Only consulted when the receiver did not rate its own fixes.
+     */
+    fun analyze(
+        samples: List<SpeedSample>,
+        config: SprintTestConfig = SprintTestConfig(),
+        satellites: List<SatelliteView> = emptyList(),
+    ): SprintTestOutcome {
         if (samples.size < MIN_SAMPLES) return SprintTestOutcome.Rejected(SprintRejection.NOT_ENOUGH_DATA)
 
         val steady = withoutIsolatedJumps(samples)
@@ -134,7 +142,7 @@ object SprintTestAnalyzer {
         val phaseMeters = dopplerDistance(phaseSamples)
 
         val coverage = coverageScore(phaseSamples, config.expectedSampleIntervalMs)
-        val signal = signalScore(windowSamples)
+        val signal = signalScore(windowSamples, satellites)
         val steadiness = steadinessScore(windowSamples, topSpeed)
         val glitches = if (hasImpossibleJump(samples, fastPhase)) GLITCH_SCORE else 1.0
         val agreement = agreementScore(phaseSamples, phaseMeters)
@@ -242,17 +250,24 @@ object SprintTestAnalyzer {
 
     private data class SignalScore(val score: Double, val fromSpeedAccuracy: Boolean)
 
-    /** What the receiver said about its own fix during the top-speed window. */
-    private fun signalScore(window: List<SpeedSample>): SignalScore {
-        val speedAccuracies = window.mapNotNull { it.speedAccuracy?.metersPerSecond }
+    /**
+     * How good the fix was during the top-speed window: by the receiver's own rating
+     * where it gives a believable one, otherwise by the satellites it was using.
+     */
+    private fun signalScore(window: List<SpeedSample>, satellites: List<SatelliteView>): SignalScore {
+        val speedAccuracies = window.mapNotNull { it.credibleSpeedAccuracy() }
         if (speedAccuracies.size == window.size) {
             return SignalScore(ramp(speedAccuracies.average(), zeroAt = 1.5, oneAt = 0.3), fromSpeedAccuracy = true)
         }
-        val positionAccuracies = window.mapNotNull { it.horizontalAccuracyMeters }
+        val positionAccuracies = window.mapNotNull { it.crediblePositionAccuracy() }
         if (positionAccuracies.size == window.size) {
             return SignalScore(ramp(positionAccuracies.average(), zeroAt = 25.0, oneAt = 5.0), fromSpeedAccuracy = false)
         }
-        // The receiver said nothing about quality. Neither good nor bad can be assumed.
+        // The weakest moment counts, not the average: one stretch of poor reception is
+        // enough to spoil the speed that was read during it.
+        satellites.minOfOrNull { it.fixQuality() }?.let { return SignalScore(it, fromSpeedAccuracy = false) }
+
+        // Nothing at all about quality. Neither good nor bad can be assumed.
         return SignalScore(UNKNOWN_SIGNAL_SCORE, fromSpeedAccuracy = false)
     }
 
@@ -291,14 +306,21 @@ object SprintTestAnalyzer {
 
         val deviation = abs(from.distanceTo(to) / dopplerMeters - 1.0)
         // Position error is forgiven up to what the receiver admitted to; beyond that it counts.
-        val admittedError = ((phase.first().horizontalAccuracyMeters ?: 0.0) + (phase.last().horizontalAccuracyMeters ?: 0.0)) /
-            2 / dopplerMeters
+        // A placeholder is not an admission: forgiving "125 m" would forgive any mismatch at all,
+        // so a receiver that does not rate its positions is allowed an ordinary GPS error instead.
+        val admittedError = (admittedPositionError(phase.first()) + admittedPositionError(phase.last())) / 2 / dopplerMeters
         return ramp(maxOf(0.0, deviation - admittedError), zeroAt = 0.40, oneAt = 0.10)
     }
 
-    /** One-sigma uncertainty of the window average: the receiver's own error and the scatter of the readings, combined. */
+    private fun admittedPositionError(sample: SpeedSample): Double =
+        sample.crediblePositionAccuracy() ?: if (sample.horizontalAccuracyMeters == null) 0.0 else TYPICAL_POSITION_ERROR_METERS
+
+    /**
+     * One-sigma uncertainty of the window average: the receiver's own error and the scatter of the
+     * readings, combined. Null when the receiver gave no believable error to build it on.
+     */
     private fun uncertaintyOf(window: List<SpeedSample>): Speed? {
-        val reported = window.mapNotNull { it.speedAccuracy?.metersPerSecond }
+        val reported = window.mapNotNull { it.credibleSpeedAccuracy() }
         if (reported.size != window.size) return null
         val n = window.size
         val speeds = window.map { it.speed.metersPerSecond }
@@ -322,6 +344,9 @@ object SprintTestAnalyzer {
     private const val MAX_GAP_IN_WINDOW_MS = 1_500L
     private const val SAME_SPEED_TOLERANCE = 0.01
     private const val MIN_METERS_FOR_AGREEMENT = 12.0
+
+    /** What a watch-sized receiver is typically off by under open sky, for one that will not say. */
+    private const val TYPICAL_POSITION_ERROR_METERS = 5.0
 
     /**
      * In m/s². More than any sprinter gains per second once already running fast, so a

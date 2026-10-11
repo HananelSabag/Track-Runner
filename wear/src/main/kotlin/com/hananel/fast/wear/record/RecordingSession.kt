@@ -9,6 +9,7 @@ import com.hananel.fast.core.data.FixRecord
 import com.hananel.fast.core.data.HeartRateRecord
 import com.hananel.fast.core.data.RawRecord
 import com.hananel.fast.core.data.RecordedSession
+import com.hananel.fast.core.data.SatelliteRecord
 import com.hananel.fast.core.data.SessionHeader
 import com.hananel.fast.core.data.SessionInsights
 import com.hananel.fast.core.data.SessionSummary
@@ -145,7 +146,13 @@ object RecordingSession {
             launch {
                 satelliteViews(tools.context).collect {
                     tracker.onSatellites(it)
-                    if (phase == Phase.LOCATING) publishLocating()
+                    when (phase) {
+                        Phase.LOCATING -> publishLocating()
+                        // Kept with the session: on a receiver that does not rate its own fixes,
+                        // the satellites are the only record of how good the signal was.
+                        Phase.RECORDING -> records?.trySend(SatelliteRecord(SystemClock.elapsedRealtime(), it))
+                        else -> Unit
+                    }
                 }
             }
             launch { heartRates(tools.context).collect(::onHeartRate) }

@@ -20,16 +20,25 @@ object GnssReadinessCheck {
      * Judges the last few seconds of readings. Starting a test before the fix has
      * settled is the commonest way to get a bad measurement, so the bar is the
      * same one the analysis will apply afterwards.
+     *
+     * @param satellites what the receiver is using right now. It decides the matter
+     *   when the receiver does not rate its own fixes, or rates them with a placeholder.
      */
-    fun evaluate(samples: List<SpeedSample>, nowMs: Long): GnssReadiness {
+    fun evaluate(samples: List<SpeedSample>, nowMs: Long, satellites: SatelliteView? = null): GnssReadiness {
         val recent = samples.filter { nowMs - it.timeMs <= LOOKBACK_MS }
         if (recent.isEmpty()) return GnssReadiness.SEARCHING
         if (recent.size < MIN_RECENT_SAMPLES) return GnssReadiness.WEAK
 
-        val speedAccuracies = recent.mapNotNull { it.speedAccuracy?.metersPerSecond }
-        if (speedAccuracies.isNotEmpty() && speedAccuracies.average() > MAX_SPEED_ACCURACY) return GnssReadiness.WEAK
+        val speedAccuracies = recent.mapNotNull { it.credibleSpeedAccuracy() }
+        val positionAccuracies = recent.mapNotNull { it.crediblePositionAccuracy() }
+        if (speedAccuracies.isEmpty() && positionAccuracies.isEmpty()) {
+            // The receiver says nothing usable about its fixes. With no satellite report
+            // either there is no evidence at all, and no evidence is not "ready".
+            val quality = satellites?.fixQuality() ?: return GnssReadiness.WEAK
+            return if (quality >= READY_FIX_QUALITY) GnssReadiness.READY else GnssReadiness.WEAK
+        }
 
-        val positionAccuracies = recent.mapNotNull { it.horizontalAccuracyMeters }
+        if (speedAccuracies.isNotEmpty() && speedAccuracies.average() > MAX_SPEED_ACCURACY) return GnssReadiness.WEAK
         if (positionAccuracies.isNotEmpty() && positionAccuracies.average() > MAX_POSITION_ACCURACY_METERS) return GnssReadiness.WEAK
 
         return GnssReadiness.READY

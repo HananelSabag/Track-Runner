@@ -15,7 +15,7 @@ import kotlin.math.roundToInt
  * Bumped whenever the way a session is read changes, so every stored summary
  * made by an older reading is thrown away and worked out again from the raw file.
  */
-const val ALGORITHM_VERSION = 1
+const val ALGORITHM_VERSION = 2
 
 /** What the analysis needs to know about the player, beyond the session itself. */
 data class AnalysisContext(
@@ -91,7 +91,8 @@ object SessionInsights {
             val samples = session.fixes.filter { it.hasSpeed }.map {
                 SpeedSample(it.timeMs, it.speed, it.speedAccuracy, it.position, it.horizontalAccuracyMeters)
             }
-            return SessionInsight(session, points, null, SprintTestAnalyzer.analyze(samples), maxBpm, profile)
+            val outcome = SprintTestAnalyzer.analyze(samples, satellites = session.satellites.map { it.view })
+            return SessionInsight(session, points, null, outcome, maxBpm, profile)
         }
 
         val analysis = SessionAnalyzer.analyze(points, profile, heartRateZones = maxBpm?.let(::HeartRateZones))

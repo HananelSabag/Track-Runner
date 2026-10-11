@@ -25,7 +25,11 @@ enum class AcquisitionStage {
     /** Positions arrive but carry no speed. The test cannot run on these. */
     FIX_WITHOUT_SPEED,
 
-    /** A steady stream of fixes, but the receiver rates them poorly. A test may start; it will score lower. */
+    /**
+     * A steady stream of fixes, but a poor one: the receiver rates them badly, or
+     * rates them not at all and is using too few satellites. A test may start; it
+     * will score lower.
+     */
     WEAK_FIX,
 
     READY,
@@ -36,7 +40,7 @@ data class GnssAcquisition(
     /** 0–4, for a signal-strength display. */
     val bars: Int,
     val satellites: SatelliteView?,
-    /** The receiver's own estimate of its position error, from the latest fix. */
+    /** The receiver's own estimate of its position error, from the latest fix. Null when it gives none worth showing. */
     val positionAccuracyMeters: Double?,
     /** True once fixes with speed arrive steadily. A weak fix still allows a start: the score will say so. */
     val canStart: Boolean,
@@ -57,11 +61,12 @@ object GnssAcquisitionCheck {
     ): GnssAcquisition {
         val recentSamples = speedSamples.filter { nowMs - it.timeMs <= LOOKBACK_MS }
         val recentFixes = fixTimesMs.count { nowMs - it <= LOOKBACK_MS }
-        val accuracy = recentSamples.lastOrNull()?.horizontalAccuracyMeters
+        // A placeholder such as "125 m" is not shown: it would look like a measurement.
+        val accuracy = recentSamples.lastOrNull()?.crediblePositionAccuracy()
 
         val stage = when {
             recentSamples.size >= STEADY_FIXES ->
-                if (GnssReadinessCheck.evaluate(recentSamples, nowMs) == GnssReadiness.READY) AcquisitionStage.READY else AcquisitionStage.WEAK_FIX
+                if (GnssReadinessCheck.evaluate(recentSamples, nowMs, satellites) == GnssReadiness.READY) AcquisitionStage.READY else AcquisitionStage.WEAK_FIX
             // Plenty of fixes and none with a speed: waiting longer will not help.
             recentSamples.isEmpty() && recentFixes >= STEADY_FIXES -> AcquisitionStage.FIX_WITHOUT_SPEED
             recentFixes > 0 -> AcquisitionStage.LOCKING

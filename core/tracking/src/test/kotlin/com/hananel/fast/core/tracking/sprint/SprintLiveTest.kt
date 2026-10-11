@@ -46,15 +46,51 @@ class SprintLiveTest {
         assertEquals(GnssReadiness.WEAK, GnssReadinessCheck.evaluate(poorPosition, nowMs = 5_000))
     }
 
+    // Satellite counts below are the ones the real watch logged: under open sky, and on a balcony.
+    private val openSky = SatelliteView(visible = 29, strong = 6, usedInFix = 12)
+    private val balcony = SatelliteView(visible = 8, strong = 1, usedInFix = 5)
+
     @Test
-    fun aReceiverThatReportsNoAccuracyIsJudgedOnItsReadingRateAlone() {
+    fun aReceiverThatDoesNotRateItsFixesIsJudgedByItsSatellites() {
         val samples = sprint {
             speedAccuracy = null
             positionAccuracy = null
             hold(0.0, 6)
         }
 
-        assertEquals(GnssReadiness.READY, GnssReadinessCheck.evaluate(samples, nowMs = 5_000))
+        assertEquals(GnssReadiness.READY, GnssReadinessCheck.evaluate(samples, nowMs = 5_000, satellites = openSky))
+        assertEquals(GnssReadiness.WEAK, GnssReadinessCheck.evaluate(samples, nowMs = 5_000, satellites = balcony))
+    }
+
+    @Test
+    fun withNoRatingAndNoSatelliteReportThereIsNoEvidenceOfAGoodFix() {
+        val samples = sprint {
+            speedAccuracy = null
+            positionAccuracy = null
+            hold(0.0, 6)
+        }
+
+        assertEquals(GnssReadiness.WEAK, GnssReadinessCheck.evaluate(samples, nowMs = 5_000))
+    }
+
+    @Test
+    fun aPlaceholderAccuracyIsNeitherBelievedNorHeldAgainstTheFix() {
+        // What the OnePlus Watch 2 reports on every fix, good or bad: 25 m/s and 125 m.
+        val samples = sprint {
+            speedAccuracy = 25.0
+            positionAccuracy = 125.0
+            hold(0.0, 6)
+        }
+
+        assertEquals(GnssReadiness.READY, GnssReadinessCheck.evaluate(samples, nowMs = 5_000, satellites = openSky))
+        assertEquals(GnssReadiness.WEAK, GnssReadinessCheck.evaluate(samples, nowMs = 5_000, satellites = balcony))
+    }
+
+    @Test
+    fun manySatellitesHeardFaintlyAreNotAGoodFix() {
+        assertEquals(0.0, SatelliteView(visible = 20, strong = 1, usedInFix = 12).fixQuality(), 0.0)
+        assertEquals(0.0, SatelliteView(visible = 6, strong = 6, usedInFix = 4).fixQuality(), 0.0)
+        assertEquals(1.0, SatelliteView(visible = 35, strong = 14, usedInFix = 14).fixQuality(), 0.0)
     }
 
     // --- Progress

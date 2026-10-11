@@ -2,6 +2,7 @@ package com.hananel.fast.core.data
 
 import com.hananel.fast.core.model.Speed
 import com.hananel.fast.core.tracking.SegmentKind
+import com.hananel.fast.core.tracking.sprint.SatelliteView
 import com.hananel.fast.core.tracking.sprint.SprintTestOutcome
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -79,6 +80,27 @@ class SessionInsightsTest {
         assertEquals(measured.topSpeed, summary.peak3s)
         assertEquals(measured.confidence, summary.confidence)
         assertEquals(27.5, summary.peak3s.kmh, 0.3)
+    }
+
+    @Test
+    fun `a sprint test on the real watch is scored by the satellites it was using`() {
+        // The watch claims 25 m/s and 125 m on every fix, so its claims say nothing.
+        fun testUnder(view: SatelliteView) = SessionBuilder(ActivityKind.SPRINT_TEST).apply {
+            speedAccuracy = 25.0
+            positionAccuracy = 125.0
+            sky = view
+            second(6.0); second(12.0); second(18.0); second(23.0); second(26.0)
+            second(27.5); second(27.5); second(27.5); second(27.0)
+            second(20.0); second(10.0); second(4.0)
+        }.build()
+
+        val openSky = SessionInsights.summarize(SessionInsights.of(testUnder(SatelliteView(visible = 35, strong = 14, usedInFix = 14))))
+        val balcony = SessionInsights.summarize(SessionInsights.of(testUnder(SatelliteView(visible = 8, strong = 1, usedInFix = 5))))
+
+        assertTrue("open sky scored ${openSky.confidence}", openSky.confidence!! >= SprintTestOutcome.HIGH_CONFIDENCE)
+        assertTrue("balcony scored ${balcony.confidence}", balcony.confidence!! < SprintTestOutcome.MEDIUM_CONFIDENCE)
+        // Same speeds either way: the sky changes the trust, not the number.
+        assertEquals(openSky.peak3s, balcony.peak3s)
     }
 
     @Test

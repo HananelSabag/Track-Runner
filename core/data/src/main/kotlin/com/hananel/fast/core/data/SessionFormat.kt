@@ -2,6 +2,7 @@ package com.hananel.fast.core.data
 
 import com.hananel.fast.core.model.GeoPoint
 import com.hananel.fast.core.model.Speed
+import com.hananel.fast.core.tracking.sprint.SatelliteView
 import java.util.Locale
 
 /**
@@ -16,6 +17,7 @@ import java.util.Locale
  * #
  * G,<t>,<utc>,<hasSpeed>,<speed m/s>,<speed accuracy>,<lat>,<lon>,<position accuracy m>,<bearing>
  * H,<t>,<bpm>
+ * S,<t>,<satellites heard>,<heard clearly>,<used in the fix>
  * M,<t>,END
  * ```
  *
@@ -33,6 +35,7 @@ object SessionFormat {
     private const val HEADER_END = "#"
     private const val FIX = "G"
     private const val HEART_RATE = "H"
+    private const val SATELLITES = "S"
     private const val MARKER = "M"
     private const val MARKER_END = "END"
     private const val MARKER_AUTO_END = "AUTO_END"
@@ -64,6 +67,7 @@ object SessionFormat {
             record.bearingDegrees?.toDouble()?.fmt(1).orEmpty(),
         ).joinToString(",")
         is HeartRateRecord -> "$HEART_RATE,${record.timeMs},${record.bpm}"
+        is SatelliteRecord -> "$SATELLITES,${record.timeMs},${record.view.visible},${record.view.strong},${record.view.usedInFix}"
     }
 
     /** The last line of a session that was finished on purpose. */
@@ -100,6 +104,7 @@ object SessionFormat {
         val header = parseHeader(text.lineSequence()) ?: return null
         val fixes = mutableListOf<FixRecord>()
         val heartRates = mutableListOf<HeartRateRecord>()
+        val satellites = mutableListOf<SatelliteRecord>()
         var endedCleanly = false
         var trimAfterMs: Long? = null
 
@@ -109,6 +114,7 @@ object SessionFormat {
             when (cells[0]) {
                 FIX -> parseFix(timeMs, cells)?.let(fixes::add)
                 HEART_RATE -> cells.getOrNull(2)?.toIntOrNull()?.let { heartRates += HeartRateRecord(timeMs, it) }
+                SATELLITES -> parseSatellites(timeMs, cells)?.let(satellites::add)
                 MARKER -> when (cells.getOrNull(2)) {
                     MARKER_END -> endedCleanly = true
                     MARKER_AUTO_END -> {
@@ -118,7 +124,14 @@ object SessionFormat {
                 }
             }
         }
-        return RecordedSession(header, fixes, heartRates, endedCleanly, trimAfterMs)
+        return RecordedSession(header, fixes, heartRates, endedCleanly, satellites, trimAfterMs)
+    }
+
+    private fun parseSatellites(timeMs: Long, cells: List<String>): SatelliteRecord? {
+        val visible = cells.getOrNull(2)?.toIntOrNull() ?: return null
+        val strong = cells.getOrNull(3)?.toIntOrNull() ?: return null
+        val usedInFix = cells.getOrNull(4)?.toIntOrNull() ?: return null
+        return SatelliteRecord(timeMs, SatelliteView(visible, strong, usedInFix))
     }
 
     private fun parseFix(timeMs: Long, cells: List<String>): FixRecord? {

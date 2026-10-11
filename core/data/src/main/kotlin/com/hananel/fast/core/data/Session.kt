@@ -2,6 +2,7 @@ package com.hananel.fast.core.data
 
 import com.hananel.fast.core.model.GeoPoint
 import com.hananel.fast.core.model.Speed
+import com.hananel.fast.core.tracking.sprint.SatelliteView
 
 /** What was recorded. The first two differ only in how they are read; a sprint test is one scored sprint. */
 enum class ActivityKind { RUN, FOOTBALL, SPRINT_TEST }
@@ -44,6 +45,12 @@ data class FixRecord(
 
 data class HeartRateRecord(override val timeMs: Long, val bpm: Int) : RawRecord
 
+/**
+ * What the receiver was using at one moment. On a watch whose receiver does not
+ * rate its own fixes, this is the only evidence of how good they were.
+ */
+data class SatelliteRecord(override val timeMs: Long, val view: SatelliteView) : RawRecord
+
 /** A whole recording read back from storage. */
 data class RecordedSession(
     val header: SessionHeader,
@@ -51,6 +58,8 @@ data class RecordedSession(
     val heartRates: List<HeartRateRecord>,
     /** False when there is no end marker: the app or the watch died while recording. */
     val endedCleanly: Boolean,
+    /** Empty for sessions recorded before satellites were logged, or on a receiver that reports none. */
+    val satellites: List<SatelliteRecord> = emptyList(),
     /**
      * Set when the watch ended a forgotten session by itself. Everything after this
      * moment (on the monotonic clock) is the player having gone home, not training.

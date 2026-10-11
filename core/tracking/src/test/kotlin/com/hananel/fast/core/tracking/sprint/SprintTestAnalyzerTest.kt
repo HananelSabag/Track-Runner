@@ -169,6 +169,69 @@ class SprintTestAnalyzerTest {
         assertTrue("confidence was ${result.confidence}", result.level != ConfidenceLevel.HIGH)
     }
 
+    // --- A receiver that fills in its accuracy without measuring it (the real watch)
+
+    // Satellite counts the watch logged: under open sky, and on a balcony.
+    private val openSky = listOf(SatelliteView(visible = 29, strong = 6, usedInFix = 12), SatelliteView(visible = 35, strong = 14, usedInFix = 14))
+    private val balcony = listOf(SatelliteView(visible = 8, strong = 1, usedInFix = 5))
+
+    // The parameter is not called "build": inside the builder that name is the builder's own function.
+    private fun measureOnTheWatch(satellites: List<SatelliteView>, scenario: SprintBuilder.() -> Unit): Measured =
+        SprintTestAnalyzer.analyze(
+            sprint {
+                // On every fix, whatever the sky: 25 m/s and 125 m.
+                speedAccuracy = 25.0
+                positionAccuracy = 125.0
+                scenario()
+            },
+            satellites = satellites,
+        ) as Measured
+
+    @Test
+    fun aPlaceholderAccuracyDoesNotCondemnACleanSprint() {
+        val result = measureOnTheWatch(openSky) { cleanSprint() }
+
+        // Capped, because the receiver still never said how accurate its speed was.
+        assertEquals(85, result.confidence)
+        assertTrue(SprintIssue.WEAK_SIGNAL !in result.issues)
+        // And no "±90 km/h" built on the placeholder.
+        assertNull(result.uncertainty)
+    }
+
+    @Test
+    fun aPlaceholderAccuracyDoesNotExcuseAPoorSky() {
+        val result = measureOnTheWatch(balcony) { cleanSprint() }
+
+        assertTrue(SprintIssue.WEAK_SIGNAL in result.issues)
+        assertEquals(ConfidenceLevel.LOW, result.level)
+    }
+
+    @Test
+    fun oneStretchOfPoorReceptionDuringTheSprintIsEnoughToCount() {
+        val result = measureOnTheWatch(openSky + balcony) { cleanSprint() }
+
+        assertTrue(SprintIssue.WEAK_SIGNAL in result.issues)
+    }
+
+    @Test
+    fun withAPlaceholderAndNoSatelliteReportTheScoreCannotBeHigh() {
+        val result = measureOnTheWatch(emptyList()) { cleanSprint() }
+
+        assertTrue("confidence was ${result.confidence}", result.level != ConfidenceLevel.HIGH)
+    }
+
+    @Test
+    fun aPlaceholderPositionAccuracyDoesNotExcuseADistanceMismatch() {
+        // Believing "125 m" would forgive the positions for covering half the distance the speeds claim.
+        val result = measureOnTheWatch(openSky) {
+            groundCovered = 0.5
+            cleanSprint()
+        }
+
+        assertTrue(SprintIssue.DISTANCE_MISMATCH in result.issues)
+        assertTrue("confidence was ${result.confidence}", result.level != ConfidenceLevel.HIGH)
+    }
+
     // --- Things that are not a sprint are refused outright
 
     @Test

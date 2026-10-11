@@ -19,6 +19,26 @@ class GnssAcquisitionTest {
     }
 
     @Test
+    fun aPlaceholderAccuracyIsNotShownAndTheSatellitesDecide() {
+        val placeholder: SprintBuilder.() -> Unit = {
+            speedAccuracy = 25.0
+            positionAccuracy = 125.0
+            hold(0.0, 6)
+        }
+
+        val openSky = evaluate(placeholder, satellites = SatelliteView(visible = 35, strong = 14, usedInFix = 14))
+        val balcony = evaluate(placeholder, satellites = SatelliteView(visible = 8, strong = 1, usedInFix = 5))
+
+        assertEquals(AcquisitionStage.READY, openSky.stage)
+        assertEquals(4, openSky.bars)
+        // "±125 m" on the screen would look like a measurement.
+        assertEquals(null, openSky.positionAccuracyMeters)
+
+        assertEquals(AcquisitionStage.WEAK_FIX, balcony.stage)
+        assertTrue(balcony.canStart)
+    }
+
+    @Test
     fun hearingNothingIsTheFirstStage() {
         val none = evaluate()
         val silentReport = evaluate(satellites = SatelliteView(visible = 0, strong = 0, usedInFix = 0))

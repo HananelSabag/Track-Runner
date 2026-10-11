@@ -2,6 +2,7 @@ package com.hananel.fast.core.data
 
 import com.hananel.fast.core.model.GeoPoint
 import com.hananel.fast.core.model.Speed
+import com.hananel.fast.core.tracking.sprint.SatelliteView
 import kotlin.math.cos
 
 /**
@@ -12,6 +13,10 @@ class SessionBuilder(private val kind: ActivityKind, private val startedElapsedM
 
     private val fixes = mutableListOf<FixRecord>()
     private val heartRates = mutableListOf<HeartRateRecord>()
+    private val satellites = mutableListOf<SatelliteRecord>()
+
+    /** From now on the receiver reports this view once a second; null stops the reports. */
+    var sky: SatelliteView? = null
     private var timeMs = startedElapsedMs
     private var eastMeters = 0.0
     private var heartRate: Int? = null
@@ -26,6 +31,10 @@ class SessionBuilder(private val kind: ActivityKind, private val startedElapsedM
 
     fun run(kmh: Double, seconds: Int) = apply { repeat(seconds) { second(kmh) } }
 
+    /** What the receiver claims about its own fixes. The real watch claims 25 m/s and 125 m, always. */
+    var speedAccuracy: Double = 0.3
+    var positionAccuracy: Double = 4.0
+
     /** One second at an exact speed. */
     fun second(kmh: Double, hasSpeed: Boolean = true) = apply {
         timeMs += 1000
@@ -35,12 +44,13 @@ class SessionBuilder(private val kind: ActivityKind, private val startedElapsedM
             utcMs = STARTED_UTC_MS + (timeMs - startedElapsedMs),
             hasSpeed = hasSpeed,
             speed = Speed.ofKmh(kmh),
-            speedAccuracy = Speed(0.3),
+            speedAccuracy = Speed(speedAccuracy),
             position = GeoPoint(BASE_LATITUDE, BASE_LONGITUDE + eastMeters / METERS_PER_DEGREE_LONGITUDE),
-            horizontalAccuracyMeters = 4.0,
+            horizontalAccuracyMeters = positionAccuracy,
             bearingDegrees = 90f,
         )
         heartRate?.let { heartRates += HeartRateRecord(timeMs, it) }
+        sky?.let { satellites += SatelliteRecord(timeMs, it) }
     }
 
     /** Skips ahead without records, as when the signal is lost. */
@@ -60,7 +70,7 @@ class SessionBuilder(private val kind: ActivityKind, private val startedElapsedM
     )
 
     fun build(id: String = "11111111-2222-3333-4444-555555555555") =
-        RecordedSession(header(id), fixes.toList(), heartRates.toList(), endedCleanly, trimAfterMs)
+        RecordedSession(header(id), fixes.toList(), heartRates.toList(), endedCleanly, satellites.toList(), trimAfterMs)
 
     companion object {
         const val STARTED_UTC_MS = 1_791_600_000_000
@@ -76,7 +86,7 @@ fun session(kind: ActivityKind = ActivityKind.FOOTBALL, build: SessionBuilder.()
 /** The session as the watch would have written it. */
 fun RecordedSession.toText(): String = buildString {
     append(SessionFormat.header(header))
-    (fixes + heartRates).sortedBy { it.timeMs }.forEach { appendLine(SessionFormat.line(it)) }
+    (fixes + heartRates + satellites).sortedBy { it.timeMs }.forEach { appendLine(SessionFormat.line(it)) }
     if (endedCleanly) {
         val end = (fixes + heartRates).maxOfOrNull { it.timeMs } ?: header.startedElapsedMs
         appendLine(trimAfterMs?.let { SessionFormat.autoEndMarker(end, it) } ?: SessionFormat.endMarker(end))
