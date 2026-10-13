@@ -159,38 +159,6 @@ class SessionStoreTest {
     }
 
     @Test
-    fun `a session set aside leaves the history but is not destroyed`() {
-        val store = store()
-        val empty = SessionBuilder(ActivityKind.RUN).apply { stand(40) }.build("empty")
-        val real = SessionBuilder(ActivityKind.RUN).apply { run(10.0, 40) }.build("real")
-        store.record(empty)
-        store.record(real)
-        store.summary("empty")
-        store.markSynced("empty")
-
-        store.setAside("empty")
-
-        assertEquals(listOf("real"), store.ids())
-        assertEquals(listOf("real"), store.unsyncedIds())
-        assertNull(store.read("empty"))
-        // Still there for working out why nothing was recorded.
-        assertTrue(File(folder.root, "sessions/set-aside/empty.fast").isFile)
-        assertFalse(File(folder.root, "sessions/empty.summary").exists())
-    }
-
-    @Test
-    fun `only the newest few set-aside sessions are kept`() {
-        val store = store()
-        repeat(13) { i ->
-            store.record(SessionBuilder(ActivityKind.RUN).apply { stand(5) }.build("empty-$i"))
-            store.setAside("empty-$i")
-        }
-
-        assertEquals(10, File(folder.root, "sessions/set-aside").listFiles()!!.size)
-        assertTrue(store.ids().isEmpty())
-    }
-
-    @Test
     fun `deleting a session removes everything about it`() {
         val store = store()
         val recorded = session { run(10.0, 30) }

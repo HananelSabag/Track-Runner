@@ -75,11 +75,7 @@ sealed interface SprintTestOutcome {
             }
     }
 
-    /**
-     * No measurement. [reached] is the fastest speed the readings do support — a held
-     * speed where there was one — so the runner can be told how far short it fell.
-     */
-    data class Rejected(val reason: SprintRejection, val reached: Speed = Speed.ZERO) : SprintTestOutcome
+    data class Rejected(val reason: SprintRejection) : SprintTestOutcome
 
     companion object {
         const val HIGH_CONFIDENCE = 80
@@ -123,12 +119,12 @@ object SprintTestAnalyzer {
         config: SprintTestConfig = SprintTestConfig(),
         satellites: List<SatelliteView> = emptyList(),
     ): SprintTestOutcome {
-        val steady = withoutIsolatedJumps(samples)
-        val steadyMax = steady.maxOrNull() ?: 0.0
-        if (samples.size < MIN_SAMPLES) return SprintTestOutcome.Rejected(SprintRejection.NOT_ENOUGH_DATA, Speed(steadyMax))
+        if (samples.size < MIN_SAMPLES) return SprintTestOutcome.Rejected(SprintRejection.NOT_ENOUGH_DATA)
 
+        val steady = withoutIsolatedJumps(samples)
+        val steadyMax = steady.max()
         if (steadyMax > config.maxHumanSpeed.metersPerSecond) {
-            return SprintTestOutcome.Rejected(SprintRejection.TOO_FAST_FOR_A_RUNNER, Speed(steadyMax))
+            return SprintTestOutcome.Rejected(SprintRejection.TOO_FAST_FOR_A_RUNNER)
         }
 
         val window = bestHoldWindow(samples, steady, config.holdWindowMs)
@@ -136,10 +132,9 @@ object SprintTestAnalyzer {
                 // Fast readings exist but never close enough together to form a window: a data problem.
                 // No fast readings at all: simply no sprint.
                 if (steadyMax >= config.minTopSpeed.metersPerSecond) SprintRejection.NOT_ENOUGH_DATA else SprintRejection.NO_SPRINT,
-                Speed(steadyMax),
             )
         val topSpeed = Speed(steady.slice(window).average())
-        if (topSpeed < config.minTopSpeed) return SprintTestOutcome.Rejected(SprintRejection.NO_SPRINT, topSpeed)
+        if (topSpeed < config.minTopSpeed) return SprintTestOutcome.Rejected(SprintRejection.NO_SPRINT)
 
         val windowSamples = samples.slice(window)
         val fastPhase = fastPhaseAround(steady, window, topSpeed.metersPerSecond * config.fastPhaseFraction)

@@ -39,16 +39,12 @@ class SprintLog(context: Context) {
         Log.i(TAG, outcome.toLogLine(fixes.size))
     }
 
-    /**
-     * The tests that produced a measurement, newest first. Attempts that did not —
-     * a walk, a lost signal — stay in the log for diagnosis but are not tests anyone
-     * wants to look back on. A row that cannot be read is skipped rather than failing the list.
-     */
+    /** Every saved test, newest first. A row that cannot be read is skipped rather than failing the list. */
     fun readResults(): List<SavedSprint> {
         val file = File(directory, "results.csv")
         if (!file.exists()) return emptyList()
         return try {
-            file.readLines().drop(1).mapNotNull(::parseRow).filter { it.topSpeedKmh != null }.sortedByDescending { it.startedUtcMs }
+            file.readLines().drop(1).mapNotNull(::parseRow).sortedByDescending { it.startedUtcMs }
         } catch (e: IOException) {
             Log.w(TAG, "Could not read sprint log", e)
             emptyList()

@@ -232,22 +232,11 @@ private fun FinishedScreen(finished: RecordingUiState.Finished, onDone: () -> Un
             }
             item {
                 Text(
-                    text = stringResource(
-                        if (finished.notSaved == NotSaved.NO_GPS) R.string.summary_nothing_no_gps else R.string.summary_nothing_no_movement,
-                    ),
+                    text = stringResource(R.string.summary_nothing_text),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                    modifier = edgeMorphing(spec),
-                )
-            }
-            item {
-                Text(
-                    text = stringResource(R.string.not_completed_not_saved),
-                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                    modifier = edgeMorphing(spec).padding(bottom = 6.dp),
+                    modifier = edgeMorphing(spec).padding(bottom = 8.dp),
                 )
             }
             item {

@@ -56,17 +56,16 @@
     <string name="issue_spike">דגימה אחת קפצה, כנראה רעש</string>
     <string name="issue_distance_mismatch">המרחק שנמדד לא תואם למהירות</string>
 
-    <string name="not_completed_title">המבחן לא הושלם</string>
-    <string name="not_completed_reached">המהירות שהגעת אליה</string>
-    <string name="not_completed_too_slow">ספרינט מתחיל מ-%1$d קמ״ש. רוץ בכל הכוח.</string>
-    <string name="not_completed_no_movement">לא זוהתה ריצה. צא לדרך מיד אחרי הרטט הארוך.</string>
-    <string name="not_completed_signal_lost">ה-GPS איבד את האות בזמן הריצה. נסה במקום פתוח יותר.</string>
-    <string name="not_completed_too_fast">מהר יותר ממה שאדם רץ. המבחן לא מתאים לנסיעה או לרכיבה.</string>
-    <string name="not_completed_not_saved">לא נשמר</string>
+    <string name="rejected_no_sprint_title">לא זוהה ספרינט</string>
+    <string name="rejected_no_sprint_text">לא הגעת למהירות ספרינט.</string>
+    <string name="rejected_no_data_title">אין מספיק נתוני GPS</string>
+    <string name="rejected_no_data_text">האות נפל במהלך הריצה.</string>
+    <string name="rejected_too_fast_title">זו לא הייתה ריצה</string>
+    <string name="rejected_too_fast_text">המהירות גבוהה ממה שאדם יכול לרוץ.</string>
 
     <!-- Saved sprint tests -->
     <string name="home_sprint_history">מבחנים שמורים</string>
-    <string name="history_empty">עוד אין מבחנים. כל מבחן שנתן תוצאה נשמר אוטומטית.</string>
+    <string name="history_empty">עוד אין מבחנים. כל מבחן נשמר אוטומטית.</string>
     <string name="history_not_measured">לא נמדד</string>
 
     <!-- Device check: the plain-language verdict -->
@@ -167,9 +166,8 @@
     <string name="summary_cut_off">ההקלטה נקטעה ושוחזרה.</string>
     <string name="summary_synced">סונכרן לטלפון</string>
     <string name="summary_pending">ממתין לטלפון</string>
-    <string name="summary_nothing_title">האימון לא הושלם</string>
-    <string name="summary_nothing_no_gps">ה-GPS לא מדד מהירות בכלל. נסה במקום פתוח יותר.</string>
-    <string name="summary_nothing_no_movement">לא זוהתה תנועה.</string>
+    <string name="summary_nothing_title">לא נשמר אימון</string>
+    <string name="summary_nothing_text">ה-GPS לא מדד מהירות בכלל.</string>
     <string name="summary_done">סיום</string>
     <string name="history_sessions_empty">עוד אין אימונים.</string>
 

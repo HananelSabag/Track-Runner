@@ -44,7 +44,6 @@ import com.hananel.fast.core.tracking.sprint.AcquisitionStage
 import com.hananel.fast.core.tracking.sprint.GnssAcquisition
 import com.hananel.fast.core.tracking.sprint.SprintIssue
 import com.hananel.fast.core.tracking.sprint.SprintRejection
-import com.hananel.fast.core.tracking.sprint.SprintTestConfig
 import com.hananel.fast.core.tracking.sprint.SprintTestOutcome
 import com.hananel.fast.wear.R
 import com.hananel.fast.wear.theme.FastColors
@@ -57,7 +56,6 @@ import com.hananel.fast.wear.ui.edgeMorphing
 import com.hananel.fast.wear.ui.formatKmh
 import com.hananel.fast.wear.ui.withSideMargins
 import java.util.Locale
-import kotlin.math.roundToInt
 
 @Composable
 fun SprintTestRoute(viewModel: SprintTestViewModel = viewModel()) {
@@ -249,7 +247,7 @@ private fun RunningScreen(state: SprintUiState.Running, onStop: () -> Unit) {
 private fun ResultScreen(outcome: SprintTestOutcome, onRetry: () -> Unit) {
     when (outcome) {
         is SprintTestOutcome.Measured -> MeasuredScreen(outcome, onRetry)
-        is SprintTestOutcome.Rejected -> NotCompletedScreen(outcome, onRetry)
+        is SprintTestOutcome.Rejected -> RejectedScreen(outcome.reason, onRetry)
     }
 }
 
@@ -343,29 +341,15 @@ private fun MeasuredScreen(result: SprintTestOutcome.Measured, onRetry: () -> Un
     }
 }
 
-/**
- * The test ended without a measurement. The screen says so in one line, says what
- * was seen instead — how fast the runner actually got — and makes plain that
- * nothing was saved, so there is no empty entry to wonder about later.
- */
 @Composable
-private fun NotCompletedScreen(outcome: SprintTestOutcome.Rejected, onRetry: () -> Unit) {
+private fun RejectedScreen(reason: SprintRejection, onRetry: () -> Unit) {
     val listState = rememberTransformingLazyColumnState()
     val spec = rememberTransformationSpec()
-    val reached = outcome.reached
-    val minimum = SprintTestConfig().minTopSpeed
-    val explanation = when (outcome.reason) {
-        SprintRejection.NO_SPRINT ->
-            if (reached < BARELY_MOVED) {
-                stringResource(R.string.not_completed_no_movement)
-            } else {
-                stringResource(R.string.not_completed_too_slow, minimum.kmh.roundToInt())
-            }
-        SprintRejection.NOT_ENOUGH_DATA -> stringResource(R.string.not_completed_signal_lost)
-        SprintRejection.TOO_FAST_FOR_A_RUNNER -> stringResource(R.string.not_completed_too_fast)
+    val (title, text) = when (reason) {
+        SprintRejection.NO_SPRINT -> R.string.rejected_no_sprint_title to R.string.rejected_no_sprint_text
+        SprintRejection.NOT_ENOUGH_DATA -> R.string.rejected_no_data_title to R.string.rejected_no_data_text
+        SprintRejection.TOO_FAST_FOR_A_RUNNER -> R.string.rejected_too_fast_title to R.string.rejected_too_fast_text
     }
-    // The speed is the feedback, except when the problem was that there was no usable speed.
-    val showReached = outcome.reason != SprintRejection.NOT_ENOUGH_DATA && reached >= BARELY_MOVED
 
     ScreenScaffold(scrollState = listState) { contentPadding ->
         TransformingLazyColumn(state = listState, contentPadding = contentPadding.withSideMargins()) {
@@ -373,53 +357,21 @@ private fun NotCompletedScreen(outcome: SprintTestOutcome.Rejected, onRetry: () 
                 ListHeader(
                     modifier = Modifier.fillMaxWidth().transformedHeight(this, spec),
                     transformation = SurfaceTransformation(spec),
-                ) { Text(stringResource(R.string.not_completed_title), textAlign = TextAlign.Center) }
-            }
-            if (showReached) {
-                item(key = "reached") {
-                    Column(modifier = edgeMorphing(spec), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = stringResource(R.string.not_completed_reached),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        // Plain, not in the brand gradient: this is not a result.
-                        HeroNumber(reached.formatKmh(), fontSize = 48, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(
-                            text = stringResource(R.string.unit_kmh),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
+                ) { Text(stringResource(title), textAlign = TextAlign.Center) }
             }
             item {
                 Text(
-                    text = explanation,
+                    text = stringResource(text),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                    modifier = edgeMorphing(spec).padding(top = 4.dp),
-                )
-            }
-            item {
-                Text(
-                    text = stringResource(R.string.not_completed_not_saved),
-                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                    modifier = edgeMorphing(spec).padding(bottom = 6.dp),
+                    modifier = edgeMorphing(spec).padding(bottom = 8.dp),
                 )
             }
             item { RetryButton(onRetry, prominent = true, modifier = Modifier.fillMaxWidth().transformedHeight(this, spec), transformation = SurfaceTransformation(spec)) }
         }
     }
 }
-
-/** Under this the runner did not really set off, and "you reached 1.1 km/h" would be noise. */
-private val BARELY_MOVED = Speed.ofKmh(3.0)
 
 @Composable
 private fun RetryButton(onRetry: () -> Unit, prominent: Boolean, modifier: Modifier, transformation: SurfaceTransformation) {
@@ -478,10 +430,4 @@ private fun MeasuredLowPreview() {
             onRetry = {},
         )
     }
-}
-
-@WearPreviewDevices
-@Composable
-private fun NotCompletedPreview() {
-    FastTheme { NotCompletedScreen(SprintTestOutcome.Rejected(SprintRejection.NO_SPRINT, Speed.ofKmh(8.4)), onRetry = {}) }
 }

@@ -58,17 +58,16 @@
     <string name="issue_spike">One reading jumped, likely a glitch</string>
     <string name="issue_distance_mismatch">Distance covered does not match the speed</string>
 
-    <string name="not_completed_title">Test not completed</string>
-    <string name="not_completed_reached">You reached</string>
-    <string name="not_completed_too_slow">A sprint starts at %1$d km/h. Run flat out.</string>
-    <string name="not_completed_no_movement">No running detected. Set off right after the long buzz.</string>
-    <string name="not_completed_signal_lost">The GPS lost the signal during the run. Try somewhere more open.</string>
-    <string name="not_completed_too_fast">Faster than a person runs. The test is not for driving or cycling.</string>
-    <string name="not_completed_not_saved">Not saved</string>
+    <string name="rejected_no_sprint_title">No sprint detected</string>
+    <string name="rejected_no_sprint_text">You did not reach sprinting speed.</string>
+    <string name="rejected_no_data_title">Not enough GPS data</string>
+    <string name="rejected_no_data_text">The signal dropped during the run.</string>
+    <string name="rejected_too_fast_title">That was not running</string>
+    <string name="rejected_too_fast_text">The speed is beyond what a person can run.</string>
 
     <!-- Saved sprint tests -->
     <string name="home_sprint_history">Saved tests</string>
-    <string name="history_empty">No tests yet. Every test that gives a result is saved automatically.</string>
+    <string name="history_empty">No tests yet. Every test is saved automatically.</string>
     <string name="history_not_measured">Not measured</string>
 
     <!-- Device check: the plain-language verdict -->
@@ -168,9 +167,8 @@
     <string name="summary_cut_off">The recording was cut off and recovered.</string>
     <string name="summary_synced">Synced to phone</string>
     <string name="summary_pending">Waiting for phone</string>
-    <string name="summary_nothing_title">Session not completed</string>
-    <string name="summary_nothing_no_gps">The GPS never measured a speed. Try somewhere more open.</string>
-    <string name="summary_nothing_no_movement">No movement was detected.</string>
+    <string name="summary_nothing_title">Nothing saved</string>
+    <string name="summary_nothing_text">The GPS never measured a speed.</string>
     <string name="summary_done">Done</string>
     <string name="history_sessions_empty">No sessions yet.</string>
 

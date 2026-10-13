@@ -169,36 +169,6 @@ class SprintTestAnalyzerTest {
         assertTrue("confidence was ${result.confidence}", result.level != ConfidenceLevel.HIGH)
     }
 
-    // --- A test with no result still tells the runner what happened
-
-    @Test
-    fun aWalkIsRefusedButSaysHowFastItGot() {
-        // The first "sprints" on the real watch were brisk walks like this one.
-        val outcome = SprintTestAnalyzer.analyze(
-            sprint { speeds(3.2, 4.5, 5.6, 6.7, 7.2, 7.8, 8.3, 8.3, 8.7, 8.2, 8.3, 8.0, 7.2, 6.9, 6.5, 5.9, 5.6, 5.2) },
-        ) as Rejected
-
-        assertEquals(SprintRejection.NO_SPRINT, outcome.reason)
-        // The best two seconds, not the single fastest reading.
-        assertEquals(8.4, outcome.reached.kmh, 0.15)
-    }
-
-    @Test
-    fun standingStillIsRefusedWithNothingReached() {
-        val outcome = SprintTestAnalyzer.analyze(sprint { hold(0.0, 15) }) as Rejected
-
-        assertEquals(SprintRejection.NO_SPRINT, outcome.reason)
-        assertEquals(0.0, outcome.reached.kmh, 0.0)
-    }
-
-    @Test
-    fun aDriveIsRefusedAndTheSpeedThatGaveItAwayIsKept() {
-        val outcome = SprintTestAnalyzer.analyze(sprint { hold(60.0, 10) }) as Rejected
-
-        assertEquals(SprintRejection.TOO_FAST_FOR_A_RUNNER, outcome.reason)
-        assertEquals(60.0, outcome.reached.kmh, 0.01)
-    }
-
     // --- A receiver that fills in its accuracy without measuring it (the real watch)
 
     // Satellite counts the watch logged: under open sky, and on a balcony.
