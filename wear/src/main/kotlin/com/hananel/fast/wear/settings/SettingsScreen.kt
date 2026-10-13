@@ -2,24 +2,34 @@ package com.hananel.fast.wear.settings
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
+import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.FilledTonalButton
+import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.ListHeader
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.SurfaceTransformation
+import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
@@ -29,12 +39,13 @@ import com.hananel.fast.wear.record.AgeScreen
 import com.hananel.fast.wear.record.DEFAULT_AGE
 import com.hananel.fast.wear.sync.SyncEngine
 import com.hananel.fast.wear.theme.FastColors
+import com.hananel.fast.wear.ui.FastIcons
 import com.hananel.fast.wear.ui.edgeMorphing
 import com.hananel.fast.wear.ui.formatKmh
 import com.hananel.fast.wear.ui.withSideMargins
 
 @Composable
-fun SettingsRoute(onEditAge: () -> Unit) {
+fun SettingsRoute(onEditAge: () -> Unit, onAbout: () -> Unit) {
     val context = LocalContext.current.applicationContext
     val settings = remember { WearData.settings(context) }
     val pending by SyncEngine.pendingCount.collectAsStateWithLifecycle()
@@ -45,6 +56,7 @@ fun SettingsRoute(onEditAge: () -> Unit) {
     val age = settings.ageYears
     val maxBpm = settings.maxBpm
     val topSpeed = settings.topSpeed
+    var keepScreenOn by remember { mutableStateOf(settings.keepScreenOn) }
 
     ScreenScaffold(scrollState = listState) { contentPadding ->
         TransformingLazyColumn(state = listState, contentPadding = contentPadding.withSideMargins()) {
@@ -53,6 +65,19 @@ fun SettingsRoute(onEditAge: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().transformedHeight(this, spec),
                     transformation = SurfaceTransformation(spec),
                 ) { Text(stringResource(R.string.home_settings)) }
+            }
+            item {
+                SwitchButton(
+                    checked = keepScreenOn,
+                    onCheckedChange = {
+                        keepScreenOn = it
+                        settings.keepScreenOn = it
+                    },
+                    label = { Text(stringResource(R.string.settings_screen_on)) },
+                    secondaryLabel = { Text(stringResource(R.string.settings_screen_on_hint)) },
+                    modifier = Modifier.fillMaxWidth().transformedHeight(this, spec),
+                    transformation = SurfaceTransformation(spec),
+                )
             }
             item {
                 FilledTonalButton(
@@ -92,7 +117,7 @@ fun SettingsRoute(onEditAge: () -> Unit) {
                     style = MaterialTheme.typography.labelMedium,
                     color = if (pending == 0) FastColors.Mint else MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center,
-                    modifier = edgeMorphing(spec).padding(top = 4.dp),
+                    modifier = edgeMorphing(spec).padding(top = 4.dp, bottom = 4.dp),
                 )
             }
             if (pending > 0) {
@@ -104,6 +129,83 @@ fun SettingsRoute(onEditAge: () -> Unit) {
                         transformation = SurfaceTransformation(spec),
                     )
                 }
+            }
+            item {
+                FilledTonalButton(
+                    onClick = onAbout,
+                    icon = {
+                        Icon(
+                            imageVector = FastIcons.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(ButtonDefaults.IconSize),
+                        )
+                    },
+                    label = { Text(stringResource(R.string.settings_about)) },
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
+                    modifier = Modifier.fillMaxWidth().transformedHeight(this, spec),
+                    transformation = SurfaceTransformation(spec),
+                )
+            }
+        }
+    }
+}
+
+/** Which build is on the wrist, and the way to the hardware report. */
+@Composable
+fun AboutRoute(onDeviceCheck: () -> Unit) {
+    val context = LocalContext.current
+    val version = remember { context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty() }
+    val listState = rememberTransformingLazyColumnState()
+    val spec = rememberTransformationSpec()
+
+    ScreenScaffold(scrollState = listState) { contentPadding ->
+        TransformingLazyColumn(state = listState, contentPadding = contentPadding.withSideMargins()) {
+            item {
+                ListHeader(
+                    modifier = Modifier.fillMaxWidth().transformedHeight(this, spec),
+                    transformation = SurfaceTransformation(spec),
+                ) {
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Black,
+                            fontStyle = FontStyle.Italic,
+                            brush = Brush.horizontalGradient(listOf(FastColors.Cyan, FastColors.Electric, FastColors.Violet)),
+                        ),
+                    )
+                }
+            }
+            item {
+                Text(
+                    text = stringResource(R.string.about_tagline),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier = edgeMorphing(spec),
+                )
+            }
+            item {
+                Text(
+                    text = stringResource(R.string.home_version, version),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = edgeMorphing(spec).padding(top = 2.dp, bottom = 6.dp),
+                )
+            }
+            item {
+                FilledTonalButton(
+                    onClick = onDeviceCheck,
+                    label = { Text(stringResource(R.string.home_device_check)) },
+                    secondaryLabel = { Text(stringResource(R.string.about_device_check_hint)) },
+                    modifier = Modifier.fillMaxWidth().transformedHeight(this, spec),
+                    transformation = SurfaceTransformation(spec),
+                )
             }
         }
     }

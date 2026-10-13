@@ -77,6 +77,15 @@ class Settings(private val preferences: SharedPreferences) {
             if (value != null) putFloat(KEY_TOP_SPEED, value.metersPerSecond.toFloat()) else remove(KEY_TOP_SPEED)
         }.apply()
 
+    /**
+     * Whether the display stays lit while something is being measured. On by default:
+     * the watch otherwise darkens after five seconds, and a speed nobody can see
+     * mid-run is half the point lost. It costs battery, which is why it can be turned off.
+     */
+    var keepScreenOn: Boolean
+        get() = preferences.getBoolean(KEY_KEEP_SCREEN_ON, true)
+        set(value) = preferences.edit().putBoolean(KEY_KEEP_SCREEN_ON, value).apply()
+
     val maxBpm: Int? get() = ageYears?.let(HeartRateZones::estimateMaxBpm)
 
     private companion object {
@@ -84,5 +93,6 @@ class Settings(private val preferences: SharedPreferences) {
         const val KEY_AGE_ASKED = "ageAsked"
         const val KEY_SENSORS_ASKED = "sensorsAsked"
         const val KEY_TOP_SPEED = "topSpeedMps"
+        const val KEY_KEEP_SCREEN_ON = "keepScreenOn"
     }
 }

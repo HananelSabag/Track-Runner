@@ -4,6 +4,10 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,8 +17,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -39,8 +45,8 @@ import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import com.hananel.fast.core.model.Speed
-import com.hananel.fast.core.tracking.sprint.ConfidenceLevel
 import com.hananel.fast.core.tracking.sprint.AcquisitionStage
+import com.hananel.fast.core.tracking.sprint.ConfidenceLevel
 import com.hananel.fast.core.tracking.sprint.GnssAcquisition
 import com.hananel.fast.core.tracking.sprint.SprintIssue
 import com.hananel.fast.core.tracking.sprint.SprintRejection
@@ -52,8 +58,12 @@ import com.hananel.fast.wear.ui.DetailRow
 import com.hananel.fast.wear.ui.GnssStatus
 import com.hananel.fast.wear.ui.HeroNumber
 import com.hananel.fast.wear.ui.KeepScreenOn
+import com.hananel.fast.wear.ui.SpeedGauge
 import com.hananel.fast.wear.ui.edgeMorphing
 import com.hananel.fast.wear.ui.formatKmh
+import com.hananel.fast.wear.ui.rememberCountUp
+import com.hananel.fast.wear.ui.rememberKeepScreenOnSetting
+import com.hananel.fast.wear.ui.stageTransition
 import com.hananel.fast.wear.ui.withSideMargins
 import java.util.Locale
 
@@ -72,23 +82,31 @@ fun SprintTestRoute(viewModel: SprintTestViewModel = viewModel()) {
             PackageManager.PERMISSION_GRANTED
         if (alreadyGranted) viewModel.onPermissionResult(true)
     }
-    // Best effort only: the watch still turns the display off when the wrist drops, which
-    // is why the test itself runs in SprintService and not in this screen.
-    KeepScreenOn()
+    // Best effort only: a palm over the screen still turns it off, which is why the test
+    // itself runs in SprintService and not in this screen.
+    KeepScreenOn(rememberKeepScreenOnSetting())
 
-    when (val current = state) {
-        is SprintUiState.NeedsPermission ->
-            PermissionScreen(
-                onAllow = {
-                    permissionRequest.launch(
-                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS),
-                    )
-                },
-            )
-        is SprintUiState.Locating -> ReadyScreen(current.acquisition, current.searchingForMs, onStart = viewModel::start)
-        is SprintUiState.Countdown -> CountdownScreen(current.secondsLeft)
-        is SprintUiState.Running -> RunningScreen(current, onStop = viewModel::stop)
-        is SprintUiState.Result -> ResultScreen(current.outcome, onRetry = viewModel::retry)
+    // One stage gives way to the next; a stage that only updates its numbers does not re-enter.
+    AnimatedContent(
+        targetState = state,
+        contentKey = { it::class },
+        transitionSpec = { stageTransition() },
+        label = "speed test stage",
+    ) { current ->
+        when (current) {
+            is SprintUiState.NeedsPermission ->
+                PermissionScreen(
+                    onAllow = {
+                        permissionRequest.launch(
+                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS),
+                        )
+                    },
+                )
+            is SprintUiState.Locating -> ReadyScreen(current.acquisition, current.searchingForMs, onStart = viewModel::start)
+            is SprintUiState.Countdown -> CountdownScreen(current.secondsLeft)
+            is SprintUiState.Running -> RunningScreen(current, onStop = viewModel::stop)
+            is SprintUiState.Result -> ResultScreen(current.outcome, onRetry = viewModel::retry)
+        }
     }
 }
 
@@ -207,13 +225,37 @@ private fun CountdownScreen(secondsLeft: Int) {
             text = secondsLeft.toString(),
             style = MaterialTheme.typography.displayLarge.copy(fontSize = 110.sp, fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.landing(key = secondsLeft),
         )
     }
 }
 
+/**
+ * Arrives large and settles, once for each new [key]: a beat of the countdown,
+ * or the word that starts the run, lands with the tap on the wrist.
+ */
+@Composable
+private fun Modifier.landing(key: Any): Modifier {
+    val scale = remember { Animatable(1f) }
+    LaunchedEffect(key) {
+        scale.snapTo(LANDING_FROM_SCALE)
+        scale.animateTo(1f, tween(LANDING_MS, easing = FastOutSlowInEasing))
+    }
+    return graphicsLayer {
+        scaleX = scale.value
+        scaleY = scale.value
+        // Fully solid by the time it is half way down.
+        alpha = ((1f - (scale.value - 1f) / (LANDING_FROM_SCALE - 1f)) * 2f).coerceIn(0f, 1f)
+    }
+}
+
+private const val LANDING_FROM_SCALE = 1.45f
+private const val LANDING_MS = 320
+
 @Composable
 private fun RunningScreen(state: SprintUiState.Running, onStop: () -> Unit) {
     Box(Modifier.fillMaxSize()) {
+        if (state.started) SpeedGauge(speed = state.speed, peak = state.peak, color = FastColors.Cyan)
         Column(
             modifier = Modifier.align(Alignment.Center).padding(bottom = 22.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -231,6 +273,7 @@ private fun RunningScreen(state: SprintUiState.Running, onStop: () -> Unit) {
                     text = stringResource(R.string.sprint_run),
                     style = MaterialTheme.typography.displayLarge.copy(fontSize = 64.sp, fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.landing(key = Unit),
                 )
             }
         }
@@ -278,7 +321,7 @@ private fun MeasuredScreen(result: SprintTestOutcome.Measured, onRetry: () -> Un
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    HeroNumber(result.topSpeed.formatKmh(), fontSize = 64, gradient = !isLow)
+                    HeroNumber(rememberCountUp(result.topSpeed).formatKmh(), fontSize = 64, gradient = !isLow)
                     Text(
                         text = result.uncertainty
                             ?.let { stringResource(R.string.value_plus_minus_kmh, it.formatKmh()) }

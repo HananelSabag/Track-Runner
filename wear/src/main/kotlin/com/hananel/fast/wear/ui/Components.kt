@@ -1,5 +1,7 @@
 package com.hananel.fast.wear.ui
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -16,7 +18,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -31,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import com.hananel.fast.core.model.Speed
 import com.hananel.fast.core.tracking.sprint.AcquisitionStage
 import com.hananel.fast.core.tracking.sprint.GnssAcquisition
 import com.hananel.fast.wear.R
@@ -57,6 +62,18 @@ fun HeroNumber(text: String, fontSize: Int, gradient: Boolean = false, color: Co
         maxLines = 1,
         softWrap = false,
     )
+}
+
+/**
+ * A result that runs up to its value when it appears. The number an effort was
+ * made for deserves an entrance; a row in a list does not, so this is for the
+ * hero of a result screen only.
+ */
+@Composable
+fun rememberCountUp(target: Speed): Speed {
+    val shown = remember { Animatable(0f) }
+    LaunchedEffect(target) { shown.animateTo(target.kmh.toFloat(), tween(COUNT_UP_MS, easing = FastOutSlowInEasing)) }
+    return Speed.ofKmh(shown.value.toDouble())
 }
 
 @Composable
@@ -193,3 +210,4 @@ fun formatMeters(meters: Double): String =
     }
 
 private const val SIGNAL_BAR_COUNT = 4
+private const val COUNT_UP_MS = 900

@@ -3,6 +3,7 @@ package com.hananel.fast.wear.record
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -47,7 +48,11 @@ import com.hananel.fast.wear.history.SessionSummaryScreen
 import com.hananel.fast.wear.theme.FastTheme
 import com.hananel.fast.wear.ui.GnssStatus
 import com.hananel.fast.wear.ui.HeroNumber
+import com.hananel.fast.wear.ui.KeepScreenOn
 import com.hananel.fast.wear.ui.edgeMorphing
+import com.hananel.fast.wear.ui.rememberKeepScreenOnSetting
+import com.hananel.fast.wear.ui.stageTransition
+import com.hananel.fast.wear.ui.titleRes
 import com.hananel.fast.wear.ui.withSideMargins
 
 /** @param onDone called when the player leaves the summary, to go back where they came from. */
@@ -60,32 +65,43 @@ fun RecordRoute(kind: ActivityKind, onDone: () -> Unit, viewModel: RecordViewMod
         viewModel.onPermissionResult(results[Manifest.permission.ACCESS_FINE_LOCATION] == true)
     }
     LaunchedEffect(kind) { viewModel.enter(kind) }
+    // Lit only while something is being recorded: a GPS search can take minutes and needs no audience.
+    val measuring = (state as? RecordScreenState.Session)?.state is RecordingUiState.Recording
+    KeepScreenOn(measuring && rememberKeepScreenOnSetting())
 
-    when (val current = state) {
-        is RecordScreenState.NeedsPermission ->
-            PermissionScreen(
-                kind = kind,
-                denied = current.denied,
-                onAllow = {
-                    permissionRequest.launch(
-                        arrayOf(
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.BODY_SENSORS,
-                            Manifest.permission.POST_NOTIFICATIONS,
-                        ),
-                    )
-                },
-            )
-        RecordScreenState.AskAge -> AgeScreen(initialAge = DEFAULT_AGE, onConfirm = viewModel::onAge, onSkip = { viewModel.onAge(null) })
-        is RecordScreenState.Session -> when (val session = current.state) {
-            is RecordingUiState.Locating -> ReadyScreen(session.kind, session.acquisition, session.searchingForMs, onStart = viewModel::start)
-            is RecordingUiState.Recording -> LiveScreen(session.kind, session.live, onFinish = viewModel::finish)
-            is RecordingUiState.Finished ->
-                FinishedScreen(session, onDone = {
-                    viewModel.dismiss()
-                    onDone()
-                })
-            RecordingUiState.Idle -> Unit
+    AnimatedContent(
+        targetState = state,
+        // A stage that only updates its numbers must not re-enter: the key is the stage, not its contents.
+        contentKey = { (it as? RecordScreenState.Session)?.state?.let { session -> session::class } ?: it::class },
+        transitionSpec = { stageTransition() },
+        label = "recording stage",
+    ) { current ->
+        when (current) {
+            is RecordScreenState.NeedsPermission ->
+                PermissionScreen(
+                    kind = kind,
+                    denied = current.denied,
+                    onAllow = {
+                        permissionRequest.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.BODY_SENSORS,
+                                Manifest.permission.POST_NOTIFICATIONS,
+                            ),
+                        )
+                    },
+                )
+            RecordScreenState.AskAge -> AgeScreen(initialAge = DEFAULT_AGE, onConfirm = viewModel::onAge, onSkip = { viewModel.onAge(null) })
+            is RecordScreenState.Session -> when (val session = current.state) {
+                is RecordingUiState.Locating -> ReadyScreen(session.kind, session.acquisition, session.searchingForMs, onStart = viewModel::start)
+                is RecordingUiState.Recording -> LiveScreen(session.kind, session.live, onFinish = viewModel::finish)
+                is RecordingUiState.Finished ->
+                    FinishedScreen(session, onDone = {
+                        viewModel.dismiss()
+                        onDone()
+                    })
+                RecordingUiState.Idle -> Unit
+            }
         }
     }
 }
@@ -249,12 +265,6 @@ private fun FinishedScreen(finished: RecordingUiState.Finished, onDone: () -> Un
             }
         }
     }
-}
-
-internal fun ActivityKind.titleRes(): Int = when (this) {
-    ActivityKind.RUN -> R.string.mode_run
-    ActivityKind.FOOTBALL -> R.string.mode_football
-    ActivityKind.SPRINT_TEST -> R.string.home_sprint_title
 }
 
 const val DEFAULT_AGE = 30

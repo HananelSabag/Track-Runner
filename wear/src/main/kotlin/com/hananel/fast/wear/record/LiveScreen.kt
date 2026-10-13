@@ -2,6 +2,8 @@ package com.hananel.fast.wear.record
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -63,6 +65,7 @@ import com.hananel.fast.wear.R
 import com.hananel.fast.wear.theme.FastColors
 import com.hananel.fast.wear.theme.FastTheme
 import com.hananel.fast.wear.ui.HeroNumber
+import com.hananel.fast.wear.ui.SpeedGauge
 import com.hananel.fast.wear.ui.formatClock
 import com.hananel.fast.wear.ui.formatKmh
 import com.hananel.fast.wear.ui.formatMeters
@@ -339,34 +342,6 @@ private fun HeartRateLine(text: String, color: Color) {
     }
 }
 
-/**
- * A 270° dial around the edge of the screen: the fill is the current speed and
- * the rose mark is the fastest of the session.
- */
-@Composable
-private fun SpeedGauge(speed: Speed, peak: Speed, color: Color, full: Boolean = false) {
-    val track = MaterialTheme.colorScheme.surfaceContainerHigh
-    val peakColor = FastColors.Rose
-    // The dial grows with the player: it always has room above the session's peak.
-    val scaleKmh = maxOf(GAUGE_MIN_SCALE_KMH, (peak.kmh / 5).toInt() * 5 + 5.0)
-
-    Canvas(Modifier.fillMaxSize().padding(4.dp)) {
-        val stroke = 6.dp.toPx()
-        val topLeft = Offset(stroke / 2, stroke / 2)
-        val arcSize = Size(size.width - stroke, size.height - stroke)
-        fun arc(arcColor: Color, start: Float, sweep: Float, width: Float = stroke) =
-            drawArc(arcColor, start, sweep, useCenter = false, topLeft = topLeft, size = arcSize, style = Stroke(width, cap = StrokeCap.Round))
-
-        arc(track, GAUGE_START, GAUGE_SWEEP)
-        val fraction = if (full) 1f else (speed.kmh / scaleKmh).toFloat().coerceIn(0f, 1f)
-        if (fraction > 0f) arc(color, GAUGE_START, GAUGE_SWEEP * fraction)
-        if (peak.kmh > 0) {
-            val at = GAUGE_START + GAUGE_SWEEP * (peak.kmh / scaleKmh).toFloat().coerceIn(0f, 1f)
-            arc(peakColor, at - 1f, 2f, width = stroke * 1.9f)
-        }
-    }
-}
-
 /** Five segments, slow to fast, the current one lit. Speed reads left to right in every language. */
 @Composable
 private fun ZoneBar(current: SpeedZone, modifier: Modifier = Modifier) {
@@ -374,12 +349,9 @@ private fun ZoneBar(current: SpeedZone, modifier: Modifier = Modifier) {
         Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
             for (zone in SpeedZone.entries) {
                 val lit = zone == current
-                Box(
-                    Modifier
-                        .width(if (lit) 26.dp else 18.dp)
-                        .height(5.dp)
-                        .background(zone.color().copy(alpha = if (lit) 1f else 0.3f), RoundedCornerShape(3.dp)),
-                )
+                val width by animateDpAsState(if (lit) 26.dp else 18.dp, tween(ZONE_SHIFT_MS), label = "zone width")
+                val alpha by animateFloatAsState(if (lit) 1f else 0.3f, tween(ZONE_SHIFT_MS), label = "zone light")
+                Box(Modifier.width(width).height(5.dp).background(zone.color().copy(alpha = alpha), RoundedCornerShape(3.dp)))
             }
         }
     }
@@ -411,9 +383,7 @@ private fun Intensity.color(): Color = when (this) {
     Intensity.HIGH -> FastColors.Rose
 }
 
-private const val GAUGE_START = 135f
-private const val GAUGE_SWEEP = 270f
-private const val GAUGE_MIN_SCALE_KMH = 30.0
+private const val ZONE_SHIFT_MS = 250
 private const val SPRINT_RECAP_MS = 7_000L
 private const val HOLD_TO_FINISH_MS = 1_200
 

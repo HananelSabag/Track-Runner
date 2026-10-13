@@ -143,6 +143,8 @@ object SprintSession {
 
     /** Switches the receiver off and abandons whatever was in progress. */
     fun close() {
+        // Leaving in the middle of a run still counts as a test: what was measured is scored and kept like any other.
+        if (phase == Phase.RUNNING) finish()
         if (listening != null) tools?.acquisitionLog?.record("search stopped after ${searchSeconds()}s at stage $loggedStage")
         listening?.cancel()
         listening = null

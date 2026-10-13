@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Home -->
-    <string name="home_sprint_title">מבחן ספרינט</string>
-    <string name="home_sprint_subtitle">כמה אתה מהיר?</string>
+    <string name="home_sprint_title">בדיקת מהירות</string>
+    <string name="home_sprint_subtitle">מהירות השיא שלך</string>
     <string name="home_device_check">בדיקת מכשיר</string>
     <string name="home_version">גרסה %1$s</string>
 
@@ -29,8 +29,8 @@
     <string name="sprint_instruction_ground">משטח ישר, מישורי ופתוח</string>
     <string name="sprint_instruction_one">ספרינט אחד ארוך</string>
     <string name="sprint_instruction_hold">החזק מהירות שיא 3 שניות</string>
-    <string name="notification_channel">מבחן ספרינט</string>
-    <string name="notification_text">מבחן ספרינט פעיל</string>
+    <string name="notification_channel">בדיקת מהירות</string>
+    <string name="notification_text">בדיקת מהירות פעילה</string>
     <string name="sprint_start">התחל</string>
 
     <!-- Sprint test: during the run -->
@@ -63,9 +63,6 @@
     <string name="rejected_too_fast_title">זו לא הייתה ריצה</string>
     <string name="rejected_too_fast_text">המהירות גבוהה ממה שאדם יכול לרוץ.</string>
 
-    <!-- Saved sprint tests -->
-    <string name="home_sprint_history">מבחנים שמורים</string>
-    <string name="history_empty">עוד אין מבחנים. כל מבחן נשמר אוטומטית.</string>
     <string name="history_not_measured">לא נמדד</string>
 
     <!-- Device check: the plain-language verdict -->
@@ -85,7 +82,7 @@
     <string name="compat_on">פועלים</string>
     <string name="compat_location_off">כבויים. להפעיל בהגדרות</string>
     <string name="compat_granted">ניתנה</string>
-    <string name="compat_permission_pending">תתבקש במבחן הראשון</string>
+    <string name="compat_permission_pending">תתבקש בבדיקה הראשונה</string>
     <string name="compat_available">זמינים</string>
     <string name="compat_unavailable">לא זמינים</string>
     <string name="compat_motion_fast">100 דגימות בשנייה</string>
@@ -104,7 +101,7 @@
     <string name="home_run_subtitle">מהירות, שיא ומרחק</string>
     <string name="home_recording">אימון מוקלט</string>
     <string name="home_recording_back">חזרה לאימון</string>
-    <string name="home_history">אימונים</string>
+    <string name="home_history">היסטוריה</string>
     <string name="home_settings">הגדרות</string>
     <string name="recording_channel">אימון</string>
 
@@ -169,7 +166,7 @@
     <string name="summary_nothing_title">לא נשמר אימון</string>
     <string name="summary_nothing_text">ה-GPS לא מדד מהירות בכלל.</string>
     <string name="summary_done">סיום</string>
-    <string name="history_sessions_empty">עוד אין אימונים.</string>
+    <string name="history_sessions_empty">עוד אין כאן כלום. כל בדיקה וכל אימון נשמרים לבד.</string>
 
     <!-- Settings -->
     <string name="settings_age">גיל</string>
@@ -184,4 +181,9 @@
         <item quantity="two">%1$d אימונים ממתינים לטלפון</item>
         <item quantity="other">%1$d אימונים ממתינים לטלפון</item>
     </plurals>
+    <string name="settings_screen_on">מסך דולק</string>
+    <string name="settings_screen_on_hint">בזמן מדידה</string>
+    <string name="settings_about">אודות</string>
+    <string name="about_tagline">כמה אתה מהיר?</string>
+    <string name="about_device_check_hint">מה השעון הזה יודע למדוד</string>
 </resources>

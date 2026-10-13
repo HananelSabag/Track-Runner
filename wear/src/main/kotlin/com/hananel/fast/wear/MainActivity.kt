@@ -22,9 +22,9 @@ import com.hananel.fast.wear.home.HomeScreen
 import com.hananel.fast.wear.record.RecordRoute
 import com.hananel.fast.wear.record.RecordingSession
 import com.hananel.fast.wear.record.RecordingUiState
+import com.hananel.fast.wear.settings.AboutRoute
 import com.hananel.fast.wear.settings.EditAgeRoute
 import com.hananel.fast.wear.settings.SettingsRoute
-import com.hananel.fast.wear.sprint.SprintHistoryRoute
 import com.hananel.fast.wear.sprint.SprintTestRoute
 import com.hananel.fast.wear.sync.SyncEngine
 import com.hananel.fast.wear.theme.FastTheme
@@ -72,11 +72,9 @@ private fun FastWearApp() {
                     actions = HomeActions(
                         onRecord = { navController.navigate(Route.record(it)) },
                         onResume = { recordingKind?.let { navController.navigate(Route.record(it)) } },
-                        onSprintTest = { navController.navigate(Route.SPRINT_TEST) },
+                        onSpeedTest = { navController.navigate(Route.SPRINT_TEST) },
                         onHistory = { navController.navigate(Route.HISTORY) },
-                        onSprintHistory = { navController.navigate(Route.SPRINT_HISTORY) },
                         onSettings = { navController.navigate(Route.SETTINGS) },
-                        onDeviceCheck = { navController.navigate(Route.DEVICE_CHECK) },
                     ),
                 )
             }
@@ -89,8 +87,13 @@ private fun FastWearApp() {
             composable(Route.HISTORY) { HistoryRoute(onOpen = { navController.navigate(Route.session(it)) }) }
             composable(Route.SESSION) { entry -> SessionDetailRoute(entry.arguments?.getString(Route.ARG_ID).orEmpty()) }
             composable(Route.SPRINT_TEST) { SprintTestRoute() }
-            composable(Route.SPRINT_HISTORY) { SprintHistoryRoute() }
-            composable(Route.SETTINGS) { SettingsRoute(onEditAge = { navController.navigate(Route.EDIT_AGE) }) }
+            composable(Route.SETTINGS) {
+                SettingsRoute(
+                    onEditAge = { navController.navigate(Route.EDIT_AGE) },
+                    onAbout = { navController.navigate(Route.ABOUT) },
+                )
+            }
+            composable(Route.ABOUT) { AboutRoute(onDeviceCheck = { navController.navigate(Route.DEVICE_CHECK) }) }
             composable(Route.EDIT_AGE) { EditAgeRoute(onDone = { navController.popBackStack() }) }
             composable(Route.DEVICE_CHECK) { DeviceCheckRoute() }
         }
@@ -106,9 +109,9 @@ private object Route {
     const val HISTORY = "history"
     const val SESSION = "session/{$ARG_ID}"
     const val SPRINT_TEST = "sprint-test"
-    const val SPRINT_HISTORY = "sprint-history"
     const val SETTINGS = "settings"
     const val EDIT_AGE = "settings/age"
+    const val ABOUT = "settings/about"
     const val DEVICE_CHECK = "device-check"
 
     fun record(kind: ActivityKind) = "record/${kind.name}"
