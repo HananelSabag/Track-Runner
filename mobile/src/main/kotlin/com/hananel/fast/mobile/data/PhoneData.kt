@@ -2,6 +2,7 @@ package com.hananel.fast.mobile.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.hananel.fast.core.data.ActivityKind
 import com.hananel.fast.core.data.AnalysisContext
 import com.hananel.fast.core.data.SessionInsight
 import com.hananel.fast.core.data.SessionInsights
@@ -82,7 +83,13 @@ object PhoneData {
         val settings = settings(context)
         val snapshot = SessionLibrary(store(context)).load(settings.maxBpm, settings.lastTopSpeed)
         settings.lastTopSpeed = snapshot.topSpeed
-        return Library(snapshot.summaries, snapshot.topSpeed, snapshot.context)
+        // A sprint test that gave no measurement, or a training in which nobody moved, is not
+        // something to look back on. The watch no longer sends them; any that arrived from an
+        // earlier version stay on disk, unlisted.
+        val listed = snapshot.summaries.filter {
+            if (it.kind == ActivityKind.SPRINT_TEST) it.confidence != null else it.showsMovement
+        }
+        return Library(listed, snapshot.topSpeed, snapshot.context)
     }
 }
 

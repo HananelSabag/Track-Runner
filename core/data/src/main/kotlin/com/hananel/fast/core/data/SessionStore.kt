@@ -19,6 +19,7 @@ import java.util.zip.GZIPOutputStream
  * | `<id>.fast` | a finished session: the raw records, never changed again |
  * | `<id>.summary` | its one-line summary — a cache, safe to delete |
  * | `<id>.synced` | proof the phone has confirmed it holds this session |
+ * | `set-aside/` | the last few recordings in which nothing happened, kept for diagnosis only |
  *
  * The raw file is the only thing that matters. The same class runs on the
  * watch and on the phone, so a session means the same thing on both.
@@ -72,6 +73,22 @@ class SessionStore(private val directory: File) {
         sessionFile(id).delete()
         summaryFile(id).delete()
         syncedFile(id).delete()
+    }
+
+    /**
+     * Takes a session out of the history without destroying it, for a recording in
+     * which nothing happened. It is no longer listed or synced, but the raw file stays
+     * in a side folder: if "nothing happened" was really the GPS failing, the file is
+     * the only evidence of how. Only the newest few are kept.
+     */
+    fun setAside(id: String) {
+        val file = sessionFile(id)
+        if (!file.isFile) return
+        val aside = File(directory, ASIDE_DIRECTORY).apply { mkdirs() }
+        if (!file.renameTo(File(aside, file.name))) file.delete()
+        summaryFile(id).delete()
+        syncedFile(id).delete()
+        aside.listFiles().orEmpty().sortedByDescending { it.lastModified() }.drop(ASIDE_KEPT).forEach { it.delete() }
     }
 
     // ---- Transfer ----
@@ -216,6 +233,8 @@ class SessionStore(private val directory: File) {
         const val PART_SUFFIX = ".fast.part"
         const val IMPORT_SUFFIX = ".incoming"
         const val SYNCED_SUFFIX = ".synced"
+        const val ASIDE_DIRECTORY = "set-aside"
+        const val ASIDE_KEPT = 10
         val SAFE_ID = Regex("[A-Za-z0-9-]{1,64}")
     }
 }

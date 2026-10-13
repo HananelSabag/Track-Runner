@@ -64,7 +64,17 @@ data class SessionSummary(
     val confidence: Int?,
     val endedCleanly: Boolean,
     val demo: Boolean,
-)
+) {
+    /**
+     * False when nobody went anywhere: the recording was started and the watch never
+     * saw even three seconds at walking pace. Such a session is empty — an accidental
+     * start, or a watch left on a bench — and is kept out of every list.
+     *
+     * A walk counts as movement. The bar is only high enough to clear the speed a
+     * receiver reports while standing still, which on the real watch stayed near 1 km/h.
+     */
+    val showsMovement: Boolean get() = peak3s >= SessionInsights.BARELY_MOVED
+}
 
 object SessionInsights {
 
@@ -74,6 +84,9 @@ object SessionInsights {
      * apply until a real top speed is on record.
      */
     val MIN_PERSONAL_TOP_SPEED: Speed = Speed.ofKmh(18.0)
+
+    /** Under this, held for three seconds, nothing was measured but the receiver's own noise. */
+    val BARELY_MOVED: Speed = Speed.ofKmh(3.0)
 
     fun profileFor(kind: ActivityKind, topSpeed: Speed?): ActivityProfile = when (kind) {
         ActivityKind.FOOTBALL -> ActivityProfile.football(topSpeed?.takeIf { it >= MIN_PERSONAL_TOP_SPEED })

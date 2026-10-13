@@ -55,8 +55,9 @@ fun HistoryRoute(onOpen: (String) -> Unit) {
         value = withContext(Dispatchers.IO) {
             val store = WearData.store(context)
             WearData.loadLibrary(context).summaries
-                // Sprint tests have their own list, with their confidence scores.
-                .filter { it.kind != ActivityKind.SPRINT_TEST }
+                // Sprint tests have their own list, with their confidence scores. A recording in
+                // which nobody moved is not a training; one left by an earlier version is not listed.
+                .filter { it.kind != ActivityKind.SPRINT_TEST && it.showsMovement }
                 .map { HistoryEntry(it, store.isSynced(it.id)) }
         }
     }

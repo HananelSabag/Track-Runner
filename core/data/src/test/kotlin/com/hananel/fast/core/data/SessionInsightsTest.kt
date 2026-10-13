@@ -104,6 +104,21 @@ class SessionInsightsTest {
     }
 
     @Test
+    fun `standing still is an empty session, a walk is not`() {
+        // What the real watch reports while standing: a trickle of speed, never three seconds of it.
+        val stood = SessionInsights.summarize(
+            SessionInsights.of(session(ActivityKind.RUN) { repeat(20) { second(0.4); second(1.1); second(0.2) } }),
+        )
+        val walked = SessionInsights.summarize(SessionInsights.of(session(ActivityKind.RUN) { run(4.5, 60) }))
+        val tooShort = SessionInsights.summarize(SessionInsights.of(session(ActivityKind.RUN) { run(10.0, 2) }))
+
+        assertTrue(!stood.showsMovement)
+        assertTrue(walked.showsMovement)
+        // Two seconds are not a session, whatever the speed.
+        assertTrue(!tooShort.showsMovement)
+    }
+
+    @Test
     fun `a jog is not a top speed`() {
         val jog = SessionInsights.summarize(SessionInsights.of(session { run(11.0, 300) }))
 

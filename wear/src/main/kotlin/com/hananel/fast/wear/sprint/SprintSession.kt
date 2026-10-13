@@ -254,9 +254,16 @@ object SprintSession {
         phase = Phase.RESULT
         idleSinceMs = SystemClock.elapsedRealtime()
         val outcome = SprintTestAnalyzer.analyze(runSamples.toList(), satellites = runSatellites.map { it.view })
+        // Every attempt goes into the log, for working out later why one failed. Only an
+        // attempt that produced a measurement becomes a saved test: an entry with no number
+        // in it is clutter, on the watch and on the phone alike.
         tools.sprintLog.save(goUtcMs, runFixes.toList(), outcome)
-        saveForSync(tools.context)
-        tools.haptics.done()
+        if (outcome is SprintTestOutcome.Measured) {
+            saveForSync(tools.context)
+            tools.haptics.done()
+        } else {
+            tools.haptics.notCompleted()
+        }
         releaseWakeLock()
         _state.value = SprintUiState.Result(outcome)
     }

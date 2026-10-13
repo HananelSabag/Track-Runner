@@ -53,10 +53,24 @@ sealed interface RecordingUiState {
     data class Recording(val kind: ActivityKind, val live: LiveState, val signalBars: Int) : RecordingUiState
 
     /**
-     * [summary] is null when the session produced no speed at all and so was not kept.
+     * [summary] is null when there was no training to keep, and [notSaved] says why.
      * [autoEnded] is true when the watch gave up on a session nobody finished.
      */
-    data class Finished(val kind: ActivityKind, val summary: SessionSummary?, val autoEnded: Boolean) : RecordingUiState
+    data class Finished(
+        val kind: ActivityKind,
+        val summary: SessionSummary?,
+        val autoEnded: Boolean,
+        val notSaved: NotSaved? = null,
+    ) : RecordingUiState
+}
+
+/** Why a recording did not become a training. */
+enum class NotSaved {
+    /** The receiver never produced a speed. */
+    NO_GPS,
+
+    /** There were speeds, and none of them was movement: nobody went anywhere. */
+    NO_MOVEMENT,
 }
 
 /**
@@ -370,13 +384,15 @@ object RecordingSession {
             writing?.join()
             val summary = withContext(disk) {
                 try {
-                    if (hasSpeed) {
-                        writer.finish(endMs, trimAfterMs)
-                        // Rereads the library so this session can raise the top speed that sets the bands.
-                        WearData.loadLibrary(tools.context).summaries.firstOrNull { it.id == header.id }
+                    writer.finish(endMs, trimAfterMs)
+                    // Rereads the library so this session can raise the top speed that sets the bands.
+                    val recorded = WearData.loadLibrary(tools.context).summaries.firstOrNull { it.id == header.id }
+                    if (recorded?.showsMovement == true) {
+                        recorded
                     } else {
-                        // Not one speed reading: there is no training here to keep.
-                        writer.discard()
+                        // Nobody went anywhere, or the GPS never spoke. An empty entry in the history
+                        // helps nobody; the raw file is put aside in case the cause needs finding.
+                        WearData.store(tools.context).setAside(header.id)
                         null
                     }
                 } catch (e: IOException) {
@@ -385,9 +401,15 @@ object RecordingSession {
                 }
             }
             if (tools.wakeLock.isHeld) tools.wakeLock.release()
-            tools.haptics.done()
+            // Two different endings, told apart on the wrist: a saved training, or nothing to save.
+            if (summary != null) tools.haptics.done() else tools.haptics.notCompleted()
             phase = Phase.FINISHED
-            _state.value = RecordingUiState.Finished(kind, summary, autoEnded)
+            val notSaved = when {
+                summary != null -> null
+                hasSpeed -> NotSaved.NO_MOVEMENT
+                else -> NotSaved.NO_GPS
+            }
+            _state.value = RecordingUiState.Finished(kind, summary, autoEnded, notSaved)
             SyncEngine.syncPending(tools.context)
             onFinished?.invoke()
         }

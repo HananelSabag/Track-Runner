@@ -21,6 +21,9 @@ class Haptics(context: Context) {
     /** It is over and a result is on screen. */
     fun done() = play(VibrationEffect.createWaveform(DONE_PATTERN, NO_REPEAT))
 
+    /** It is over and there is no result. One long, flat buzz: nothing like the two taps of a result. */
+    fun notCompleted() = play(VibrationEffect.createOneShot(NOT_COMPLETED_MS, SOFT_AMPLITUDE))
+
     /** The player is moving again after a rest: the watch is counting work. */
     fun workStarted() = play(VibrationEffect.createWaveform(WORK_PATTERN, NO_REPEAT))
 
@@ -41,6 +44,7 @@ class Haptics(context: Context) {
         const val TICK_MS = 70L
         const val GO_MS = 450L
         const val SPRINT_MS = 140L
+        const val NOT_COMPLETED_MS = 600L
         const val SOFT_AMPLITUDE = 90
         val READY_PATTERN = longArrayOf(0, 60, 90, 60)
         val DONE_PATTERN = longArrayOf(0, 120, 110, 120)
