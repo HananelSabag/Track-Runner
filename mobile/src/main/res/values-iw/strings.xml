@@ -140,4 +140,29 @@
     <string name="demo_explain">רק בגרסת פיתוח. אימונים מומצאים לבדיקת האפליקציה; הם לא נספרים למהירות השיא ברגע שיש אימונים אמיתיים.</string>
     <string name="demo_load">טען אימוני דוגמה</string>
     <string name="demo_remove">הסר אותם</string>
+
+    <!-- Reference measurement: the phone's GPS recorded next to the watch's -->
+    <string name="reference_title">מדידה מהטלפון</string>
+    <string name="reference_subtitle">להקליט את ה-GPS של הטלפון לצד השעון, כדי להשוות ביניהם</string>
+    <string name="reference_notification">מודד עם ה-GPS של הטלפון</string>
+    <string name="reference_what_title">כלי בדיקה</string>
+    <string name="reference_what_text">מקליט את ה-GPS של הטלפון עצמו, בקצב הכי גבוה שהוא נותן, כדי שאותה ריצה תימדד פעמיים: בשעון ובטלפון. ההקלטות לא מופיעות בהיסטוריה.</string>
+    <string name="reference_step_1">1. צא החוצה ולחץ כאן \"התחל\". חכה שתופיע מהירות.</string>
+    <string name="reference_step_2">2. התחל \"ריצה\" בשעון.</string>
+    <string name="reference_step_3">3. הטלפון ביד או בכיס צמוד. רוץ.</string>
+    <string name="reference_step_4">4. סיים בשעון, ואז לחץ כאן \"עצור\".</string>
+    <string name="reference_start">התחל</string>
+    <string name="reference_stop">עצור</string>
+    <string name="reference_recording">מודד</string>
+    <string name="reference_waiting">מחכה ל-GPS…</string>
+    <string name="reference_fixes">דגימות</string>
+    <string name="reference_rate">קצב</string>
+    <string name="reference_per_second">בשנייה</string>
+    <string name="reference_duration">משך</string>
+    <string name="reference_speed_accuracy">דיוק מהירות</string>
+    <string name="reference_position_accuracy">דיוק מיקום</string>
+    <string name="reference_satellites">לוויינים בשימוש</string>
+    <string name="reference_saved_title">נשמר</string>
+    <string name="reference_saved_count">מדידות בטלפון הזה: %1$d</string>
+    <string name="reference_permission_denied">בלי הרשאת מיקום הטלפון לא יכול למדוד. אפשר לאשר בהגדרות הטלפון.</string>
 </resources>

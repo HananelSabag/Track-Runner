@@ -15,6 +15,10 @@ import com.hananel.fast.core.data.SessionInsights
 import com.hananel.fast.core.data.SessionSummary
 import com.hananel.fast.core.data.SessionWriter
 import com.hananel.fast.core.data.TrackAssembler
+import com.hananel.fast.core.gnss.GnssFix
+import com.hananel.fast.core.gnss.gnssFixes
+import com.hananel.fast.core.gnss.satelliteViews
+import com.hananel.fast.core.gnss.toRecord
 import com.hananel.fast.core.model.Speed
 import com.hananel.fast.core.tracking.ActivityProfile
 import com.hananel.fast.core.tracking.HeartRateZones
@@ -23,11 +27,7 @@ import com.hananel.fast.core.tracking.live.LiveAnalyzer
 import com.hananel.fast.core.tracking.live.LiveState
 import com.hananel.fast.core.tracking.sprint.GnssAcquisition
 import com.hananel.fast.wear.data.WearData
-import com.hananel.fast.wear.data.toRecord
 import com.hananel.fast.wear.gnss.AcquisitionTracker
-import com.hananel.fast.wear.gnss.GnssFix
-import com.hananel.fast.wear.gnss.gnssFixes
-import com.hananel.fast.wear.gnss.satelliteViews
 import com.hananel.fast.wear.sensors.heartRates
 import com.hananel.fast.wear.sync.SyncEngine
 import com.hananel.fast.wear.ui.Haptics

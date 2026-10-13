@@ -140,4 +140,29 @@
     <string name="demo_explain">Debug builds only. Made-up sessions for trying the app; they do not count towards your top speed once you have real ones.</string>
     <string name="demo_load">Load demo sessions</string>
     <string name="demo_remove">Remove them</string>
+
+    <!-- Reference measurement: the phone's GPS recorded next to the watch's -->
+    <string name="reference_title">Measure with the phone</string>
+    <string name="reference_subtitle">Record the phone\'s GPS next to the watch\'s, to compare them</string>
+    <string name="reference_notification">Measuring with the phone\'s GPS</string>
+    <string name="reference_what_title">A test tool</string>
+    <string name="reference_what_text">Records this phone\'s own GPS, as fast as it delivers, so the same run can be measured twice: by the watch and by the phone. The recordings do not appear in the history.</string>
+    <string name="reference_step_1">1. Go outside and press Start here. Wait for a speed to appear.</string>
+    <string name="reference_step_2">2. Start a Run on the watch.</string>
+    <string name="reference_step_3">3. Phone in your hand or a tight pocket. Run.</string>
+    <string name="reference_step_4">4. Finish on the watch, then press Stop here.</string>
+    <string name="reference_start">Start</string>
+    <string name="reference_stop">Stop</string>
+    <string name="reference_recording">Measuring</string>
+    <string name="reference_waiting">Waiting for GPS…</string>
+    <string name="reference_fixes">Fixes</string>
+    <string name="reference_rate">Rate</string>
+    <string name="reference_per_second">per second</string>
+    <string name="reference_duration">Duration</string>
+    <string name="reference_speed_accuracy">Speed accuracy</string>
+    <string name="reference_position_accuracy">Position accuracy</string>
+    <string name="reference_satellites">Satellites in use</string>
+    <string name="reference_saved_title">Saved</string>
+    <string name="reference_saved_count">Measurements on this phone: %1$d</string>
+    <string name="reference_permission_denied">Without the location permission the phone cannot measure. You can allow it in the phone\'s settings.</string>
 </resources>

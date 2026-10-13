@@ -28,6 +28,7 @@ import com.hananel.fast.mobile.data.PhoneData
 import com.hananel.fast.mobile.demo.DemoSessions
 import com.hananel.fast.mobile.devicecheck.DeviceCheckRoute
 import com.hananel.fast.mobile.home.HomeScreen
+import com.hananel.fast.mobile.reference.ReferenceScreen
 import com.hananel.fast.mobile.replay.ReplayRoute
 import com.hananel.fast.mobile.session.SessionRoute
 import com.hananel.fast.mobile.settings.SettingsScreen
@@ -64,7 +65,7 @@ class MainActivity : ComponentActivity() {
 /**
  * Five screens and a back stack. Routes are plain strings so the stack survives
  * the activity being recreated: "home", "session/<id>", "replay/<id>", "settings",
- * "device-check".
+ * "device-check", "reference".
  */
 @Composable
 private fun FastApp() {
@@ -106,7 +107,14 @@ private fun FastApp() {
                     SessionRoute(id, onBack = ::back, onReplay = { open(REPLAY + id) })
                 }
                 route.startsWith(REPLAY) -> ReplayRoute(route.removePrefix(REPLAY), onBack = ::back)
-                route == SETTINGS -> SettingsScreen(library, watch, onBack = ::back, onDeviceCheck = { open(DEVICE_CHECK) })
+                route == SETTINGS -> SettingsScreen(
+                    library = library,
+                    watch = watch,
+                    onBack = ::back,
+                    onDeviceCheck = { open(DEVICE_CHECK) },
+                    onReference = { open(REFERENCE) },
+                )
+                route == REFERENCE -> ReferenceScreen(onBack = ::back)
                 route == DEVICE_CHECK -> DeviceCheckRoute()
             }
         }
@@ -118,3 +126,4 @@ private const val SESSION = "session/"
 private const val REPLAY = "replay/"
 private const val SETTINGS = "settings"
 private const val DEVICE_CHECK = "device-check"
+private const val REFERENCE = "reference"

@@ -4,13 +4,11 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
 import com.hananel.fast.core.data.ActivityKind
-import com.hananel.fast.core.data.FixRecord
 import com.hananel.fast.core.data.SessionHeader
 import com.hananel.fast.core.data.SessionLibrary
 import com.hananel.fast.core.data.SessionStore
 import com.hananel.fast.core.model.Speed
 import com.hananel.fast.core.tracking.HeartRateZones
-import com.hananel.fast.wear.gnss.GnssFix
 import java.io.File
 import java.util.UUID
 
@@ -88,14 +86,3 @@ class Settings(private val preferences: SharedPreferences) {
         const val KEY_TOP_SPEED = "topSpeedMps"
     }
 }
-
-fun GnssFix.toRecord() = FixRecord(
-    timeMs = sample.timeMs,
-    utcMs = utcMs,
-    hasSpeed = hasSpeed,
-    speed = sample.speed,
-    speedAccuracy = sample.speedAccuracy,
-    position = sample.position,
-    horizontalAccuracyMeters = sample.horizontalAccuracyMeters,
-    bearingDegrees = bearingDegrees,
-)

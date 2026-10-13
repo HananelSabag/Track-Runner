@@ -40,6 +40,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:tracking"))
     implementation(project(":core:data"))
+    implementation(project(":core:gnss"))
     implementation(project(":core:diagnostics"))
 
     implementation(libs.androidx.core.ktx)

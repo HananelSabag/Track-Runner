@@ -1,6 +1,7 @@
 package com.hananel.fast.wear.gnss
 
 import android.os.SystemClock
+import com.hananel.fast.core.gnss.GnssFix
 import com.hananel.fast.core.model.SpeedSample
 import com.hananel.fast.core.tracking.sprint.GnssAcquisition
 import com.hananel.fast.core.tracking.sprint.GnssAcquisitionCheck

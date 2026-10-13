@@ -13,8 +13,8 @@ android {
         applicationId = "com.hananel.fast"
         minSdk = libs.versions.minSdkMobile.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 4
-        versionName = "0.3.1"
+        versionCode = 5
+        versionName = "0.3.2"
     }
 
     buildTypes {
@@ -39,6 +39,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:tracking"))
     implementation(project(":core:data"))
+    implementation(project(":core:gnss"))
     implementation(project(":core:diagnostics"))
 
     implementation(libs.androidx.core.ktx)

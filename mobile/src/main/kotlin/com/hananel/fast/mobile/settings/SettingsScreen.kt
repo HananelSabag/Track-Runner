@@ -51,7 +51,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun SettingsScreen(library: Library?, watch: WatchStatus, onBack: () -> Unit, onDeviceCheck: () -> Unit) {
+fun SettingsScreen(library: Library?, watch: WatchStatus, onBack: () -> Unit, onDeviceCheck: () -> Unit, onReference: () -> Unit) {
     val context = LocalContext.current.applicationContext
     val settings = remember { PhoneData.settings(context) }
     val scope = rememberCoroutineScope()
@@ -147,6 +147,12 @@ fun SettingsScreen(library: Library?, watch: WatchStatus, onBack: () -> Unit, on
                     enabled = !asked,
                     modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
                 ) { Text(stringResource(if (asked) R.string.settings_resync_sent else R.string.settings_resync)) }
+            }
+
+            // A measuring tool, not part of the app proper: the phone's GPS recorded next to the watch's.
+            Card(Modifier.clickable(onClick = onReference)) {
+                Title(stringResource(R.string.reference_title))
+                Body(stringResource(R.string.reference_subtitle))
             }
 
             Card(Modifier.clickable(onClick = onDeviceCheck)) {

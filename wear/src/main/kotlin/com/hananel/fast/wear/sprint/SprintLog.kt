@@ -3,7 +3,7 @@ package com.hananel.fast.wear.sprint
 import android.content.Context
 import android.util.Log
 import com.hananel.fast.core.tracking.sprint.SprintTestOutcome
-import com.hananel.fast.wear.gnss.GnssFix
+import com.hananel.fast.core.gnss.GnssFix
 import java.io.File
 import java.io.IOException
 import java.util.Locale
