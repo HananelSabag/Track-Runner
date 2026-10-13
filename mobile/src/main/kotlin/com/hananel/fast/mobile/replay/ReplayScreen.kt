@@ -1,7 +1,27 @@
 package com.hananel.fast.mobile.replay
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,14 +34,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,14 +58,19 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -53,6 +78,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hananel.fast.core.data.SessionInsight
+import com.hananel.fast.core.model.Speed
 import com.hananel.fast.core.model.TrackPoint
 import com.hananel.fast.core.tracking.Effort
 import com.hananel.fast.core.tracking.EffortKind
@@ -62,16 +88,21 @@ import com.hananel.fast.mobile.data.PhoneData
 import com.hananel.fast.mobile.theme.FastColors
 import com.hananel.fast.mobile.ui.HeartRate
 import com.hananel.fast.mobile.ui.LeftToRight
+import com.hananel.fast.mobile.ui.SlimSlider
 import com.hananel.fast.mobile.ui.TopBar
 import com.hananel.fast.mobile.ui.color
 import com.hananel.fast.mobile.ui.formatClock
 import com.hananel.fast.mobile.ui.formatDateTime
 import com.hananel.fast.mobile.ui.formatKmh
 import com.hananel.fast.mobile.ui.label
+import java.util.Locale
+import kotlin.math.abs
 import kotlin.math.cos
+import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+import kotlin.math.roundToInt
 
 @Composable
 fun ReplayRoute(id: String, onBack: () -> Unit) {
@@ -84,7 +115,7 @@ private enum class ReplayMode { TRACK, HEAT, SPRINTS }
 
 /**
  * The session played back like a film: the track drawn to scale, a dot moving
- * along it in fast-forward, its trail coloured by speed.
+ * along it, its trail coloured by speed.
  *
  * There is no map underneath — nothing is fetched, so nothing about where the
  * player trains leaves the phone. A grid and a scale bar give the size.
@@ -99,9 +130,12 @@ fun ReplayScreen(insight: SessionInsight, onBack: () -> Unit) {
     val totalMs = track.times.lastOrNull()?.toFloat() ?: 0f
 
     var positionMs by rememberSaveable { mutableFloatStateOf(0f) }
-    var playing by rememberSaveable { mutableStateOf(false) }
-    var factor by rememberSaveable { mutableIntStateOf(DEFAULT_FACTOR) }
+    // It opens already moving: a film that has to be started is a still.
+    var playing by rememberSaveable { mutableStateOf(true) }
+    var speedIndex by rememberSaveable { mutableIntStateOf(defaultSpeedIndex(totalMs)) }
+    var speedOpen by rememberSaveable { mutableStateOf(false) }
     var mode by rememberSaveable { mutableStateOf(ReplayMode.TRACK) }
+    val factor = SPEEDS[speedIndex]
 
     LaunchedEffect(playing, factor) {
         if (!playing) return@LaunchedEffect
@@ -118,13 +152,22 @@ fun ReplayScreen(insight: SessionInsight, onBack: () -> Unit) {
         }
     }
 
+    val sprintMarks = remember(efforts, totalMs) {
+        if (totalMs <= 0f) emptyList() else efforts.filter { it.kind == EffortKind.SPRINT }.map { it.startMs / totalMs }
+    }
     val index = track.indexAt(positionMs.toLong())
+    // How far the moment being shown lies between this fix and the next: what lets the dot glide instead of hop.
+    val into = track.fractionAfter(index, positionMs)
     val current = track.points.getOrNull(index)
+    val next = track.points.getOrNull(index + 1)
+    val speed = current?.let { here ->
+        if (next == null || into == 0f) here.speed else Speed(here.speed.metersPerSecond + (next.speed.metersPerSecond - here.speed.metersPerSecond) * into)
+    }
 
     Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
         TopBar(title = stringResource(R.string.replay_title), subtitle = formatDateTime(insight.session.header.startedUtcMs), onBack = onBack)
 
-        Readout(positionMs.toLong(), current, zones)
+        Readout(speed, current?.heartRateBpm, zones)
 
         Box(
             Modifier
@@ -132,47 +175,65 @@ fun ReplayScreen(insight: SessionInsight, onBack: () -> Unit) {
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .clip(RoundedCornerShape(22.dp))
-                .background(FastColors.Pitch),
+                .background(FastColors.Pitch)
+                // The picture itself is the biggest button on the screen.
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { playing = !playing },
         ) {
-            TrackCanvas(track, efforts, index, mode)
+            TrackCanvas(track, efforts, index, into, mode, playing)
+            ModeSwitch(
+                mode = mode,
+                withSprints = efforts.isNotEmpty(),
+                onSelect = { mode = it },
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 10.dp),
+            )
         }
 
         Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilledIconButton(onClick = { playing = !playing }) {
-                    if (playing) PauseIcon() else Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.replay_play))
-                }
-                // Time runs left to right, so the scrubber does too.
-                Box(Modifier.weight(1f)) {
-                    LeftToRight {
-                        Slider(
-                            value = positionMs,
-                            onValueChange = { positionMs = it },
-                            valueRange = 0f..max(totalMs, 1f),
-                        )
-                    }
-                }
-                Text(formatClock(totalMs.toLong()), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                for (option in FACTORS) {
-                    // "×30" has no letters to give it a direction, so it is told: the sign comes first.
-                    FilterChip(selected = factor == option, onClick = { factor = option }, label = { LeftToRight { Text("×$option") } })
-                }
-                Spacer(Modifier.weight(1f))
-                val next = efforts.firstOrNull { it.kind == EffortKind.SPRINT && it.startMs > positionMs + SPRINT_LEAD_IN_MS }
-                if (next != null) {
-                    TextButton(onClick = { positionMs = max(0f, next.startMs - SPRINT_LEAD_IN_MS.toFloat()) }) {
-                        Text(stringResource(R.string.replay_next_sprint))
-                    }
+            // Time runs left to right, so the scrubber and the clocks under it do too.
+            LeftToRight {
+                SlimSlider(
+                    value = positionMs,
+                    onValueChange = { positionMs = it },
+                    valueRange = 0f..max(totalMs, 1f),
+                    modifier = Modifier.fillMaxWidth(),
+                    railHeight = 8.dp,
+                    // Every sprint has its place on the timeline, so it can be found by eye and reached by thumb.
+                    marks = sprintMarks,
+                )
+                Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+                    Text(formatClock(positionMs.toLong()), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(Modifier.weight(1f))
+                    Text(formatClock(totalMs.toLong()), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                FilterChip(selected = mode == ReplayMode.TRACK, onClick = { mode = ReplayMode.TRACK }, label = { Text(stringResource(R.string.replay_mode_track)) })
-                FilterChip(selected = mode == ReplayMode.HEAT, onClick = { mode = ReplayMode.HEAT }, label = { Text(stringResource(R.string.replay_mode_heat)) })
-                if (efforts.isNotEmpty()) {
-                    FilterChip(selected = mode == ReplayMode.SPRINTS, onClick = { mode = ReplayMode.SPRINTS }, label = { Text(stringResource(R.string.replay_mode_sprints)) })
+            Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                    SpeedPill(factor, open = speedOpen, onClick = { speedOpen = !speedOpen })
                 }
+                FilledIconButton(onClick = { playing = !playing }, modifier = Modifier.size(60.dp)) {
+                    AnimatedContent(
+                        targetState = playing,
+                        transitionSpec = { (fadeIn(tween(120)) + scaleIn(tween(160), initialScale = 0.6f)) togetherWith (fadeOut(tween(90)) + scaleOut(tween(90), targetScale = 0.6f)) },
+                        label = "play or pause",
+                    ) { isPlaying ->
+                        if (isPlaying) {
+                            PauseIcon(stringResource(R.string.replay_pause))
+                        } else {
+                            Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.replay_play), modifier = Modifier.size(30.dp))
+                        }
+                    }
+                }
+                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
+                    val nextSprint = efforts.firstOrNull { it.kind == EffortKind.SPRINT && it.startMs > positionMs + SPRINT_LEAD_IN_MS }
+                    if (nextSprint != null) {
+                        TextButton(onClick = { positionMs = max(0f, nextSprint.startMs - SPRINT_LEAD_IN_MS.toFloat()) }) {
+                            Text(stringResource(R.string.replay_next_sprint))
+                        }
+                    }
+                }
+            }
+            AnimatedVisibility(visible = speedOpen, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+                SpeedPanel(speedIndex, totalMs, onChange = { speedIndex = it })
             }
         }
     }
@@ -180,34 +241,144 @@ fun ReplayScreen(insight: SessionInsight, onBack: () -> Unit) {
 
 /** What is happening at the moment being shown. */
 @Composable
-private fun Readout(positionMs: Long, point: TrackPoint?, zones: SpeedZones) {
+private fun Readout(speed: Speed?, heartRateBpm: Int?, zones: SpeedZones) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text(formatClock(positionMs), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (point != null) {
-            val zone = zones.zoneOf(point.speed)
+        if (speed != null) {
+            val zone = zones.zoneOf(speed)
+            val zoneColor by animateColorAsState(zone.color(), tween(200), label = "zone")
             Text(
-                text = stringResource(R.string.value_kmh, point.speed.formatKmh()),
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black),
+                text = stringResource(R.string.value_kmh, speed.formatKmh()),
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Black),
             )
-            Text(zone.label(), style = MaterialTheme.typography.titleMedium, color = zone.color())
+            Text(zone.label(), style = MaterialTheme.typography.titleMedium, color = zoneColor)
             Spacer(Modifier.weight(1f))
-            point.heartRateBpm?.let { HeartRate(it, MaterialTheme.typography.titleMedium) }
+            heartRateBpm?.let { HeartRate(it, MaterialTheme.typography.titleMedium) }
+        }
+    }
+}
+
+/** The three ways to look at the session, floating over the picture they change. */
+@Composable
+private fun ModeSwitch(mode: ReplayMode, withSprints: Boolean, onSelect: (ReplayMode) -> Unit, modifier: Modifier = Modifier) {
+    val options = buildList {
+        add(ReplayMode.TRACK to R.string.replay_mode_track)
+        add(ReplayMode.HEAT to R.string.replay_mode_heat)
+        if (withSprints) add(ReplayMode.SPRINTS to R.string.replay_mode_sprints)
+    }
+    Row(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(FastColors.Navy.copy(alpha = 0.78f))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+            .padding(3.dp),
+    ) {
+        for ((option, label) in options) {
+            val selected = option == mode
+            val fill by animateColorAsState(if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, tween(180), label = "mode")
+            Text(
+                text = stringResource(label),
+                style = MaterialTheme.typography.labelLarge,
+                color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(fill)
+                    .clickable(role = Role.Tab) { onSelect(option) }
+                    .padding(horizontal = 14.dp, vertical = 7.dp),
+            )
+        }
+    }
+}
+
+/** How fast the film runs. Tapping it opens the slider that changes it. */
+@Composable
+private fun SpeedPill(factor: Float, open: Boolean, onClick: () -> Unit) {
+    val turn by animateFloatAsState(if (open) 180f else 0f, tween(200), label = "chevron")
+    Row(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(if (open) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(start = 14.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        // "×30" has no letters to give it a direction, so it is told: the sign comes first.
+        LeftToRight { Text(formatFactor(factor), style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)) }
+        Icon(
+            imageVector = Icons.Filled.KeyboardArrowDown,
+            contentDescription = stringResource(R.string.replay_speed),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp).rotate(turn),
+        )
+    }
+}
+
+/**
+ * One slider from slow motion to the whole session in seconds. The steps grow
+ * as they go, so the same finger movement doubles the speed anywhere along it.
+ */
+@Composable
+private fun SpeedPanel(speedIndex: Int, totalMs: Float, onChange: (Int) -> Unit) {
+    val factor = SPEEDS[speedIndex]
+    Column(
+        Modifier
+            .padding(top = 10.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 10.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.replay_speed), style = MaterialTheme.typography.labelLarge)
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = stringResource(R.string.replay_speed_whole, formatClock((totalMs / factor).toLong())),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        // Slow on the left, fast on the right, in every language.
+        LeftToRight {
+            SlimSlider(
+                value = speedIndex.toFloat(),
+                onValueChange = { onChange(it.roundToInt().coerceIn(0, SPEEDS.lastIndex)) },
+                valueRange = 0f..SPEEDS.lastIndex.toFloat(),
+                steps = SPEEDS.size - 2,
+                railHeight = 5.dp,
+                color = FastColors.Lilac,
+            )
+            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+                Text(formatFactor(SPEEDS.first()), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.weight(1f))
+                Text(formatFactor(SPEEDS.last()), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
     }
 }
 
 @Composable
-private fun TrackCanvas(track: Track, efforts: List<Effort>, index: Int, mode: ReplayMode) {
+private fun TrackCanvas(track: Track, efforts: List<Effort>, index: Int, into: Float, mode: ReplayMode, playing: Boolean) {
     val measurer = rememberTextMeasurer()
     val gridColor = Color.White.copy(alpha = 0.06f)
     val labelStyle = TextStyle(fontSize = 11.sp, color = FastColors.Mist)
     val effortLabel = TextStyle(fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
     val scaleLabel = stringResource(R.string.value_meters_text)
     val heat = remember(track) { HeatMap.of(track) }
+
+    // The picture fades up when the screen opens, and one view dissolves into the next.
+    val reveal = remember { Animatable(0f) }
+    LaunchedEffect(Unit) { reveal.animateTo(1f, tween(REVEAL_MS)) }
+    val trackAlpha by animateFloatAsState(if (mode == ReplayMode.TRACK) 1f else 0f, tween(MODE_FADE_MS), label = "track")
+    val heatAlpha by animateFloatAsState(if (mode == ReplayMode.HEAT) 1f else 0f, tween(MODE_FADE_MS), label = "heat")
+    val sprintsAlpha by animateFloatAsState(if (mode == ReplayMode.SPRINTS) 1f else 0f, tween(MODE_FADE_MS), label = "sprints")
+
+    // While the film runs the dot breathes; paused, it holds still.
+    val breath = rememberInfiniteTransition(label = "dot")
+    val pulse by breath.animateFloat(0f, 1f, infiniteRepeatable(tween(DOT_PULSE_MS), RepeatMode.Reverse), label = "halo")
+    val halo = if (playing) pulse else 0f
 
     // Drawn left to right whatever the language: east stays on the right.
     LeftToRight {
@@ -228,6 +399,8 @@ private fun TrackCanvas(track: Track, efforts: List<Effort>, index: Int, mode: R
             } else {
                 Offset(originX + track.xs[i] * scale, originY - track.ys[i] * scale)
             }
+            // Where the dot is right now: on the way from one fix to the next.
+            val here = if (into > 0f && index + 1 < track.size) at(index) + (at(index + 1) - at(index)) * into else at(index)
 
             // A grid in round metres, so distances can be judged by eye.
             val gridMeters = GRID_STEPS.firstOrNull { it * scale >= 22.dp.toPx() } ?: GRID_STEPS.last()
@@ -242,45 +415,46 @@ private fun TrackCanvas(track: Track, efforts: List<Effort>, index: Int, mode: R
                 gy += gridMeters * scale
             }
 
-            when (mode) {
-                ReplayMode.TRACK -> {
-                    // Where the player has yet to go, barely there; where they have been, dimmed;
-                    // and the last minute and a half bright behind the dot, like the tail of a comet.
-                    drawTrack(track, index, track.size - 1, ::at, width = 2.dp.toPx()) { 0.10f }
-                    val nowMs = track.times[index]
-                    drawTrack(track, 0, index, ::at, width = 3.dp.toPx()) { i ->
-                        val age = nowMs - track.times[i]
-                        if (age >= TRAIL_MS) PAST_ALPHA else PAST_ALPHA + (1f - PAST_ALPHA) * (1f - age.toFloat() / TRAIL_MS)
-                    }
+            layer(trackAlpha * reveal.value) {
+                // Where the player has yet to go, barely there; where they have been, dimmed;
+                // and the last minute and a half bright behind the dot, like the tail of a comet.
+                drawTrack(track, index, track.size - 1, ::at, width = 2.dp.toPx()) { FUTURE_ALPHA }
+                val nowMs = track.times[index]
+                drawTrack(track, 0, index, ::at, width = 3.dp.toPx()) { i ->
+                    val age = nowMs - track.times[i]
+                    if (age >= TRAIL_MS) PAST_ALPHA else PAST_ALPHA + (1f - PAST_ALPHA) * (1f - age.toFloat() / TRAIL_MS)
                 }
-                ReplayMode.HEAT -> heat.draw(this, originX, originY, scale, turned)
-                ReplayMode.SPRINTS -> {
-                    drawTrack(track, 0, track.size - 1, ::at, width = 2.dp.toPx()) { 0.14f }
-                    var number = 0
-                    for (effort in efforts) {
-                        val from = track.indexAt(effort.startMs)
-                        val to = track.indexAt(effort.endMs)
-                        if (to <= from) continue
-                        val color = if (effort.kind == EffortKind.SPRINT) FastColors.Rose else FastColors.Zones[4]
-                        for (i in from until to) {
-                            if (track.times[i + 1] - track.times[i] > GAP_MS) continue
-                            drawLine(color, at(i), at(i + 1), strokeWidth = 4.dp.toPx(), cap = StrokeCap.Round)
-                        }
-                        if (effort.kind == EffortKind.SPRINT) {
-                            number++
-                            drawCircle(FastColors.RoseDeep, radius = 9.dp.toPx(), center = at(from))
-                            val text = measurer.measure(number.toString(), effortLabel)
-                            drawText(text, topLeft = at(from) - Offset(text.size.width / 2f, text.size.height / 2f))
-                        }
+                // The stretch being covered this instant, so the trail reaches the dot.
+                if (here != at(index)) drawLine(track.colors[index + 1], at(index), here, strokeWidth = 3.dp.toPx(), cap = StrokeCap.Round)
+            }
+            layer(heatAlpha * reveal.value) { heat.draw(this, originX, originY, scale, turned) }
+            layer(sprintsAlpha * reveal.value) {
+                drawTrack(track, 0, track.size - 1, ::at, width = 2.dp.toPx()) { 0.14f }
+                var number = 0
+                for (effort in efforts) {
+                    val from = track.indexAt(effort.startMs)
+                    val to = track.indexAt(effort.endMs)
+                    if (to <= from) continue
+                    val color = if (effort.kind == EffortKind.SPRINT) FastColors.Rose else FastColors.Zones[4]
+                    for (i in from until to) {
+                        if (track.times[i + 1] - track.times[i] > GAP_MS) continue
+                        drawLine(color, at(i), at(i + 1), strokeWidth = 4.dp.toPx(), cap = StrokeCap.Round)
+                    }
+                    if (effort.kind == EffortKind.SPRINT) {
+                        number++
+                        drawCircle(FastColors.RoseDeep, radius = 9.dp.toPx(), center = at(from))
+                        val text = measurer.measure(number.toString(), effortLabel)
+                        drawText(text, topLeft = at(from) - Offset(text.size.width / 2f, text.size.height / 2f))
                     }
                 }
             }
 
-            if (mode != ReplayMode.HEAT) {
-                val here = at(index)
-                drawCircle(track.colors[index].copy(alpha = 0.3f), radius = 13.dp.toPx(), center = here)
+            // The heat map is about where, not when: the dot steps aside for it.
+            layer((1f - heatAlpha) * reveal.value) {
+                val color = track.colors[index]
+                drawCircle(color.copy(alpha = 0.30f - 0.18f * halo), radius = (13 + 7 * halo).dp.toPx(), center = here)
                 drawCircle(Color.White, radius = 5.5.dp.toPx(), center = here)
-                drawCircle(track.colors[index], radius = 3.5.dp.toPx(), center = here)
+                drawCircle(color, radius = 3.5.dp.toPx(), center = here)
             }
 
             // Scale bar: the grid's own step, labelled.
@@ -295,6 +469,18 @@ private fun TrackCanvas(track: Track, efforts: List<Effort>, index: Int, mode: R
     }
 }
 
+/** Draws [block] as one sheet at [alpha], so overlapping strokes inside it do not show through each other while it fades. */
+private inline fun DrawScope.layer(alpha: Float, block: DrawScope.() -> Unit) {
+    if (alpha <= 0.01f) return
+    if (alpha >= 0.99f) {
+        block()
+        return
+    }
+    drawIntoCanvas { it.saveLayer(Rect(Offset.Zero, size), Paint().apply { this.alpha = alpha }) }
+    block()
+    drawIntoCanvas { it.restore() }
+}
+
 /**
  * Draws the track from [from] to [to], each step in the colour of its speed and as
  * opaque as [alpha] says for that step. A signal gap is left open.
@@ -307,13 +493,27 @@ private fun DrawScope.drawTrack(track: Track, from: Int, to: Int, at: (Int) -> O
 }
 
 @Composable
-private fun PauseIcon() {
+private fun PauseIcon(description: String) {
     val color = MaterialTheme.colorScheme.onPrimary
-    Canvas(Modifier.size(18.dp)) {
+    Canvas(Modifier.size(20.dp), contentDescription = description) {
         val bar = Size(size.width * 0.28f, size.height)
         drawRect(color, topLeft = Offset(size.width * 0.12f, 0f), size = bar)
         drawRect(color, topLeft = Offset(size.width * 0.60f, 0f), size = bar)
     }
+}
+
+/** "×30", "×0.5": whole numbers bare, slow motion with its fraction. */
+private fun formatFactor(factor: Float): String =
+    if (factor >= 1f) "×" + factor.roundToInt() else "×" + String.format(Locale.US, "%.2f", factor).trimEnd('0')
+
+/**
+ * The speed a session opens at: the one that shows all of it in about
+ * [TARGET_WATCH_MS], and never slower than life. A sprint test opens in real
+ * time, a full match at a couple of hundred times that.
+ */
+private fun defaultSpeedIndex(totalMs: Float): Int {
+    val wanted = (totalMs / TARGET_WATCH_MS).coerceAtLeast(1f)
+    return SPEEDS.indices.minBy { abs(ln(SPEEDS[it] / wanted)) }
 }
 
 /** The positions of a session in metres on a flat plane, east and north of its south-west corner. */
@@ -328,6 +528,17 @@ private class Track(
     val heightMeters: Float,
 ) {
     val size: Int get() = times.size
+
+    /**
+     * How far [timeMs] lies between point [index] and the one after it, 0 to 1.
+     * Zero across a signal gap: nobody knows where the player was in between.
+     */
+    fun fractionAfter(index: Int, timeMs: Float): Float {
+        if (index + 1 >= size) return 0f
+        val span = times[index + 1] - times[index]
+        if (span <= 0 || span > GAP_MS) return 0f
+        return ((timeMs - times[index]) / span).coerceIn(0f, 1f)
+    }
 
     /** The last point at or before [timeMs]. */
     fun indexAt(timeMs: Long): Int {
@@ -442,10 +653,21 @@ private const val GAP_MS = 5_000L
 
 /** How far before a sprint the "next sprint" jump lands, so the run-up is seen too. */
 private const val SPRINT_LEAD_IN_MS = 3_000L
-private const val DEFAULT_FACTOR = 30
 
 /** How much of the session, in its own time, glows behind the moving dot. */
 private const val TRAIL_MS = 90_000L
 private const val PAST_ALPHA = 0.3f
-private val FACTORS = listOf(10, 30, 60, 120)
+private const val FUTURE_ALPHA = 0.16f
+
+/**
+ * Playback speeds, from slow motion to a whole match in seconds. Each is roughly
+ * one and a half times the one before, so the slider feels even along its length.
+ */
+private val SPEEDS = floatArrayOf(0.25f, 0.5f, 1f, 2f, 3f, 5f, 8f, 10f, 15f, 20f, 30f, 45f, 60f, 90f, 120f, 180f, 240f, 360f, 480f, 600f)
+
+/** How long watching a whole session should take at the speed it opens with. */
+private const val TARGET_WATCH_MS = 40_000f
+private const val REVEAL_MS = 450
+private const val MODE_FADE_MS = 260
+private const val DOT_PULSE_MS = 900
 private val GRID_STEPS = listOf(5, 10, 20, 50, 100, 200, 500, 1000)

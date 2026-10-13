@@ -10,7 +10,7 @@
     <!-- Kinds and units -->
     <string name="mode_run">Run</string>
     <string name="mode_football">Football</string>
-    <string name="mode_sprint_test">Sprint test</string>
+    <string name="mode_sprint_test">Speed test</string>
     <string name="unit_kmh">km/h</string>
     <string name="unit_km">km</string>
     <string name="unit_seconds">s</string>
@@ -39,7 +39,7 @@
     <string name="home_top_speed">Your top speed</string>
     <string name="home_top_speed_held">Held for 3 seconds</string>
     <string name="home_top_speed_held_test">Held for 2 seconds</string>
-    <string name="home_top_speed_none">No top speed yet. It appears after your first fast run or sprint test.</string>
+    <string name="home_top_speed_none">No top speed yet. It appears after your first speed test or fast run.</string>
     <string name="home_last_30_days">Last 30 days</string>
     <string name="home_sessions">Sessions</string>
     <string name="week_this">This week</string>
@@ -52,7 +52,7 @@
     <string name="watch_connected">%1$s connected</string>
     <string name="watch_not_connected">Watch not connected</string>
     <string name="empty_title">No sessions yet</string>
-    <string name="empty_text">Start a run, a football session or a sprint test on the watch. It shows up here by itself once the watch and the phone are near each other.</string>
+    <string name="empty_text">Start a speed test, a football training or a run on the watch. They appear here by themselves once the watch and the phone are near each other.</string>
 
     <!-- Session -->
     <string name="stat_top_speed">Top speed</string>
@@ -109,7 +109,7 @@
     <string name="rejected_no_sprint">No sprint detected</string>
     <string name="rejected_no_data">Not enough GPS data</string>
     <string name="rejected_too_fast">That was not a run</string>
-    <string name="sprint_not_measured_text">This test did not produce a top speed.</string>
+    <string name="sprint_not_measured_text">This test produced no top speed.</string>
 
     <!-- Replay -->
     <string name="replay_open">Replay</string>
@@ -135,11 +135,6 @@
     <string name="settings_resync_explain">Sessions arrive by themselves. If something is missing, the watch can be asked to send everything again; nothing is duplicated.</string>
     <string name="settings_resync">Ask the watch for all sessions</string>
     <string name="settings_resync_sent">Asked. Sessions arrive when the watch is in reach.</string>
-    <string name="settings_version">FAST %1$s</string>
-    <string name="demo_title">Demo data</string>
-    <string name="demo_explain">Debug builds only. Made-up sessions for trying the app; they do not count towards your top speed once you have real ones.</string>
-    <string name="demo_load">Load demo sessions</string>
-    <string name="demo_remove">Remove them</string>
 
     <!-- Reference measurement: the phone's GPS recorded next to the watch's -->
     <string name="reference_title">Measure with the phone</string>
@@ -165,4 +160,10 @@
     <string name="reference_saved_title">Saved</string>
     <string name="reference_saved_count">Measurements on this phone: %1$d</string>
     <string name="reference_permission_denied">Without the location permission the phone cannot measure. You can allow it in the phone\'s settings.</string>
+    <string name="replay_pause">Pause</string>
+    <string name="replay_speed">Playback speed</string>
+    <string name="replay_speed_whole">Watch time %1$s</string>
+    <string name="settings_tools">Tools</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_text">Everything stays with you, on the watch and the phone. No account, no cloud, and no location is sent anywhere.</string>
 </resources>

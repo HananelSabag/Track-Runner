@@ -10,30 +10,37 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -154,6 +161,69 @@ fun Dot(color: Color, modifier: Modifier = Modifier) {
 @Composable
 fun LeftToRight(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr, content = content)
+}
+
+/**
+ * A slider with a slim rail and a round handle, in place of Material's heavy one.
+ *
+ * @param marks places along the rail worth pointing at, each 0 to 1 — the sprints
+ *   of a session on its timeline, say. Drawn in [markColor] over the rail.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SlimSlider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    valueRange: ClosedFloatingPointRange<Float>,
+    modifier: Modifier = Modifier,
+    steps: Int = 0,
+    railHeight: Dp = 6.dp,
+    color: Color = MaterialTheme.colorScheme.primary,
+    marks: List<Float> = emptyList(),
+    markColor: Color = FastColors.Rose,
+) {
+    val rail = MaterialTheme.colorScheme.surfaceContainerHighest
+    Slider(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        valueRange = valueRange,
+        steps = steps,
+        thumb = {
+            Box(
+                Modifier
+                    .size(22.dp)
+                    .background(Color.White, CircleShape)
+                    .padding(5.dp)
+                    .background(color, CircleShape),
+            )
+        },
+        track = { state ->
+            Box(contentAlignment = Alignment.Center) {
+                SliderDefaults.Track(
+                    sliderState = state,
+                    modifier = Modifier.height(railHeight),
+                    colors = SliderDefaults.colors(
+                        activeTrackColor = color,
+                        inactiveTrackColor = rail,
+                        // Stops are felt, not seen: a row of dots along the rail would only be noise.
+                        activeTickColor = Color.Transparent,
+                        inactiveTickColor = Color.Transparent,
+                    ),
+                    drawStopIndicator = null,
+                    thumbTrackGapSize = 0.dp,
+                )
+                if (marks.isNotEmpty()) {
+                    Canvas(Modifier.fillMaxWidth().height(railHeight + 8.dp)) {
+                        for (mark in marks) {
+                            val x = size.width * mark.coerceIn(0f, 1f)
+                            drawLine(markColor, Offset(x, 0f), Offset(x, size.height), strokeWidth = 2.dp.toPx(), cap = StrokeCap.Round)
+                        }
+                    }
+                }
+            }
+        },
+    )
 }
 
 /** A heart and a number: heart rate, without spending a word on it. */

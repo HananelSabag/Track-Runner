@@ -9,7 +9,7 @@
     <!-- Kinds and units -->
     <string name="mode_run">ריצה</string>
     <string name="mode_football">כדורגל</string>
-    <string name="mode_sprint_test">מבחן ספרינט</string>
+    <string name="mode_sprint_test">בדיקת מהירות</string>
     <string name="unit_kmh">קמ״ש</string>
     <string name="unit_km">ק״מ</string>
     <string name="unit_seconds">שנ׳</string>
@@ -39,7 +39,7 @@
     <string name="home_top_speed">מהירות השיא שלך</string>
     <string name="home_top_speed_held">הוחזקה 3 שניות</string>
     <string name="home_top_speed_held_test">הוחזקה 2 שניות</string>
-    <string name="home_top_speed_none">עוד אין מהירות שיא. היא תופיע אחרי הריצה המהירה או מבחן הספרינט הראשון.</string>
+    <string name="home_top_speed_none">עוד אין מהירות שיא. היא תופיע אחרי בדיקת המהירות או הריצה המהירה הראשונה.</string>
     <string name="home_last_30_days">30 הימים האחרונים</string>
     <string name="home_sessions">אימונים</string>
     <string name="week_this">השבוע</string>
@@ -52,7 +52,7 @@
     <string name="watch_connected">%1$s מחובר</string>
     <string name="watch_not_connected">השעון לא מחובר</string>
     <string name="empty_title">עוד אין אימונים</string>
-    <string name="empty_text">התחל ריצה, אימון כדורגל או מבחן ספרינט בשעון. הוא יופיע כאן לבד כשהשעון והטלפון יהיו קרובים זה לזה.</string>
+    <string name="empty_text">התחל בדיקת מהירות, אימון כדורגל או ריצה בשעון. הם יופיעו כאן לבד כשהשעון והטלפון יהיו קרובים זה לזה.</string>
 
     <!-- Session -->
     <string name="stat_top_speed">מהירות שיא</string>
@@ -109,7 +109,7 @@
     <string name="rejected_no_sprint">לא זוהה ספרינט</string>
     <string name="rejected_no_data">אין מספיק נתוני GPS</string>
     <string name="rejected_too_fast">זו לא הייתה ריצה</string>
-    <string name="sprint_not_measured_text">המבחן הזה לא הפיק מהירות שיא.</string>
+    <string name="sprint_not_measured_text">הבדיקה הזו לא הפיקה מהירות שיא.</string>
 
     <!-- Replay -->
     <string name="replay_open">שידור חוזר</string>
@@ -135,11 +135,6 @@
     <string name="settings_resync_explain">אימונים מגיעים לבד. אם משהו חסר, אפשר לבקש מהשעון לשלוח הכול שוב; שום דבר לא ישוכפל.</string>
     <string name="settings_resync">בקש מהשעון את כל האימונים</string>
     <string name="settings_resync_sent">התבקש. האימונים יגיעו כשהשעון יהיה בטווח.</string>
-    <string name="settings_version">FAST %1$s</string>
-    <string name="demo_title">נתוני דוגמה</string>
-    <string name="demo_explain">רק בגרסת פיתוח. אימונים מומצאים לבדיקת האפליקציה; הם לא נספרים למהירות השיא ברגע שיש אימונים אמיתיים.</string>
-    <string name="demo_load">טען אימוני דוגמה</string>
-    <string name="demo_remove">הסר אותם</string>
 
     <!-- Reference measurement: the phone's GPS recorded next to the watch's -->
     <string name="reference_title">מדידה מהטלפון</string>
@@ -165,4 +160,10 @@
     <string name="reference_saved_title">נשמר</string>
     <string name="reference_saved_count">מדידות בטלפון הזה: %1$d</string>
     <string name="reference_permission_denied">בלי הרשאת מיקום הטלפון לא יכול למדוד. אפשר לאשר בהגדרות הטלפון.</string>
+    <string name="replay_pause">השהה</string>
+    <string name="replay_speed">מהירות ניגון</string>
+    <string name="replay_speed_whole">משך צפייה %1$s</string>
+    <string name="settings_tools">כלים</string>
+    <string name="settings_about">אודות</string>
+    <string name="settings_about_text">הכול נשאר אצלך, על השעון ועל הטלפון. אין חשבון, אין ענן, ושום מיקום לא נשלח לשום מקום.</string>
 </resources>

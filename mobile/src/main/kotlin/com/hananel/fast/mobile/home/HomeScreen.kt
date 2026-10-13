@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -53,11 +54,14 @@ import com.hananel.fast.mobile.ui.HeroNumber
 import com.hananel.fast.mobile.ui.SectionTitle
 import com.hananel.fast.mobile.ui.StatTile
 import com.hananel.fast.mobile.ui.color
+import com.hananel.fast.mobile.ui.countedUp
 import com.hananel.fast.mobile.ui.formatClock
 import com.hananel.fast.mobile.ui.formatKmh
 import com.hananel.fast.mobile.ui.formatMeters
+import com.hananel.fast.mobile.ui.icon
 import com.hananel.fast.mobile.ui.label
 import com.hananel.fast.mobile.ui.localTime
+import com.hananel.fast.mobile.ui.rememberEntrance
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
@@ -66,9 +70,7 @@ import java.util.Locale
 
 /**
  * The history: personal bests on top, then every run, football session and
- * sprint test in one list, newest first, grouped by week.
- *
- * @param onLoadDemo given only in debug builds, to try the app before the first real session.
+ * speed test in one list, newest first, grouped by week.
  */
 @Composable
 fun HomeScreen(
@@ -76,12 +78,13 @@ fun HomeScreen(
     watch: WatchStatus,
     onOpen: (String) -> Unit,
     onSettings: () -> Unit,
-    onLoadDemo: (() -> Unit)?,
 ) {
     val insets = WindowInsets.safeDrawing.asPaddingValues()
     val direction = LocalLayoutDirection.current
     val summaries = library?.summaries.orEmpty()
     val weeks = remember(summaries) { groupByWeek(summaries) }
+    // Above the list, so the number runs up once and not every time its card scrolls back into view.
+    val entrance = rememberEntrance()
 
     LazyColumn(
         // The top inset is outside the list, so rows scroll away under its edge rather than
@@ -99,16 +102,18 @@ fun HomeScreen(
         if (library == null) return@LazyColumn
 
         if (summaries.isEmpty()) {
-            item(key = "empty") { EmptyState(watch, onLoadDemo) }
+            item(key = "empty") { EmptyState(watch) }
             return@LazyColumn
         }
 
-        item(key = "best") { PersonalBest(library) }
+        item(key = "best") { PersonalBest(library, entrance) }
         item(key = "month") { LastThirtyDays(summaries) }
         item(key = "watch") { WatchLine(watch) }
         for (week in weeks) {
             item(key = "week-${week.start}") { SectionTitle(week.title(), Modifier.padding(top = 6.dp)) }
-            items(week.sessions, key = { it.id }) { summary -> SessionCard(summary, onClick = { onOpen(summary.id) }) }
+            items(week.sessions, key = { it.id }) { summary ->
+                SessionCard(summary, onClick = { onOpen(summary.id) }, modifier = Modifier.animateItem())
+            }
         }
     }
 }
@@ -125,7 +130,7 @@ private fun Header(onSettings: () -> Unit) {
 }
 
 @Composable
-private fun PersonalBest(library: Library) {
+private fun PersonalBest(library: Library, entrance: Float) {
     val topSpeed = library.topSpeed
     // The session that set it, so the number has a date.
     val setBy = remember(library) { SessionInsights.personalBest(library.summaries) }
@@ -144,7 +149,7 @@ private fun PersonalBest(library: Library) {
             return@Card
         }
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            HeroNumber(topSpeed.formatKmh(), fontSize = 64)
+            HeroNumber(topSpeed.countedUp(entrance).formatKmh(), fontSize = 64)
             Text(
                 text = stringResource(R.string.unit_kmh),
                 style = MaterialTheme.typography.titleMedium,
@@ -202,10 +207,10 @@ private fun WatchLine(watch: WatchStatus) {
 }
 
 @Composable
-private fun SessionCard(summary: SessionSummary, onClick: () -> Unit) {
+private fun SessionCard(summary: SessionSummary, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val accent = summary.kind.color()
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(CardShape)
             .background(MaterialTheme.colorScheme.surfaceContainer)
@@ -216,6 +221,7 @@ private fun SessionCard(summary: SessionSummary, onClick: () -> Unit) {
         Box(Modifier.width(5.dp).height(84.dp).background(accent))
         Column(Modifier.weight(1f).padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(summary.kind.icon(), contentDescription = null, tint = accent, modifier = Modifier.size(18.dp))
                 Text(summary.kind.label(), style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = accent)
                 if (summary.demo) Badge(stringResource(R.string.badge_demo))
                 if (!summary.endedCleanly) Badge(stringResource(R.string.badge_recovered))
@@ -280,7 +286,7 @@ private fun Badge(text: String) {
 }
 
 @Composable
-private fun EmptyState(watch: WatchStatus, onLoadDemo: (() -> Unit)?) {
+private fun EmptyState(watch: WatchStatus) {
     Card(Modifier.padding(top = 24.dp)) {
         Text(stringResource(R.string.empty_title), style = MaterialTheme.typography.titleLarge)
         Text(
@@ -290,11 +296,6 @@ private fun EmptyState(watch: WatchStatus, onLoadDemo: (() -> Unit)?) {
             modifier = Modifier.padding(top = 8.dp, bottom = 12.dp),
         )
         WatchLine(watch)
-        if (onLoadDemo != null) {
-            FilledTonalButton(onClick = onLoadDemo, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
-                Text(stringResource(R.string.demo_load), textAlign = TextAlign.Center)
-            }
-        }
     }
 }
 

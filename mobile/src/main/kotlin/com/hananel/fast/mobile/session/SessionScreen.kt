@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -23,6 +25,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -68,11 +71,13 @@ import com.hananel.fast.mobile.ui.SpeedChart
 import com.hananel.fast.mobile.ui.StatTile
 import com.hananel.fast.mobile.ui.TopBar
 import com.hananel.fast.mobile.ui.color
+import com.hananel.fast.mobile.ui.countedUp
 import com.hananel.fast.mobile.ui.formatClock
 import com.hananel.fast.mobile.ui.formatDateTime
 import com.hananel.fast.mobile.ui.formatKmh
 import com.hananel.fast.mobile.ui.formatMeters
 import com.hananel.fast.mobile.ui.label
+import com.hananel.fast.mobile.ui.rememberEntrance
 import java.util.Locale
 
 @Composable
@@ -114,6 +119,14 @@ fun SessionScreen(insight: SessionInsight, onBack: () -> Unit, onReplay: () -> U
             subtitle = formatDateTime(header.startedUtcMs),
             onBack = onBack,
             actions = {
+                // The film of the session is one tap away, not at the bottom of a long page.
+                if (insight.points.count { it.position != null } >= MIN_POINTS_FOR_REPLAY) {
+                    FilledTonalButton(onClick = onReplay, contentPadding = PaddingValues(start = 12.dp, end = 16.dp)) {
+                        Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(stringResource(R.string.replay_open))
+                    }
+                }
                 IconButton(onClick = { confirmDelete = true }) {
                     Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.action_delete), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -133,14 +146,6 @@ fun SessionScreen(insight: SessionInsight, onBack: () -> Unit, onReplay: () -> U
                 outcome != null -> SprintTestBody(outcome, insight.points)
                 analysis != null && header.kind == ActivityKind.FOOTBALL -> FootballBody(analysis, insight.points)
                 analysis != null -> RunBody(analysis, insight.points)
-            }
-
-            if (insight.points.count { it.position != null } >= MIN_POINTS_FOR_REPLAY && outcome == null) {
-                Button(onClick = onReplay, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Filled.PlayArrow, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.replay_open))
-                }
             }
 
             // Where the numbers came from, so they can be trusted or questioned.
@@ -243,7 +248,7 @@ private fun TopSpeedCard(analysis: SessionAnalysis) {
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.stat_top_speed), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    HeroNumber(analysis.maxSpeed.formatKmh(), fontSize = 60)
+                    HeroNumber(analysis.maxSpeed.countedUp(rememberEntrance()).formatKmh(), fontSize = 60)
                     Text(
                         text = stringResource(R.string.unit_kmh),
                         style = MaterialTheme.typography.titleMedium,
@@ -413,7 +418,7 @@ private fun SprintTestBody(outcome: SprintTestOutcome, points: List<TrackPoint>)
                 Text(stringResource(R.string.stat_top_speed), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     // A number the app itself doubts does not get the brand treatment.
-                    HeroNumber(outcome.topSpeed.formatKmh(), fontSize = 64, gradient = outcome.level != ConfidenceLevel.LOW)
+                    HeroNumber(outcome.topSpeed.countedUp(rememberEntrance()).formatKmh(), fontSize = 64, gradient = outcome.level != ConfidenceLevel.LOW)
                     Text(
                         text = outcome.uncertainty?.let { stringResource(R.string.value_plus_minus_kmh, it.formatKmh()) }
                             ?: stringResource(R.string.unit_kmh),
@@ -502,10 +507,11 @@ private fun Legend(color: Color, text: String) {
 /** A horizontal bar that fills from the left in every language, like the charts above it. */
 @Composable
 private fun Bar(fraction: Float, color: Color) {
+    val grown = fraction * rememberEntrance(delayMs = 150)
     LeftToRight {
         Box(Modifier.fillMaxWidth().height(8.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(4.dp))) {
             if (fraction > 0f) {
-                Box(Modifier.fillMaxWidth(fraction.coerceIn(0.01f, 1f)).height(8.dp).background(color, RoundedCornerShape(4.dp)))
+                Box(Modifier.fillMaxWidth(grown.coerceIn(0.01f, 1f)).height(8.dp).background(color, RoundedCornerShape(4.dp)))
             }
         }
     }
@@ -553,4 +559,5 @@ private fun SprintRejection.titleRes(): Int = when (this) {
 }
 
 /** Fewer positions than this do not make a track worth watching. */
-private const val MIN_POINTS_FOR_REPLAY = 20
+/** A few seconds of movement are enough for a film: a speed test is seldom longer, and plays in slow motion. */
+private const val MIN_POINTS_FOR_REPLAY = 5

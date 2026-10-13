@@ -41,7 +41,9 @@ import com.hananel.fast.mobile.sync.WatchStatus
 import com.hananel.fast.mobile.theme.FastColors
 import com.hananel.fast.mobile.ui.Card
 import com.hananel.fast.mobile.ui.Dot
+import com.hananel.fast.mobile.ui.HeroNumber
 import com.hananel.fast.mobile.ui.LeftToRight
+import com.hananel.fast.mobile.ui.SectionTitle
 import com.hananel.fast.mobile.ui.TopBar
 import com.hananel.fast.mobile.ui.color
 import com.hananel.fast.mobile.ui.formatKmh
@@ -54,7 +56,6 @@ import kotlinx.coroutines.withContext
 fun SettingsScreen(library: Library?, watch: WatchStatus, onBack: () -> Unit, onDeviceCheck: () -> Unit, onReference: () -> Unit) {
     val context = LocalContext.current.applicationContext
     val settings = remember { PhoneData.settings(context) }
-    val scope = rememberCoroutineScope()
     var age by remember { mutableStateOf(settings.ageYears) }
     var asked by remember { mutableStateOf(false) }
     val version = remember { context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty() }
@@ -118,12 +119,12 @@ fun SettingsScreen(library: Library?, watch: WatchStatus, onBack: () -> Unit, on
                     // Less on the left, more on the right, in every language.
                     LeftToRight {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            FilledTonalIconButton(onClick = { setAge((age?.minus(1) ?: DEFAULT_AGE).coerceAtLeast(MIN_AGE)) }) { Text("−") }
+                            FilledTonalIconButton(onClick = { setAge((age?.minus(1) ?: DEFAULT_AGE).coerceAtLeast(MIN_AGE)) }) { Text("−", style = MaterialTheme.typography.titleLarge) }
                             Text(
                                 text = age?.toString() ?: "—",
                                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                             )
-                            FilledTonalIconButton(onClick = { setAge((age?.plus(1) ?: DEFAULT_AGE).coerceAtMost(MAX_AGE)) }) { Text("+") }
+                            FilledTonalIconButton(onClick = { setAge((age?.plus(1) ?: DEFAULT_AGE).coerceAtMost(MAX_AGE)) }) { Text("+", style = MaterialTheme.typography.titleLarge) }
                         }
                     }
                 }
@@ -149,6 +150,8 @@ fun SettingsScreen(library: Library?, watch: WatchStatus, onBack: () -> Unit, on
                 ) { Text(stringResource(if (asked) R.string.settings_resync_sent else R.string.settings_resync)) }
             }
 
+            SectionTitle(stringResource(R.string.settings_tools), Modifier.padding(top = 6.dp))
+
             // A measuring tool, not part of the app proper: the phone's GPS recorded next to the watch's.
             Card(Modifier.clickable(onClick = onReference)) {
                 Title(stringResource(R.string.reference_title))
@@ -160,29 +163,15 @@ fun SettingsScreen(library: Library?, watch: WatchStatus, onBack: () -> Unit, on
                 Body(stringResource(R.string.device_check_subtitle))
             }
 
-            if (DemoSessions.AVAILABLE) {
-                Card {
-                    Title(stringResource(R.string.demo_title))
-                    Body(stringResource(R.string.demo_explain))
-                    Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilledTonalButton(
-                            onClick = { scope.launch { withContext(Dispatchers.IO) { DemoSessions.add(context) } } },
-                            modifier = Modifier.weight(1f),
-                        ) { Text(stringResource(R.string.demo_load)) }
-                        FilledTonalButton(
-                            onClick = { scope.launch { withContext(Dispatchers.IO) { DemoSessions.remove(context) } } },
-                            modifier = Modifier.weight(1f),
-                        ) { Text(stringResource(R.string.demo_remove)) }
-                    }
-                }
-            }
+            SectionTitle(stringResource(R.string.settings_about), Modifier.padding(top = 6.dp))
 
-            Text(
-                text = stringResource(R.string.settings_version, version),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 4.dp),
-            )
+            Card {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    HeroNumber(stringResource(R.string.app_name), fontSize = 28)
+                    Text(version, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Body(stringResource(R.string.settings_about_text), Modifier.padding(top = 8.dp))
+            }
         }
     }
 }

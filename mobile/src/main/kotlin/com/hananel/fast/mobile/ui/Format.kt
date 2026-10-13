@@ -2,6 +2,7 @@ package com.hananel.fast.mobile.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.hananel.fast.core.data.ActivityKind
 import com.hananel.fast.core.model.Speed
@@ -61,10 +62,18 @@ fun ActivityKind.label(): String = stringResource(
     },
 )
 
+/** One colour and one pictogram per activity, the same as on the watch. */
 fun ActivityKind.color(): Color = when (this) {
     ActivityKind.RUN -> FastColors.Sky
     ActivityKind.FOOTBALL -> FastColors.Lilac
-    ActivityKind.SPRINT_TEST -> FastColors.Rose
+    // Not rose: rose already means "sprint" and "doubtful", and a test's low score has to stand out against its name.
+    ActivityKind.SPRINT_TEST -> FastColors.Cyan
+}
+
+fun ActivityKind.icon(): ImageVector = when (this) {
+    ActivityKind.RUN -> FastIcons.Runner
+    ActivityKind.FOOTBALL -> FastIcons.Ball
+    ActivityKind.SPRINT_TEST -> FastIcons.Bolt
 }
 
 fun SpeedZone.color(): Color = FastColors.Zones[ordinal + 1]

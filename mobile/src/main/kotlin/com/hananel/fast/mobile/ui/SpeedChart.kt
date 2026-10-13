@@ -67,6 +67,7 @@ fun SpeedChart(
     val spanMs = points.last().timeMs.coerceAtLeast(1)
     val topKmh = remember(points) { (ceil(points.maxOf { it.speed.kmh } / 5.0) * 5.0).coerceAtLeast(10.0) }
     var selected by remember(points) { mutableStateOf<TrackPoint?>(null) }
+    val reveal = rememberEntrance(durationMs = 900)
 
     val line = FastColors.Sky
     val sprint = FastColors.Rose
@@ -155,6 +156,10 @@ fun SpeedChart(
                     tick += tickMs
                 }
 
+                // The line draws itself from the start when the chart first appears.
+                drawContext.canvas.save()
+                drawContext.canvas.clipRect(0f, -24.dp.toPx(), left + plotWidth * reveal, size.height)
+
                 // The speed itself. A gap in the signal breaks the line instead of drawing through it.
                 val path = Path()
                 val fill = Path()
@@ -212,6 +217,7 @@ fun SpeedChart(
                     drawCircle(sprint, radius = 4.5.dp.toPx(), center = center)
                     drawCircle(Color.White, radius = 1.8.dp.toPx(), center = center)
                 }
+                drawContext.canvas.restore()
 
                 selected?.let { point ->
                     val px = x(point.timeMs)

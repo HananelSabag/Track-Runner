@@ -8,9 +8,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -23,7 +20,10 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import com.hananel.fast.mobile.data.PhoneData
 import com.hananel.fast.mobile.demo.DemoSessions
 import com.hananel.fast.mobile.devicecheck.DeviceCheckRoute
@@ -34,6 +34,7 @@ import com.hananel.fast.mobile.session.SessionRoute
 import com.hananel.fast.mobile.settings.SettingsScreen
 import com.hananel.fast.mobile.sync.PhoneSync
 import com.hananel.fast.mobile.theme.FastTheme
+import com.hananel.fast.mobile.ui.screenTransition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -48,10 +49,24 @@ class MainActivity : ComponentActivity() {
         )
         super.onCreate(savedInstanceState)
         PhoneData.refresh(applicationContext)
+        loadDemoIfAsked()
         setContent {
             FastTheme {
                 FastApp()
             }
+        }
+    }
+
+    /**
+     * Development only, and deliberately without a button: `am start -n <activity> --es demo add`
+     * fills the history with invented sessions so the screens can be looked at on an emulator,
+     * and `--es demo remove` takes them away again. Release builds ignore it.
+     */
+    private fun loadDemoIfAsked() {
+        if (!DemoSessions.AVAILABLE) return
+        val wanted = intent?.getStringExtra(EXTRA_DEMO) ?: return
+        lifecycleScope.launch(Dispatchers.IO) {
+            if (wanted == DEMO_REMOVE) DemoSessions.remove(applicationContext) else DemoSessions.add(applicationContext)
         }
     }
 
@@ -85,9 +100,10 @@ private fun FastApp() {
 
     // A Surface, not a plain Box: it is what gives text its default colour on the dark background.
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
         AnimatedContent(
             targetState = backStack.last(),
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            transitionSpec = { screenTransition(forward = depth(targetState) >= depth(initialState), rtl = rtl) },
             label = "screen",
         ) { route ->
             when {
@@ -96,11 +112,6 @@ private fun FastApp() {
                     watch = watch,
                     onOpen = { open(SESSION + it) },
                     onSettings = { open(SETTINGS) },
-                    onLoadDemo = if (DemoSessions.AVAILABLE) {
-                        { scope.launch { withContext(Dispatchers.IO) { DemoSessions.add(context) } } }
-                    } else {
-                        null
-                    },
                 )
                 route.startsWith(SESSION) -> {
                     val id = route.removePrefix(SESSION)
@@ -121,9 +132,18 @@ private fun FastApp() {
     }
 }
 
+/** How far into the app a screen lies, which tells a move forward from a move back. */
+private fun depth(route: String): Int = when {
+    route == HOME -> 0
+    route.startsWith(SESSION) || route == SETTINGS -> 1
+    else -> 2
+}
+
 private const val HOME = "home"
 private const val SESSION = "session/"
 private const val REPLAY = "replay/"
 private const val SETTINGS = "settings"
 private const val DEVICE_CHECK = "device-check"
 private const val REFERENCE = "reference"
+private const val EXTRA_DEMO = "demo"
+private const val DEMO_REMOVE = "remove"
