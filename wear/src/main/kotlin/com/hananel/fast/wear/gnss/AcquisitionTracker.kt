@@ -6,6 +6,7 @@ import com.hananel.fast.core.model.SpeedSample
 import com.hananel.fast.core.tracking.sprint.GnssAcquisition
 import com.hananel.fast.core.tracking.sprint.GnssAcquisitionCheck
 import com.hananel.fast.core.tracking.sprint.SatelliteView
+import com.hananel.fast.core.tracking.sprint.fixQuality
 
 /**
  * Remembers what the receiver has delivered in the last few seconds, which is
@@ -19,7 +20,7 @@ class AcquisitionTracker {
 
     private val recentSamples = ArrayDeque<SpeedSample>()
     private val recentFixTimes = ArrayDeque<Long>()
-    private var satellites: SatelliteView? = null
+    private val recentSatellites = ArrayDeque<SatelliteView>()
     private var satellitesAtMs = 0L
 
     fun onFix(fix: GnssFix) {
@@ -32,21 +33,25 @@ class AcquisitionTracker {
     }
 
     fun onSatellites(view: SatelliteView) {
-        satellites = view
+        recentSatellites.addLast(view)
+        while (recentSatellites.size > SATELLITE_REPORTS) recentSatellites.removeFirst()
         satellitesAtMs = SystemClock.elapsedRealtime()
     }
 
     fun current(): GnssAcquisition {
         val now = SystemClock.elapsedRealtime()
         // A satellite report that has stopped being refreshed describes the past.
-        val fresh = satellites?.takeIf { now - satellitesAtMs <= SATELLITE_REPORT_MAX_AGE_MS }
+        // The typical one of the last few, not the latest: the count of clearly heard satellites
+        // drops out for a single report now and then, and the status should not flicker with it.
+        val typical = recentSatellites.sortedBy { it.fixQuality() }.getOrNull(recentSatellites.size / 2)
+        val fresh = typical?.takeIf { now - satellitesAtMs <= SATELLITE_REPORT_MAX_AGE_MS }
         return GnssAcquisitionCheck.evaluate(recentSamples.toList(), recentFixTimes.toList(), fresh, now)
     }
 
     fun reset() {
         recentSamples.clear()
         recentFixTimes.clear()
-        satellites = null
+        recentSatellites.clear()
     }
 
     companion object {
@@ -56,5 +61,6 @@ class AcquisitionTracker {
 
         private const val CAPACITY = 12
         private const val SATELLITE_REPORT_MAX_AGE_MS = 5_000L
+        private const val SATELLITE_REPORTS = 5
     }
 }

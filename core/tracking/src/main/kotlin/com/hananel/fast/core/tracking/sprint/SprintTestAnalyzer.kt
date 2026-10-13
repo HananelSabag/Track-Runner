@@ -263,9 +263,15 @@ object SprintTestAnalyzer {
         if (positionAccuracies.size == window.size) {
             return SignalScore(ramp(positionAccuracies.average(), zeroAt = 25.0, oneAt = 5.0), fromSpeedAccuracy = false)
         }
-        // The weakest moment counts, not the average: one stretch of poor reception is
-        // enough to spoil the speed that was read during it.
-        satellites.minOfOrNull { it.fixQuality() }?.let { return SignalScore(it, fromSpeedAccuracy = false) }
+        // The reception that held for all but a blink of the test. A stretch of poor reception
+        // still counts in full, because the speed read during it cannot be trusted. A single
+        // dropped report does not: on the real watch the count of clearly heard satellites
+        // falls to nothing for a second now and then while twenty are still in use and the
+        // positions stay true, and judging by that one second called every real run weak.
+        val qualities = satellites.map { it.fixQuality() }.sorted()
+        if (qualities.isNotEmpty()) {
+            return SignalScore(qualities[((qualities.size - 1) * BLINK_FRACTION).toInt()], fromSpeedAccuracy = false)
+        }
 
         // Nothing at all about quality. Neither good nor bad can be assumed.
         return SignalScore(UNKNOWN_SIGNAL_SCORE, fromSpeedAccuracy = false)
@@ -357,6 +363,9 @@ object SprintTestAnalyzer {
     /** A glitch outside the top-speed window does not spoil the headline, but it does cost trust. */
     private const val GLITCH_SCORE = 0.5
     private const val UNKNOWN_SIGNAL_SCORE = 0.5
+
+    /** Poor reception for less than this share of the test is a blink; for this much or more, a stretch. */
+    private const val BLINK_FRACTION = 0.25
     private const val CAP_WITHOUT_SPEED_ACCURACY = 0.85
     private const val CAP_WITHOUT_AGREEMENT = 0.80
     private const val ISSUE_THRESHOLD = 0.6

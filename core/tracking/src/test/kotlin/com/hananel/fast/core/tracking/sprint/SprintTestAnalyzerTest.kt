@@ -213,6 +213,26 @@ class SprintTestAnalyzerTest {
         assertTrue(SprintIssue.WEAK_SIGNAL in result.issues)
     }
 
+    // What the real watch did on 2026-10-13: twenty-odd satellites in use throughout, and for
+    // one report in dozens not one of them heard clearly.
+    private val blink = SatelliteView(visible = 30, strong = 0, usedInFix = 22)
+
+    @Test
+    fun aBlinkInReceptionDoesNotCondemnACleanSprint() {
+        val result = measureOnTheWatch(List(9) { openSky[1] } + blink) { cleanSprint() }
+
+        assertTrue(SprintIssue.WEAK_SIGNAL !in result.issues)
+        assertEquals(85, result.confidence)
+    }
+
+    @Test
+    fun poorReceptionForAQuarterOfTheSprintIsNotABlink() {
+        val result = measureOnTheWatch(List(6) { openSky[1] } + blink + blink) { cleanSprint() }
+
+        assertTrue(SprintIssue.WEAK_SIGNAL in result.issues)
+        assertEquals(ConfidenceLevel.LOW, result.level)
+    }
+
     @Test
     fun withAPlaceholderAndNoSatelliteReportTheScoreCannotBeHigh() {
         val result = measureOnTheWatch(emptyList()) { cleanSprint() }
