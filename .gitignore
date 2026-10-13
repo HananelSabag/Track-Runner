@@ -33,3 +33,6 @@ captures/
 # OS
 .DS_Store
 Thumbs.db
+
+# Recordings pulled from the real devices. They hold real positions and stay on this machine.
+field-data/
