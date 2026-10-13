@@ -165,5 +165,5 @@
     <string name="replay_speed_whole">Watch time %1$s</string>
     <string name="settings_tools">Tools</string>
     <string name="settings_about">About</string>
-    <string name="settings_about_text">Everything stays with you, on the watch and the phone. No account, no cloud, and no location is sent anywhere.</string>
+    <string name="settings_about_text">No account and no server. Your sessions are kept on the watch and on the phone, and the app sends them nowhere.</string>
 </resources>

@@ -308,7 +308,7 @@ private class Week(val start: LocalDate, val sessions: List<SessionSummary>) {
             thisWeek -> stringResource(R.string.week_this)
             thisWeek.minusWeeks(1) -> stringResource(R.string.week_last)
             // A date range reads low to high in every language.
-            else -> "⁦" + DAY_MONTH.format(start) + " – " + DAY_MONTH.format(start.plusDays(6)) + "⁩"
+            else -> "\u2066" + DAY_MONTH.format(start) + " – " + DAY_MONTH.format(start.plusDays(6)) + "\u2069"
         }
     }
 }

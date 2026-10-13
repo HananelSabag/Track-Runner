@@ -165,5 +165,5 @@
     <string name="replay_speed_whole">משך צפייה %1$s</string>
     <string name="settings_tools">כלים</string>
     <string name="settings_about">אודות</string>
-    <string name="settings_about_text">הכול נשאר אצלך, על השעון ועל הטלפון. אין חשבון, אין ענן, ושום מיקום לא נשלח לשום מקום.</string>
+    <string name="settings_about_text">אין חשבון ואין שרת. האימונים נשמרים על השעון ועל הטלפון, והאפליקציה לא שולחת אותם לשום מקום.</string>
 </resources>
