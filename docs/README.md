@@ -11,7 +11,7 @@
 | [04 · אפליקציות דומות](research/04-similar-apps.md) | מה קיים ואיפה FAST שונה |
 | [05 · כלים וסקילים](research/05-tooling-and-skills.md) | ערכות מוכנות, דוגמאות של גוגל, ומה צריך להתקין |
 | [06 · מעקב אימון כדורגל](research/06-football-tracking.md) | אזורי מהירות, ספרינטים, זיהוי מנוחה אוטומטי, ומה השעון באמת יכול |
-| [בדיקות שדה](research/field-tests/) | מדידות מהמכשירים האמיתיים: [דוח החומרה של השעון](research/field-tests/2026-10-10-watch-device-report.md) · [ה-GPS האמיתי וסנכרון אמיתי](research/field-tests/2026-10-11-first-real-gps.md) |
+| [בדיקות שדה](research/field-tests/) | מדידות מהמכשירים האמיתיים: [דוח החומרה של השעון](research/field-tests/2026-10-10-watch-device-report.md) · [ה-GPS האמיתי וסנכרון אמיתי](research/field-tests/2026-10-11-first-real-gps.md) · **[האימונים האמיתיים הראשונים](research/field-tests/2026-10-13-first-real-sessions.md)** |
 
 ## אפיון
 | | |
