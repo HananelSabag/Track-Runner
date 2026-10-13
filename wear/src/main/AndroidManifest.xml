@@ -34,6 +34,11 @@
             android:name="com.google.android.wearable.standalone"
             android:value="true" />
 
+        <!-- Ambient (always-on) mode. Not required: without it the app behaves as an ordinary one. -->
+        <uses-library
+            android:name="com.google.android.wearable"
+            android:required="false" />
+
         <service
             android:name=".sprint.SprintService"
             android:exported="false"

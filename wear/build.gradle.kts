@@ -53,6 +53,8 @@ dependencies {
     implementation(libs.androidx.wear.compose.navigation)
     implementation(libs.androidx.wear.tooling.preview)
     implementation(libs.androidx.wear.ongoing)
+    // Ambient (always-on) mode, so a measurement stays on screen when the watch dims.
+    implementation(libs.androidx.wear)
     // Holds the @WearPreviewDevices annotations used in main sources, so it cannot be debug-only.
     implementation(libs.androidx.wear.compose.ui.tooling)
 

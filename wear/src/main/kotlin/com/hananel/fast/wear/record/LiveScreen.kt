@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.wear.compose.foundation.pager.VerticalPager
 import androidx.wear.compose.foundation.pager.rememberPagerState
 import androidx.wear.compose.material3.AnimatedPage
@@ -64,6 +65,8 @@ import com.hananel.fast.core.tracking.live.LiveState
 import com.hananel.fast.wear.R
 import com.hananel.fast.wear.theme.FastColors
 import com.hananel.fast.wear.theme.FastTheme
+import com.hananel.fast.wear.ui.Ambient
+import com.hananel.fast.wear.ui.AmbientReadout
 import com.hananel.fast.wear.ui.HeroNumber
 import com.hananel.fast.wear.ui.SpeedGauge
 import com.hananel.fast.wear.ui.formatClock
@@ -77,6 +80,11 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun LiveScreen(kind: ActivityKind, live: LiveState, onFinish: () -> Unit) {
+    val ambient by Ambient.active.collectAsStateWithLifecycle()
+    if (ambient) {
+        AmbientLive(live)
+        return
+    }
     val pagerState = rememberPagerState(pageCount = { 2 })
     VerticalPagerScaffold(pagerState = pagerState) {
         VerticalPager(state = pagerState) { page ->
@@ -89,6 +97,17 @@ fun LiveScreen(kind: ActivityKind, live: LiveState, onFinish: () -> Unit) {
             }
         }
     }
+}
+
+/** The dimmed watch: the speed, the clock of whatever is going on, and the fastest so far. */
+@Composable
+private fun AmbientLive(live: LiveState) {
+    val resting = live.segment == SegmentKind.REST
+    AmbientReadout(
+        number = if (live.signalLost) "—" else live.speed.formatKmh(),
+        above = if (resting) stringResource(R.string.live_rest) + " · " + formatClock(live.segmentElapsedMs) else formatClock(live.elapsedMs),
+        below = stringResource(R.string.sprint_peak, live.maxSpeed.formatKmh()),
+    )
 }
 
 // ---- Run ----

@@ -54,6 +54,8 @@ import com.hananel.fast.core.tracking.sprint.SprintTestOutcome
 import com.hananel.fast.wear.R
 import com.hananel.fast.wear.theme.FastColors
 import com.hananel.fast.wear.theme.FastTheme
+import com.hananel.fast.wear.ui.Ambient
+import com.hananel.fast.wear.ui.AmbientReadout
 import com.hananel.fast.wear.ui.DetailRow
 import com.hananel.fast.wear.ui.GnssStatus
 import com.hananel.fast.wear.ui.HeroNumber
@@ -254,6 +256,15 @@ private const val LANDING_MS = 320
 
 @Composable
 private fun RunningScreen(state: SprintUiState.Running, onStop: () -> Unit) {
+    val ambient by Ambient.active.collectAsStateWithLifecycle()
+    if (ambient) {
+        AmbientReadout(
+            number = if (state.started) state.speed.formatKmh() else "—",
+            above = stringResource(R.string.unit_kmh),
+            below = stringResource(R.string.sprint_peak, state.peak.formatKmh()),
+        )
+        return
+    }
     Box(Modifier.fillMaxSize()) {
         if (state.started) SpeedGauge(speed = state.speed, peak = state.peak, color = FastColors.Cyan)
         Column(

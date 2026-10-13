@@ -1,13 +1,16 @@
 package com.hananel.fast.wear
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
@@ -25,16 +28,37 @@ import com.hananel.fast.wear.record.RecordingUiState
 import com.hananel.fast.wear.settings.AboutRoute
 import com.hananel.fast.wear.settings.EditAgeRoute
 import com.hananel.fast.wear.settings.SettingsRoute
+import com.hananel.fast.wear.sprint.SprintSession
 import com.hananel.fast.wear.sprint.SprintTestRoute
+import com.hananel.fast.wear.sprint.SprintUiState
 import com.hananel.fast.wear.sync.SyncEngine
 import com.hananel.fast.wear.theme.FastTheme
+import com.hananel.fast.wear.ui.Ambient
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
+    /** Present only while something is being measured; see [stayInFrontWhileMeasuring]. */
+    private var ambientObserver: AmbientLifecycleObserver? = null
+
+    private val ambientCallback = object : AmbientLifecycleObserver.AmbientLifecycleCallback {
+        override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) {
+            Log.i(AMBIENT_TAG, "dimmed, staying in front")
+            Ambient.set(true)
+        }
+
+        override fun onExitAmbient() {
+            Log.i(AMBIENT_TAG, "lit again")
+            Ambient.set(false)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        stayInFrontWhileMeasuring()
         lifecycleScope.launch(Dispatchers.IO) {
             // A recording whose process died is adopted here, then everything unconfirmed is offered to the phone.
             WearData.store(applicationContext).recoverOrphans(RecordingSession.activeId)
@@ -45,6 +69,51 @@ class MainActivity : ComponentActivity() {
                 FastWearApp()
             }
         }
+    }
+
+    /**
+     * When the watch dims itself — the wrist drops, a palm covers it — an ordinary app
+     * gives way to the watch face. While a training is recorded or a speed test is
+     * running, this one stays: the system keeps it in front in its low-power mode and
+     * the screens show a plain readout (see [Ambient]). Raising the wrist is then
+     * enough to see the speed.
+     *
+     * Only while measuring. Otherwise the menu would sit on a dimmed display for as
+     * long as the watch lay on a table.
+     */
+    private fun stayInFrontWhileMeasuring() {
+        lifecycleScope.launch {
+            combine(RecordingSession.state, SprintSession.state) { recording, test ->
+                recording is RecordingUiState.Recording || test is SprintUiState.Countdown || test is SprintUiState.Running
+            }.distinctUntilChanged().collect { measuring ->
+                if (measuring) attachAmbient() else detachAmbient()
+            }
+        }
+    }
+
+    private fun attachAmbient() {
+        if (ambientObserver != null) return
+        try {
+            ambientObserver = AmbientLifecycleObserver(this, ambientCallback).also(lifecycle::addObserver)
+            Log.i(AMBIENT_TAG, "measuring: the app will stay in front when the watch dims")
+        } catch (e: RuntimeException) {
+            // A watch without the ambient service simply behaves as before.
+            Log.w(AMBIENT_TAG, "Ambient mode is not available", e)
+        }
+    }
+
+    private fun detachAmbient() {
+        val observer = ambientObserver ?: return
+        ambientObserver = null
+        lifecycle.removeObserver(observer)
+        // Removing an observer does not tell it the activity has gone anywhere, and it would go on
+        // holding the app in front. It is walked through the rest of a lifecycle by hand instead.
+        val state = lifecycle.currentState
+        if (state.isAtLeast(Lifecycle.State.RESUMED)) observer.onPause(this)
+        if (state.isAtLeast(Lifecycle.State.STARTED)) observer.onStop(this)
+        observer.onDestroy(this)
+        Ambient.set(false)
+        Log.i(AMBIENT_TAG, "not measuring: back to an ordinary app")
     }
 }
 
@@ -99,6 +168,8 @@ private fun FastWearApp() {
         }
     }
 }
+
+private const val AMBIENT_TAG = "FastAmbient"
 
 private object Route {
     const val ARG_KIND = "kind"
