@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -35,13 +36,16 @@ import com.hananel.fast.mobile.R
 import com.hananel.fast.mobile.theme.FastColors
 import com.hananel.fast.mobile.ui.Card
 import com.hananel.fast.mobile.ui.HeroNumber
+import com.hananel.fast.mobile.ui.SectionTitle
 import com.hananel.fast.mobile.ui.StatTile
 import com.hananel.fast.mobile.ui.TopBar
 import com.hananel.fast.mobile.ui.formatClock
+import com.hananel.fast.mobile.ui.formatDateTime
 import com.hananel.fast.mobile.ui.formatKmh
+import com.hananel.fast.mobile.ui.label
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.Locale
 
 /**
  * The phone as a second measuring instrument: start here, start a run on the
@@ -115,12 +119,52 @@ private fun IdleBody(state: ReferenceState.Idle, denied: Boolean, onStart: () ->
             }
         }
     }
-    Text(
-        text = stringResource(R.string.reference_saved_count, state.savedCount),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 4.dp),
-    )
+    if (state.entries.isNotEmpty()) {
+        SectionTitle(stringResource(R.string.reference_list_title), Modifier.padding(top = 8.dp))
+    }
+    for (entry in state.entries) {
+        EntryBlock(entry)
+    }
+}
+
+/** One stored measurement: when, how long, how dense — and the watch beside it, when the watch was recording too. */
+@Composable
+private fun EntryBlock(entry: ReferenceEntry) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = formatDateTime(entry.startedUtcMs) + " · " + formatClock(entry.durationMs),
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = stringResource(R.string.reference_entry_fixes, entry.fixes, String.format(Locale.US, "%.1f", entry.fixesPerSecond)),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (!entry.endedCleanly) {
+            Text(
+                text = stringResource(R.string.reference_cut_off),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 4.dp),
+            )
+        }
+        val comparison = entry.comparison
+        val kind = entry.watchKind
+        if (comparison != null && kind != null) {
+            ComparisonCard(comparison, title = stringResource(R.string.reference_against, kind.label()))
+        } else {
+            Card {
+                Text(
+                    text = stringResource(R.string.compare_none),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
 }
 
 @Composable

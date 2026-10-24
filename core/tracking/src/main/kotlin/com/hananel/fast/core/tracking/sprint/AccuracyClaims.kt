@@ -27,11 +27,11 @@ private const val MAX_CREDIBLE_SPEED_ACCURACY = 10.0
 private const val MAX_CREDIBLE_POSITION_ACCURACY_METERS = 100.0
 
 /** The receiver's speed error in m/s, or null when it reported none or reported a placeholder. */
-internal fun SpeedSample.credibleSpeedAccuracy(): Double? =
+fun SpeedSample.credibleSpeedAccuracy(): Double? =
     speedAccuracy?.metersPerSecond?.takeIf { it < MAX_CREDIBLE_SPEED_ACCURACY }
 
 /** The receiver's position error in metres, or null when it reported none or reported a placeholder. */
-internal fun SpeedSample.crediblePositionAccuracy(): Double? =
+fun SpeedSample.crediblePositionAccuracy(): Double? =
     horizontalAccuracyMeters?.takeIf { it < MAX_CREDIBLE_POSITION_ACCURACY_METERS }
 
 /**

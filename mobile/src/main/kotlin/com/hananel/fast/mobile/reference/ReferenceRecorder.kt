@@ -6,10 +6,14 @@ import android.os.PowerManager
 import android.os.SystemClock
 import android.util.Log
 import com.hananel.fast.core.data.ActivityKind
+import com.hananel.fast.core.data.DeviceComparison
+import com.hananel.fast.core.data.DeviceComparisons
 import com.hananel.fast.core.data.RawRecord
+import com.hananel.fast.core.data.RecordedSession
 import com.hananel.fast.core.data.SatelliteRecord
 import com.hananel.fast.core.data.SessionHeader
 import com.hananel.fast.core.data.SessionStore
+import com.hananel.fast.core.data.SessionSummary
 import com.hananel.fast.core.data.SessionWriter
 import com.hananel.fast.core.gnss.GnssFix
 import com.hananel.fast.core.gnss.gnssFixes
@@ -17,6 +21,10 @@ import com.hananel.fast.core.gnss.satelliteViews
 import com.hananel.fast.core.gnss.toRecord
 import com.hananel.fast.core.model.Speed
 import com.hananel.fast.core.tracking.sprint.SatelliteView
+import com.hananel.fast.mobile.data.PhoneData
+import java.io.File
+import java.io.IOException
+import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,13 +36,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.IOException
-import java.util.UUID
 
 sealed interface ReferenceState {
-    /** [savedCount] is how many measurements are stored on the phone so far. */
-    data class Idle(val savedCount: Int, val last: Finished? = null) : ReferenceState
+    /** [entries] are the measurements stored on the phone, newest first. */
+    data class Idle(val entries: List<ReferenceEntry> = emptyList(), val last: Finished? = null) : ReferenceState
 
     data class Recording(
         val elapsedMs: Long,
@@ -50,6 +55,21 @@ sealed interface ReferenceState {
 
     data class Finished(val durationMs: Long, val fixes: Int, val fixesPerSecond: Double)
 }
+
+/** One stored measurement, and the watch recording it can be compared with. */
+data class ReferenceEntry(
+    val id: String,
+    val startedUtcMs: Long,
+    val durationMs: Long,
+    val fixes: Int,
+    val fixesPerSecond: Double,
+    /** False when the recording was cut off — the app closed or killed before Stop — and recovered afterwards. */
+    val endedCleanly: Boolean,
+    /** The watch recording that ran at the same time, when there was one. */
+    val watchKind: ActivityKind? = null,
+    val watchStartedUtcMs: Long? = null,
+    val comparison: DeviceComparison? = null,
+)
 
 /**
  * Records the phone's own GPS, so that one run can be measured by the watch and
@@ -67,12 +87,14 @@ object ReferenceRecorder {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val disk = Dispatchers.IO.limitedParallelism(1)
 
-    private val _state = MutableStateFlow<ReferenceState>(ReferenceState.Idle(savedCount = 0))
+    private val _state = MutableStateFlow<ReferenceState>(ReferenceState.Idle())
     val state: StateFlow<ReferenceState> = _state.asStateFlow()
 
     /** Called when a recording has been saved, so whoever keeps it alive can let go. */
     var onStopped: (() -> Unit)? = null
 
+    /** The measurement being written right now; the only unfinished file that is not an orphan. */
+    private var activeId: String? = null
     private var listening: Job? = null
     private var writing: Job? = null
     private var writer: SessionWriter? = null
@@ -88,11 +110,62 @@ object ReferenceRecorder {
 
     fun store(context: Context): SessionStore = SessionStore(File(context.applicationContext.filesDir, DIRECTORY))
 
-    /** Shows how many measurements are already saved. Reads the folder: call it off the main thread. */
+    /**
+     * Lists the stored measurements, each set against the watch recording made at the
+     * same time. A measurement cut off before Stop — the app closed or killed — is
+     * finished here first, so it is listed like any other instead of sitting unseen.
+     * Reads files: call it off the main thread.
+     */
     fun refresh(context: Context) {
         if (isRecording) return
-        val saved = store(context).ids().size
-        _state.value = ReferenceState.Idle(saved, (_state.value as? ReferenceState.Idle)?.last)
+        val appContext = context.applicationContext
+        val store = store(appContext)
+        store.recoverOrphans(activeId)
+        val watchStore = PhoneData.store(appContext)
+        val watchSummaries = watchStore.summaries()
+        val entries = store.ids().mapNotNull { id ->
+            val recording = store.read(id) ?: return@mapNotNull null
+            entryFor(recording, watchSummaries, watchStore)
+        }.sortedByDescending { it.startedUtcMs }
+        _state.value = ReferenceState.Idle(entries, (_state.value as? ReferenceState.Idle)?.last)
+    }
+
+    /**
+     * The phone measurement made alongside a watch recording, set against it.
+     * Null when the phone measured nothing at that time. Reads files: call it off the main thread.
+     */
+    fun comparisonFor(context: Context, watch: RecordedSession): DeviceComparison? {
+        val store = store(context.applicationContext)
+        return store.ids().asSequence()
+            .mapNotNull { store.read(it) }
+            .filter { DeviceComparisons.overlap(watch, it) >= DeviceComparisons.MIN_SHARED_MS }
+            .mapNotNull { DeviceComparisons.of(watch, it) }
+            .maxByOrNull { it.sharedMs }
+    }
+
+    private fun entryFor(recording: RecordedSession, watchSummaries: List<SessionSummary>, watchStore: SessionStore): ReferenceEntry {
+        val fixes = recording.fixes
+        val durationMs = if (fixes.size > 1) fixes.last().timeMs - fixes.first().timeMs else 0
+        val started = recording.header.startedUtcMs
+        val ended = started + recording.durationMs
+        // Only watch recordings that ran near the same time are read; the rest are judged by their summaries.
+        val (summary, comparison) = watchSummaries
+            .asSequence()
+            .filter { it.startedUtcMs <= ended + SEARCH_MARGIN_MS && it.startedUtcMs + it.durationMs >= started - SEARCH_MARGIN_MS }
+            .mapNotNull { candidate -> watchStore.read(candidate.id)?.let { DeviceComparisons.of(it, recording) }?.let { candidate to it } }
+            .maxByOrNull { it.second.sharedMs }
+            ?: (null to null)
+        return ReferenceEntry(
+            id = recording.header.id,
+            startedUtcMs = started,
+            durationMs = durationMs,
+            fixes = fixes.size,
+            fixesPerSecond = if (durationMs > 0) (fixes.size - 1) / (durationMs / 1000.0) else 0.0,
+            endedCleanly = recording.endedCleanly,
+            watchKind = summary?.kind,
+            watchStartedUtcMs = summary?.startedUtcMs,
+            comparison = comparison,
+        )
     }
 
     fun start(context: Context) {
@@ -108,6 +181,7 @@ object ReferenceRecorder {
             appVersion = appContext.packageManager.getPackageInfo(appContext.packageName, 0).versionName.orEmpty(),
         )
         val newWriter = try {
+            activeId = header.id
             store(appContext).newWriter(header)
         } catch (e: IOException) {
             Log.w(TAG, "Could not start a reference recording", e)
@@ -168,21 +242,23 @@ object ReferenceRecorder {
         scope.launch {
             records?.close()
             writing?.join()
-            val saved = withContext(disk) {
+            withContext(disk) {
                 try {
                     // A recording without a single fix has nothing to compare; it is not kept.
                     if (count > 0) finishing?.finish(endMs) else finishing?.discard()
                 } catch (e: IOException) {
                     Log.w(TAG, "Could not finish the reference recording", e)
                 }
-                store(appContext).ids().size
             }
+            activeId = null
             wakeLock?.let { if (it.isHeld) it.release() }
             wakeLock = null
             val durationMs = endMs - startedElapsedMs
             val finished = ReferenceState.Finished(durationMs, count, if (durationMs > 0) count / (durationMs / 1000.0) else 0.0)
-            _state.value = ReferenceState.Idle(saved, finished.takeIf { count > 0 })
+            _state.value = ReferenceState.Idle(last = finished.takeIf { count > 0 })
             onStopped?.invoke()
+            // The new measurement takes its place in the list, next to the watch recording it belongs with.
+            withContext(disk) { refresh(appContext) }
         }
     }
 
@@ -212,5 +288,8 @@ object ReferenceRecorder {
     /** Far faster than any phone receiver delivers; it answers with whatever its own best is. */
     private const val FASTEST_INTERVAL_MS = 100L
     private const val RATE_WINDOW_FIXES = 12
+
+    /** How far around a measurement to look for the watch recording made with it. */
+    private const val SEARCH_MARGIN_MS = 60_000L
     private const val WAKE_LOCK_LIMIT_MS = 3 * 60 * 60_000L
 }

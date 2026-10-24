@@ -48,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.hananel.fast.core.data.ALGORITHM_VERSION
 import com.hananel.fast.core.data.ActivityKind
+import com.hananel.fast.core.data.DeviceComparison
 import com.hananel.fast.core.data.SessionInsight
 import com.hananel.fast.core.model.TrackPoint
 import com.hananel.fast.core.tracking.Effort
@@ -62,6 +63,8 @@ import com.hananel.fast.core.tracking.sprint.SprintRejection
 import com.hananel.fast.core.tracking.sprint.SprintTestOutcome
 import com.hananel.fast.mobile.R
 import com.hananel.fast.mobile.data.PhoneData
+import com.hananel.fast.mobile.reference.ComparisonCard
+import com.hananel.fast.mobile.reference.ReferenceRecorder
 import com.hananel.fast.mobile.theme.FastColors
 import com.hananel.fast.mobile.ui.Card
 import com.hananel.fast.mobile.ui.Dot
@@ -79,6 +82,8 @@ import com.hananel.fast.mobile.ui.formatMeters
 import com.hananel.fast.mobile.ui.label
 import com.hananel.fast.mobile.ui.rememberEntrance
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun SessionRoute(id: String, onBack: () -> Unit, onReplay: () -> Unit) {
@@ -112,6 +117,10 @@ private sealed interface Loaded {
 fun SessionScreen(insight: SessionInsight, onBack: () -> Unit, onReplay: () -> Unit, onDelete: () -> Unit) {
     val header = insight.session.header
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current.applicationContext
+    val phoneComparison by produceState<DeviceComparison?>(initialValue = null, insight) {
+        value = withContext(Dispatchers.IO) { ReferenceRecorder.comparisonFor(context, insight.session) }
+    }
 
     Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
         TopBar(
@@ -147,6 +156,9 @@ fun SessionScreen(insight: SessionInsight, onBack: () -> Unit, onReplay: () -> U
                 analysis != null && header.kind == ActivityKind.FOOTBALL -> FootballBody(analysis, insight.points)
                 analysis != null -> RunBody(analysis, insight.points)
             }
+
+            // When the phone measured alongside ("Measure from the phone"), the two side by side.
+            phoneComparison?.let { ComparisonCard(it) }
 
             // Where the numbers came from, so they can be trusted or questioned.
             Text(

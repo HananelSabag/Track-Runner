@@ -158,7 +158,6 @@
     <string name="reference_position_accuracy">Position accuracy</string>
     <string name="reference_satellites">Satellites in use</string>
     <string name="reference_saved_title">Saved</string>
-    <string name="reference_saved_count">Measurements on this phone: %1$d</string>
     <string name="reference_permission_denied">Without the location permission the phone cannot measure. You can allow it in the phone\'s settings.</string>
     <string name="replay_pause">Pause</string>
     <string name="replay_speed">Playback speed</string>
@@ -166,4 +165,21 @@
     <string name="settings_tools">Tools</string>
     <string name="settings_about">About</string>
     <string name="settings_about_text">No account and no server. Your sessions are kept on the watch and on the phone, and the app sends them nowhere.</string>
+    <string name="reference_list_title">Saved measurements</string>
+    <string name="reference_entry_fixes">%1$d fixes · %2$s a second</string>
+    <string name="reference_cut_off">Cut off before Stop (the app was closed or stopped), and kept up to that moment.</string>
+    <string name="reference_against">Against the watch: %1$s</string>
+    <string name="compare_title">Watch vs phone</string>
+    <string name="compare_shared">Together %1$s</string>
+    <string name="compare_watch">Watch</string>
+    <string name="compare_phone">Phone</string>
+    <string name="compare_best_reported">Best 3 s, reported speed</string>
+    <string name="compare_best_positions">Best 3 s, from positions</string>
+    <string name="compare_distance_speeds">Distance, reported speed</string>
+    <string name="compare_distance_positions">Distance, from positions</string>
+    <string name="compare_rate">Fixes a second</string>
+    <string name="compare_speed_accuracy">Claimed speed accuracy, km/h</string>
+    <string name="compare_position_accuracy">Claimed position accuracy, m</string>
+    <string name="compare_separation">On average %1$s m between where the watch and the phone placed you at the same second.</string>
+    <string name="compare_none">No watch recording from the same time. To compare, start a run or a speed test on the watch while the phone is measuring.</string>
 </resources>

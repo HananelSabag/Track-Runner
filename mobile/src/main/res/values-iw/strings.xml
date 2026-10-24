@@ -158,7 +158,6 @@
     <string name="reference_position_accuracy">דיוק מיקום</string>
     <string name="reference_satellites">לוויינים בשימוש</string>
     <string name="reference_saved_title">נשמר</string>
-    <string name="reference_saved_count">מדידות בטלפון הזה: %1$d</string>
     <string name="reference_permission_denied">בלי הרשאת מיקום הטלפון לא יכול למדוד. אפשר לאשר בהגדרות הטלפון.</string>
     <string name="replay_pause">השהה</string>
     <string name="replay_speed">מהירות ניגון</string>
@@ -166,4 +165,21 @@
     <string name="settings_tools">כלים</string>
     <string name="settings_about">אודות</string>
     <string name="settings_about_text">אין חשבון ואין שרת. האימונים נשמרים על השעון ועל הטלפון, והאפליקציה לא שולחת אותם לשום מקום.</string>
+    <string name="reference_list_title">המדידות שנשמרו</string>
+    <string name="reference_entry_fixes">%1$d דגימות · %2$s בשנייה</string>
+    <string name="reference_cut_off">נקטעה לפני \"עצור\" (האפליקציה נסגרה או נעצרה), ונשמרה עד אותו רגע.</string>
+    <string name="reference_against">מול %1$s בשעון</string>
+    <string name="compare_title">שעון מול טלפון</string>
+    <string name="compare_shared">יחד %1$s</string>
+    <string name="compare_watch">שעון</string>
+    <string name="compare_phone">טלפון</string>
+    <string name="compare_best_reported">שיא 3 שנ׳, מהירות מדווחת</string>
+    <string name="compare_best_positions">שיא 3 שנ׳, לפי מיקום</string>
+    <string name="compare_distance_speeds">מרחק, מהירות מדווחת</string>
+    <string name="compare_distance_positions">מרחק, לפי מיקום</string>
+    <string name="compare_rate">דגימות בשנייה</string>
+    <string name="compare_speed_accuracy">דיוק מהירות מוצהר, קמ״ש</string>
+    <string name="compare_position_accuracy">דיוק מיקום מוצהר, מ׳</string>
+    <string name="compare_separation">בממוצע %1$s מ׳ בין המקום שבו השעון שם אותך לזה שהטלפון שם אותך, באותה שנייה.</string>
+    <string name="compare_none">לא נמצאה הקלטה של השעון מאותו זמן. כדי להשוות, מתחילים בשעון ריצה או בדיקת מהירות בזמן שהמדידה בטלפון פועלת.</string>
 </resources>
