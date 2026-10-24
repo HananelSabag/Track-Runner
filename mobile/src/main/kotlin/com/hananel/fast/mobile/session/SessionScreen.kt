@@ -146,7 +146,11 @@ fun SessionScreen(insight: SessionInsight, onBack: () -> Unit, onReplay: () -> U
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (!insight.session.endedCleanly) Note(stringResource(R.string.note_recovered))
-            if (insight.session.trimAfterMs != null) Note(stringResource(R.string.note_auto_ended))
+            when {
+                insight.session.effectiveTrimAfterMs != null -> Note(stringResource(R.string.note_auto_ended))
+                // The watch stopped it, but what it recorded after deciding "forgotten" says he was still playing.
+                insight.session.trimAfterMs != null -> Note(stringResource(R.string.note_auto_ended_overruled))
+            }
             if (header.demo) Note(stringResource(R.string.note_demo))
 
             val analysis = insight.analysis

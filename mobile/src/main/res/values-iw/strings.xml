@@ -182,4 +182,5 @@
     <string name="compare_position_accuracy">דיוק מיקום מוצהר, מ׳</string>
     <string name="compare_separation">בממוצע %1$s מ׳ בין המקום שבו השעון שם אותך לזה שהטלפון שם אותך, באותה שנייה.</string>
     <string name="compare_none">לא נמצאה הקלטה של השעון מאותו זמן. כדי להשוות, מתחילים בשעון ריצה או בדיקת מהירות בזמן שהמדידה בטלפון פועלת.</string>
+    <string name="note_auto_ended_overruled">השעון עצר את האימון לבד, כי חשב שאתה במנוחה כבר 20 דקות. לפי התנועה והדופק עוד שיחקת, אז הזמן הזה נספר. מה שאחרי העצירה לא הוקלט.</string>
 </resources>

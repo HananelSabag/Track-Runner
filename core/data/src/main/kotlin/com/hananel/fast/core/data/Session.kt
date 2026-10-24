@@ -66,11 +66,22 @@ data class RecordedSession(
      */
     val trimAfterMs: Long? = null,
 ) {
+    /**
+     * [trimAfterMs], unless what was recorded after it shows the player had not gone
+     * home after all. The trim is a decision an older watch made while recording;
+     * the recording itself is the fact, so it is checked again with today's rules.
+     */
+    val effectiveTrimAfterMs: Long? by lazy {
+        val trim = trimAfterMs ?: return@lazy null
+        val last = fixes.lastOrNull()?.timeMs ?: return@lazy trim
+        trim.takeIf { ForgottenCheck.looksForgotten(fixes, heartRates, it, last) }
+    }
+
     /** From the start to the last record that counts. */
     val durationMs: Long
         get() {
             val last = maxOf(fixes.lastOrNull()?.timeMs ?: 0L, heartRates.lastOrNull()?.timeMs ?: 0L)
-            val end = trimAfterMs?.let { minOf(it, last) } ?: last
+            val end = effectiveTrimAfterMs?.let { minOf(it, last) } ?: last
             return (end - header.startedElapsedMs).coerceAtLeast(0)
         }
 }

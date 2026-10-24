@@ -182,4 +182,5 @@
     <string name="compare_position_accuracy">Claimed position accuracy, m</string>
     <string name="compare_separation">On average %1$s m between where the watch and the phone placed you at the same second.</string>
     <string name="compare_none">No watch recording from the same time. To compare, start a run or a speed test on the watch while the phone is measuring.</string>
+    <string name="note_auto_ended_overruled">The watch stopped this session by itself, believing you had been resting for 20 minutes. Your movement and heart rate say you were still playing, so that time counts. Nothing after the stop was recorded.</string>
 </resources>

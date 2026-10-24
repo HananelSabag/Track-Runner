@@ -22,7 +22,7 @@ object TrackAssembler {
 
     fun assemble(session: RecordedSession): List<TrackPoint> {
         val origin = session.header.startedElapsedMs
-        val trimAfter = session.trimAfterMs
+        val trimAfter = session.effectiveTrimAfterMs
 
         // A fix without a speed says nothing about how fast the player moved, and a
         // speed no runner can reach is left out rather than reported as a record.

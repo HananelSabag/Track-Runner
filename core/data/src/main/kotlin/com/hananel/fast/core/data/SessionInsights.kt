@@ -15,7 +15,7 @@ import kotlin.math.roundToInt
  * Bumped whenever the way a session is read changes, so every stored summary
  * made by an older reading is thrown away and worked out again from the raw file.
  */
-const val ALGORITHM_VERSION = 3
+const val ALGORITHM_VERSION = 4
 
 /** What the analysis needs to know about the player, beyond the session itself. */
 data class AnalysisContext(

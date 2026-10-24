@@ -31,6 +31,14 @@ data class RestDetectionConfig(
     val resumeHoldMs: Long = 3_000,
     /** A rest also ends when the player has walked this far from where it began. */
     val leaveRadiusMeters: Double = 30.0,
+    /**
+     * And once the player is this far from where he was [relocateWindowMs] earlier.
+     * On a small pitch a player can play for twenty minutes at walking pace without
+     * ever going [leaveRadiusMeters] from one spot; standing drift does not cover
+     * this distance in this time, and pacing on the spot does not either.
+     */
+    val relocateMeters: Double = 15.0,
+    val relocateWindowMs: Long = 15_000,
 ) {
     companion object {
         /** Football training: breaks of a minute or more are rests; shorter pauses are part of the drill. */
@@ -63,6 +71,9 @@ object WorkRestSegmenter {
         var anchor: GeoPoint? = null
         // While resting: when the player started moving fast enough to end the rest.
         var resumeSinceIndex = -1
+        // While resting: the first sample of the rest, and the latest one at least relocateWindowMs old.
+        var restStartIndex = -1
+        var lagIndex = -1
 
         fun close(endMs: Long, next: SegmentKind) {
             if (endMs > segmentStartMs) segments += Segment(kind, segmentStartMs, endMs)
@@ -82,6 +93,8 @@ object WorkRestSegmenter {
                         if (point.timeMs - points[stillSinceIndex].timeMs >= config.minRestMs) {
                             close(points[stillSinceIndex].timeMs, SegmentKind.REST)
                             resumeSinceIndex = -1
+                            restStartIndex = stillSinceIndex
+                            lagIndex = stillSinceIndex
                         }
                     } else if (slow) {
                         // Slow, but either the first slow sample or one that wandered out of the
@@ -106,6 +119,23 @@ object WorkRestSegmenter {
                     val movingAgain = resumeSinceIndex >= 0 &&
                         point.timeMs - points[resumeSinceIndex].timeMs >= config.resumeHoldMs
                     val walkedAway = !isWithin(point.position, anchor, config.leaveRadiusMeters)
+
+                    while (lagIndex + 1 < i && points[lagIndex + 1].timeMs <= point.timeMs - config.relocateWindowMs) lagIndex++
+                    val relocated = lagIndex >= restStartIndex &&
+                        point.timeMs - points[lagIndex].timeMs >= config.relocateWindowMs &&
+                        !isWithin(point.position, points[lagIndex].position, config.relocateMeters)
+
+                    if (relocated && !movingAgain) {
+                        // He set off somewhere in the last few seconds: the work starts at the first sample
+                        // that had clearly left the spot, not at the start of the window.
+                        val setOff = (lagIndex + 1..i).firstOrNull {
+                            !isWithin(points[it].position, points[lagIndex].position, config.relocateMeters / SET_OFF_FRACTION)
+                        } ?: i
+                        close(points[setOff].timeMs, SegmentKind.WORK)
+                        stillSinceIndex = if (slow) i else -1
+                        anchor = if (slow) point.position else null
+                        continue
+                    }
 
                     if (movingAgain) {
                         close(points[resumeSinceIndex].timeMs, SegmentKind.WORK)
@@ -144,4 +174,7 @@ object WorkRestSegmenter {
         }
 
     private const val MEDIAN_HALF_WINDOW = 2
+
+    /** A third of the way there is past standing drift, and close enough to when he really set off. */
+    private const val SET_OFF_FRACTION = 3.0
 }

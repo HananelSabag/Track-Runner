@@ -6,6 +6,7 @@ import android.os.SystemClock
 import android.util.Log
 import com.hananel.fast.core.data.ActivityKind
 import com.hananel.fast.core.data.FixRecord
+import com.hananel.fast.core.data.ForgottenCheck
 import com.hananel.fast.core.data.HeartRateRecord
 import com.hananel.fast.core.data.RawRecord
 import com.hananel.fast.core.data.RecordedSession
@@ -342,16 +343,27 @@ object RecordingSession {
 
     /**
      * Ends a session whose owner has plainly gone home: resting, or without any
-     * GPS, for longer than any break in a training. The session is cut back to
-     * the moment the standing began, so the forgotten time does not count as rest.
+     * GPS, for longer than any break in a training — and, over that stretch,
+     * barely moving and with a heart that has come down ([ForgottenCheck]). The
+     * session is cut back to the moment the standing began, so the forgotten time
+     * does not count as rest.
+     *
+     * The second condition was added after a football session on 2026-10-24 was
+     * ended while the player was still playing: the rest detection saw twenty
+     * minutes of rest, and that alone was enough to stop the recording.
      */
     private fun endIfForgotten(live: LiveState, header: SessionHeader) {
+        val nowMs = header.startedElapsedMs + live.elapsedMs
         val lastFixMs = fixes.lastOrNull()?.timeMs ?: header.startedElapsedMs
-        val sinceLastFixMs = header.startedElapsedMs + live.elapsedMs - lastFixMs
+        val sinceLastFixMs = nowMs - lastFixMs
+        val restStartMs = nowMs - live.segmentElapsedMs
         when {
-            live.segment == SegmentKind.REST && live.segmentElapsedMs >= FORGOTTEN_AFTER_MS ->
-                end(autoEnded = true, trimAfterMs = header.startedElapsedMs + live.elapsedMs - live.segmentElapsedMs)
-            sinceLastFixMs >= FORGOTTEN_AFTER_MS -> end(autoEnded = true, trimAfterMs = lastFixMs)
+            live.segment == SegmentKind.REST && live.segmentElapsedMs >= FORGOTTEN_AFTER_MS &&
+                ForgottenCheck.looksForgotten(fixes, heartRates, restStartMs, nowMs) ->
+                end(autoEnded = true, trimAfterMs = restStartMs)
+            // No GPS at all — indoors, say. Only the heart can tell a player from a watch in a drawer.
+            sinceLastFixMs >= FORGOTTEN_AFTER_MS && !ForgottenCheck.heartSaysActive(heartRates, nowMs) ->
+                end(autoEnded = true, trimAfterMs = lastFixMs)
         }
     }
 

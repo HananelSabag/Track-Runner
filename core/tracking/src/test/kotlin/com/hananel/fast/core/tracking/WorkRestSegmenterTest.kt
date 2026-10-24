@@ -83,8 +83,34 @@ class WorkRestSegmenterTest {
         val segments = WorkRestSegmenter.segment(points, football)
 
         assertEquals(listOf(REST, WORK), segments.map { it.kind })
-        // 30 m at walking pace is about 27 s after setting off at 90 s.
-        assertTrue(segments[0].endMs in 110_000..125_000)
+        // Walking pace takes him 15 m from where he was within about 15 s of setting off at 90 s.
+        assertTrue("rest ended at ${segments[0].endMs}", segments[0].endMs in 90_000..110_000)
+    }
+
+    @Test
+    fun playingAtWalkingPaceOnASmallPitchEndsARest() {
+        // 2026-10-24: after a real break the player went on playing at walking pace, never more
+        // than 30 m from where he had stopped. The rest never ended, and after twenty minutes
+        // of it the watch decided the session was forgotten.
+        val points = track {
+            stand(90)
+            shuttle(kmh = 5.0, lengthMeters = 25.0, seconds = 600)
+        }
+
+        val segments = WorkRestSegmenter.segment(points, football)
+
+        assertEquals(listOf(REST, WORK), segments.map { it.kind })
+        assertTrue("rest ended at ${segments[0].endMs}", segments[0].endMs <= 120_000)
+    }
+
+    @Test
+    fun pacingOnTheSpotIsStillARest() {
+        val points = track {
+            stand(90)
+            shuttle(kmh = 4.0, lengthMeters = 6.0, seconds = 300)
+        }
+
+        assertEquals(listOf(REST), WorkRestSegmenter.segment(points, football).map { it.kind })
     }
 
     @Test
