@@ -1,9 +1,11 @@
 package com.hananel.fast.mobile.home
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,74 +17,71 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.hananel.fast.core.data.ActivityKind
 import com.hananel.fast.core.data.SessionInsights
 import com.hananel.fast.core.data.SessionSummary
-import com.hananel.fast.core.tracking.sprint.SprintTestOutcome
 import com.hananel.fast.mobile.R
 import com.hananel.fast.mobile.data.Library
+import com.hananel.fast.mobile.reference.PhoneMeasureCard
 import com.hananel.fast.mobile.sync.WatchStatus
 import com.hananel.fast.mobile.theme.FastColors
+import com.hananel.fast.mobile.ui.BrandGradient
 import com.hananel.fast.mobile.ui.Card
 import com.hananel.fast.mobile.ui.CardShape
 import com.hananel.fast.mobile.ui.Dot
 import com.hananel.fast.mobile.ui.HeroNumber
+import com.hananel.fast.mobile.ui.LeftToRight
 import com.hananel.fast.mobile.ui.SectionTitle
 import com.hananel.fast.mobile.ui.StatTile
 import com.hananel.fast.mobile.ui.color
 import com.hananel.fast.mobile.ui.countedUp
-import com.hananel.fast.mobile.ui.formatClock
 import com.hananel.fast.mobile.ui.formatKmh
-import com.hananel.fast.mobile.ui.formatMeters
-import com.hananel.fast.mobile.ui.icon
 import com.hananel.fast.mobile.ui.label
 import com.hananel.fast.mobile.ui.localTime
 import com.hananel.fast.mobile.ui.rememberEntrance
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.temporal.TemporalAdjusters
-import java.time.temporal.WeekFields
 import java.util.Locale
 
+/** Where each part of the home screen leads. */
+class HomeActions(
+    val onOpen: (String) -> Unit,
+    val onHistory: () -> Unit,
+    val onSettings: () -> Unit,
+    val onMeasurements: () -> Unit,
+)
+
 /**
- * The history: personal bests on top, then every run, football session and
- * speed test in one list, newest first, grouped by week.
+ * The first screen: how fast you are, the phone ready to measure, and the last
+ * few sessions. The full history is one tap away, not the whole screen.
  */
 @Composable
-fun HomeScreen(
-    library: Library?,
-    watch: WatchStatus,
-    onOpen: (String) -> Unit,
-    onSettings: () -> Unit,
-) {
+fun HomeScreen(library: Library?, watch: WatchStatus, actions: HomeActions) {
     val insets = WindowInsets.safeDrawing.asPaddingValues()
     val direction = LocalLayoutDirection.current
-    val summaries = library?.summaries.orEmpty()
-    val weeks = remember(summaries) { groupByWeek(summaries) }
+    val summaries = remember(library) { library?.summaries.orEmpty().sortedByDescending { it.startedUtcMs } }
     // Above the list, so the number runs up once and not every time its card scrolls back into view.
     val entrance = rememberEntrance()
 
@@ -98,23 +97,30 @@ fun HomeScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item(key = "header") { Header(onSettings) }
+        item(key = "header") { Header(actions.onSettings) }
         if (library == null) return@LazyColumn
 
+        item(key = "speed") { TopSpeedHero(library, summaries, entrance, actions.onOpen) }
+        item(key = "watch") { WatchLine(watch, summaries.firstOrNull()) }
+        item(key = "measure") { PhoneMeasureCard(onOpenMeasurements = actions.onMeasurements) }
+
         if (summaries.isEmpty()) {
-            item(key = "empty") { EmptyState(watch) }
+            item(key = "empty") { EmptyState() }
             return@LazyColumn
         }
 
-        item(key = "best") { PersonalBest(library, entrance) }
-        item(key = "month") { LastThirtyDays(summaries) }
-        item(key = "watch") { WatchLine(watch) }
-        for (week in weeks) {
-            item(key = "week-${week.start}") { SectionTitle(week.title(), Modifier.padding(top = 6.dp)) }
-            items(week.sessions, key = { it.id }) { summary ->
-                SessionCard(summary, onClick = { onOpen(summary.id) }, modifier = Modifier.animateItem())
+        item(key = "recent-title") {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                SectionTitle(stringResource(R.string.home_recent), Modifier.weight(1f))
+                TextButton(onClick = actions.onHistory) {
+                    Text(pluralStringResource(R.plurals.home_all_history, summaries.size, summaries.size))
+                }
             }
         }
+        items(summaries.take(RECENT_COUNT), key = { it.id }) { summary ->
+            SessionCard(summary, onClick = { actions.onOpen(summary.id) }, modifier = Modifier.animateItem())
+        }
+        item(key = "month") { LastThirtyDays(summaries) }
     }
 }
 
@@ -129,43 +135,112 @@ private fun Header(onSettings: () -> Unit) {
     }
 }
 
+/**
+ * The number the app is named for, big, with where it was set — and under it the
+ * top speed of each recent session, so the number is seen against the others.
+ */
 @Composable
-private fun PersonalBest(library: Library, entrance: Float) {
+private fun TopSpeedHero(library: Library, summaries: List<SessionSummary>, entrance: Float, onOpen: (String) -> Unit) {
     val topSpeed = library.topSpeed
-    // The session that set it, so the number has a date.
+    // The session that set it, so the number has a date and a place to go.
     val setBy = remember(library) { SessionInsights.personalBest(library.summaries) }
-    Card {
-        Text(
-            text = stringResource(R.string.home_top_speed),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+    Card(
+        Modifier
+            .border(BorderStroke(1.5.dp, BrandGradient), CardShape)
+            .then(if (setBy != null) Modifier.clip(CardShape).clickable { onOpen(setBy.id) } else Modifier),
+    ) {
+        Text(stringResource(R.string.home_top_speed), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (topSpeed == null) {
-            Text(
-                text = stringResource(R.string.home_top_speed_none),
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 6.dp),
-            )
+            Text(stringResource(R.string.home_top_speed_none), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 6.dp))
             return@Card
         }
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            HeroNumber(topSpeed.countedUp(entrance).formatKmh(), fontSize = 64)
+            HeroNumber(topSpeed.countedUp(entrance).formatKmh(), fontSize = 76)
             Text(
                 text = stringResource(R.string.unit_kmh),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 12.dp),
+                modifier = Modifier.padding(bottom = 14.dp),
             )
         }
         Text(
             text = listOfNotNull(
-                // A sprint test scores the best two seconds, a training the best three.
+                // A speed test scores the best two seconds, a training the best three.
                 stringResource(if (setBy?.kind == ActivityKind.SPRINT_TEST) R.string.home_top_speed_held_test else R.string.home_top_speed_held),
                 setBy?.let { it.kind.label() + " · " + DAY_MONTH.format(localTime(it.startedUtcMs)) },
             ).joinToString(" · "),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        val recent = summaries.take(CHART_COUNT).reversed()
+        if (recent.size >= 2) {
+            TopSpeedBars(recent, best = setBy?.id, grow = entrance, modifier = Modifier.padding(top = 14.dp))
+            Text(
+                text = stringResource(R.string.home_chart_caption, recent.size),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+    }
+}
+
+/** Oldest on the left, newest on the right, in every language: one bar per session, its height its top speed. */
+@Composable
+private fun TopSpeedBars(sessions: List<SessionSummary>, best: String?, grow: Float, modifier: Modifier = Modifier) {
+    val top = sessions.maxOf { it.topSpeed().kmh }.coerceAtLeast(1.0)
+    val track = MaterialTheme.colorScheme.surfaceContainerHigh
+    LeftToRight {
+        Canvas(modifier.fillMaxWidth().height(56.dp)) {
+            val gap = 6.dp.toPx()
+            val width = (size.width - gap * (sessions.size - 1)) / sessions.size
+            sessions.forEachIndexed { i, session ->
+                val x = i * (width + gap)
+                val fraction = (session.topSpeed().kmh / top).toFloat().coerceIn(0.04f, 1f) * grow
+                val height = size.height * fraction
+                drawRoundRect(track, topLeft = Offset(x, 0f), size = Size(width, size.height), cornerRadius = CornerRadius(6.dp.toPx()))
+                val topLeft = Offset(x, size.height - height)
+                val barSize = Size(width, height)
+                if (session.id == best) {
+                    drawRoundRect(Brush.verticalGradient(listOf(FastColors.Cyan, FastColors.Violet)), topLeft, barSize, CornerRadius(6.dp.toPx()))
+                } else {
+                    drawRoundRect(session.kind.color().copy(alpha = 0.75f), topLeft, barSize, CornerRadius(6.dp.toPx()))
+                }
+            }
+        }
+    }
+}
+
+/** Whether the watch is within reach, and when the last session came in from it. */
+@Composable
+private fun WatchLine(watch: WatchStatus, latest: SessionSummary?) {
+    if (!watch.checked) return
+    Row(
+        modifier = Modifier.padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Dot(if (watch.connectedName != null) FastColors.Mint else FastColors.Slate)
+        Text(
+            text = listOfNotNull(
+                watch.connectedName?.let { stringResource(R.string.watch_connected, it) } ?: stringResource(R.string.watch_not_connected),
+                latest?.let { stringResource(R.string.home_last_session, whenText(it.startedUtcMs)) },
+            ).joinToString(" · "),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/** "today 20:40", "yesterday 20:40", or "24.10 20:40". */
+@Composable
+private fun whenText(utcMs: Long): String {
+    val time = localTime(utcMs)
+    val clock = CLOCK.format(time)
+    return when (time.toLocalDate()) {
+        LocalDate.now() -> stringResource(R.string.time_today, clock)
+        LocalDate.now().minusDays(1) -> stringResource(R.string.time_yesterday, clock)
+        else -> DAY_MONTH.format(time) + " " + clock
     }
 }
 
@@ -175,7 +250,7 @@ private fun LastThirtyDays(summaries: List<SessionSummary>) {
         val since = System.currentTimeMillis() - THIRTY_DAYS_MS
         summaries.filter { it.startedUtcMs >= since && it.kind != ActivityKind.SPRINT_TEST }
     }
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 4.dp)) {
         SectionTitle(stringResource(R.string.home_last_30_days))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StatTile(stringResource(R.string.home_sessions), recent.size.toString())
@@ -190,142 +265,20 @@ private fun LastThirtyDays(summaries: List<SessionSummary>) {
 }
 
 @Composable
-private fun WatchLine(watch: WatchStatus) {
-    if (!watch.checked) return
-    Row(
-        modifier = Modifier.padding(horizontal = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Dot(if (watch.connectedName != null) FastColors.Mint else FastColors.Slate)
-        Text(
-            text = watch.connectedName?.let { stringResource(R.string.watch_connected, it) } ?: stringResource(R.string.watch_not_connected),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun SessionCard(summary: SessionSummary, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val accent = summary.kind.color()
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(CardShape)
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .clickable(onClick = onClick)
-            .padding(start = 0.dp, end = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.width(5.dp).height(84.dp).background(accent))
-        Column(Modifier.weight(1f).padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(summary.kind.icon(), contentDescription = null, tint = accent, modifier = Modifier.size(18.dp))
-                Text(summary.kind.label(), style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = accent)
-                if (summary.demo) Badge(stringResource(R.string.badge_demo))
-                if (!summary.endedCleanly) Badge(stringResource(R.string.badge_recovered))
-            }
-            Text(
-                text = WEEKDAY_TIME.format(localTime(summary.startedUtcMs)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            // A sprint test the app itself doubts is shown as doubtful: its score in the
-            // warning colour, and its speed dimmed so it does not pass for a result.
-            val doubtful = summary.kind == ActivityKind.SPRINT_TEST &&
-                (summary.confidence ?: 0) < SprintTestOutcome.MEDIUM_CONFIDENCE
-            Text(
-                text = summary.headline(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (doubtful) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            val doubtful = summary.kind == ActivityKind.SPRINT_TEST &&
-                (summary.confidence ?: 0) < SprintTestOutcome.MEDIUM_CONFIDENCE
-            val measured = summary.kind != ActivityKind.SPRINT_TEST || summary.confidence != null
-            // A sprint test's number is its scored top speed; a training's is the fastest it got.
-            val speed = if (summary.kind == ActivityKind.SPRINT_TEST) summary.peak3s else summary.maxSpeed
-            Text(
-                text = if (measured) speed.formatKmh() else "—",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black),
-                color = if (doubtful) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                softWrap = false,
-            )
-            Text(stringResource(R.string.unit_kmh), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
-}
-
-/** The line that says what kind of session it was: the figures that matter for its kind. */
-@Composable
-private fun SessionSummary.headline(): String = when (kind) {
-    ActivityKind.FOOTBALL -> listOf(
-        stringResource(R.string.card_work, formatClock(workMs)),
-        pluralStringResource(R.plurals.sprints, sprintCount, sprintCount),
-        formatMeters(distanceMeters),
-    ).joinToString(" · ")
-    ActivityKind.RUN -> formatMeters(distanceMeters) + " · " + formatClock(workMs)
-    ActivityKind.SPRINT_TEST -> confidence?.let { stringResource(R.string.confidence_value, it) } ?: stringResource(R.string.sprint_not_measured)
-}
-
-@Composable
-private fun Badge(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(8.dp))
-            .padding(horizontal = 6.dp, vertical = 2.dp),
-    )
-}
-
-@Composable
-private fun EmptyState(watch: WatchStatus) {
-    Card(Modifier.padding(top = 24.dp)) {
+private fun EmptyState() {
+    Card {
         Text(stringResource(R.string.empty_title), style = MaterialTheme.typography.titleLarge)
         Text(
             text = stringResource(R.string.empty_text),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp, bottom = 12.dp),
+            modifier = Modifier.padding(top = 8.dp),
         )
-        WatchLine(watch)
     }
 }
 
-private class Week(val start: LocalDate, val sessions: List<SessionSummary>) {
-
-    @Composable
-    fun title(): String {
-        val thisWeek = weekStart(LocalDate.now())
-        return when (start) {
-            thisWeek -> stringResource(R.string.week_this)
-            thisWeek.minusWeeks(1) -> stringResource(R.string.week_last)
-            // A date range reads low to high in every language.
-            else -> "\u2066" + DAY_MONTH.format(start) + " – " + DAY_MONTH.format(start.plusDays(6)) + "\u2069"
-        }
-    }
-}
-
-private fun groupByWeek(summaries: List<SessionSummary>): List<Week> =
-    summaries.groupBy { weekStart(localTime(it.startedUtcMs).toLocalDate()) }
-        .map { (start, sessions) -> Week(start, sessions) }
-        .sortedByDescending { it.start }
-
-/** The first day of the week as the phone's region counts it — Sunday in Israel, Monday in most of Europe. */
-private fun weekStart(date: LocalDate): LocalDate =
-    date.with(TemporalAdjusters.previousOrSame(WeekFields.of(Locale.getDefault()).firstDayOfWeek))
-
-private val DAY_MONTH = DateTimeFormatter.ofPattern("d.M", Locale.US)
-
-/** "Tuesday, 6.10 · 18:30", with the day's name in the phone's language. */
-private val WEEKDAY_TIME: DateTimeFormatter
-    get() = DateTimeFormatter.ofPattern("EEEE, d.M · HH:mm", Locale.getDefault())
-
+private const val RECENT_COUNT = 3
+private const val CHART_COUNT = 12
 private const val THIRTY_DAYS_MS = 30L * 24 * 60 * 60 * 1000
+private val DAY_MONTH = DateTimeFormatter.ofPattern("d.M", Locale.US)
+private val CLOCK = DateTimeFormatter.ofPattern("HH:mm", Locale.US)

@@ -189,4 +189,21 @@
     <string name="link_notification_waiting">Waiting for the watch: start on the watch and the phone measures too</string>
     <string name="link_turn_off">Turn off</string>
     <string name="reference_auto_stop">A measurement stops by itself after 20 minutes without moving, or once the phone is in a vehicle.</string>
+    <string name="history_title">History</string>
+    <plurals name="history_count">
+        <item quantity="one">One session</item>
+        <item quantity="other">%1$d sessions</item>
+    </plurals>
+    <string name="home_recent">Recent</string>
+    <plurals name="home_all_history">
+        <item quantity="one">History (1)</item>
+        <item quantity="other">History (%1$d)</item>
+    </plurals>
+    <string name="home_chart_caption">Top speed in each of the last %1$d sessions</string>
+    <string name="home_last_session">Last: %1$s</string>
+    <string name="time_today">today %1$s</string>
+    <string name="time_yesterday">yesterday %1$s</string>
+    <string name="measure_saved">Measurements</string>
+    <string name="measure_start">Start measuring</string>
+    <string name="link_off">Off</string>
 </resources>

@@ -13,8 +13,8 @@ android {
         applicationId = "com.hananel.fast"
         minSdk = libs.versions.minSdkMobile.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 9
-        versionName = "0.5.0"
+        versionCode = 10
+        versionName = "0.6.0"
     }
 
     buildTypes {

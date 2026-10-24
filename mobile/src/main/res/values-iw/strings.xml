@@ -189,4 +189,23 @@
     <string name="link_notification_waiting">מחכה לשעון: כשתתחיל בשעון, גם הטלפון ימדוד</string>
     <string name="link_turn_off">כבה</string>
     <string name="reference_auto_stop">מדידה נעצרת לבד אחרי 20 דקות בלי תזוזה, או כשהטלפון בנסיעה.</string>
+    <string name="history_title">היסטוריה</string>
+    <plurals name="history_count">
+        <item quantity="one">אימון אחד</item>
+        <item quantity="two">%1$d אימונים</item>
+        <item quantity="other">%1$d אימונים</item>
+    </plurals>
+    <string name="home_recent">אחרונים</string>
+    <plurals name="home_all_history">
+        <item quantity="one">להיסטוריה (1)</item>
+        <item quantity="two">להיסטוריה (%1$d)</item>
+        <item quantity="other">להיסטוריה (%1$d)</item>
+    </plurals>
+    <string name="home_chart_caption">השיא בכל אחד מ-%1$d האימונים האחרונים</string>
+    <string name="home_last_session">אחרון: %1$s</string>
+    <string name="time_today">היום %1$s</string>
+    <string name="time_yesterday">אתמול %1$s</string>
+    <string name="measure_saved">המדידות</string>
+    <string name="measure_start">התחל מדידה</string>
+    <string name="link_off">כבוי</string>
 </resources>

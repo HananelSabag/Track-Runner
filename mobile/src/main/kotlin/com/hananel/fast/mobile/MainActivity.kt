@@ -30,6 +30,8 @@ import androidx.lifecycle.lifecycleScope
 import com.hananel.fast.mobile.data.PhoneData
 import com.hananel.fast.mobile.demo.DemoSessions
 import com.hananel.fast.mobile.devicecheck.DeviceCheckRoute
+import com.hananel.fast.mobile.history.HistoryScreen
+import com.hananel.fast.mobile.home.HomeActions
 import com.hananel.fast.mobile.home.HomeScreen
 import com.hananel.fast.mobile.reference.ReferenceRecorder
 import com.hananel.fast.mobile.reference.ReferenceScreen
@@ -126,9 +128,14 @@ private fun FastApp() {
                 route == HOME -> HomeScreen(
                     library = library,
                     watch = watch,
-                    onOpen = { open(SESSION + it) },
-                    onSettings = { open(SETTINGS) },
+                    actions = HomeActions(
+                        onOpen = { open(SESSION + it) },
+                        onHistory = { open(HISTORY) },
+                        onSettings = { open(SETTINGS) },
+                        onMeasurements = { open(REFERENCE) },
+                    ),
                 )
+                route == HISTORY -> HistoryScreen(library, onOpen = { open(SESSION + it) }, onBack = ::back)
                 route.startsWith(SESSION) -> {
                     val id = route.removePrefix(SESSION)
                     SessionRoute(id, onBack = ::back, onReplay = { open(REPLAY + id) })
@@ -151,14 +158,16 @@ private fun FastApp() {
 /** How far into the app a screen lies, which tells a move forward from a move back. */
 private fun depth(route: String): Int = when {
     route == HOME -> 0
-    route.startsWith(SESSION) || route == SETTINGS -> 1
-    else -> 2
+    route == HISTORY || route == SETTINGS -> 1
+    route.startsWith(SESSION) -> 2
+    else -> 3
 }
 
 private const val HOME = "home"
 private const val SESSION = "session/"
 private const val REPLAY = "replay/"
 private const val SETTINGS = "settings"
+private const val HISTORY = "history"
 private const val DEVICE_CHECK = "device-check"
 private const val REFERENCE = "reference"
 private const val EXTRA_DEMO = "demo"
