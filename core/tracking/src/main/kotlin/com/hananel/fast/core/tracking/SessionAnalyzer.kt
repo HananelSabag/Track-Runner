@@ -71,12 +71,24 @@ data class SessionAnalysis(
 
 object SessionAnalyzer {
 
+    /**
+     * After two minutes of a rest a heart above this share of its maximum is a player still
+     * at it: about 115 for a maximum near 186. A resting heart, even a minute after a
+     * sprint, is well below; one at 50–70 when truly at rest is far below.
+     */
+    private const val ACTIVE_FRACTION_OF_MAX = 0.62
+    private const val ACTIVE_BPM_WITHOUT_MAX = 118
+
+
     fun analyze(
         points: List<TrackPoint>,
         profile: ActivityProfile,
         heartRateZones: HeartRateZones? = null,
     ): SessionAnalysis {
-        val segments = WorkRestSegmenter.segment(points, profile.rest)
+        val byMovement = WorkRestSegmenter.segment(points, profile.rest)
+        // A heart still up after a long "rest" says it was play. Without a known maximum, a figure no resting heart reaches.
+        val activeBpm = heartRateZones?.let { (it.maxBpm * ACTIVE_FRACTION_OF_MAX).toInt() } ?: ACTIVE_BPM_WITHOUT_MAX
+        val segments = WorkRestSegmenter.confirmByHeart(byMovement, points, profile.rest, activeBpm)
         val maxGapMs = profile.efforts.maxSampleGapMs
 
         var workMs = 0L

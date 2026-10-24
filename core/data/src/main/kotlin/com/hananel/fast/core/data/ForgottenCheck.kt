@@ -31,9 +31,11 @@ object ForgottenCheck {
     }
 
     private fun movesTooMuch(fixes: List<FixRecord>, fromMs: Long, toMs: Long): Boolean {
-        val inside = fixes.filter { it.hasSpeed && it.timeMs in fromMs..toMs }
+        val ordered = fixes.sortedBy { it.timeMs }
+        val speeds = Speeds.of(ordered)
+        val inside = ordered.indices.filter { ordered[it].timeMs in fromMs..toMs }.mapNotNull { speeds[it] }
         if (inside.isEmpty()) return false
-        return inside.count { it.speed >= MOVING_SPEED } > inside.size * MAX_MOVING_SHARE
+        return inside.count { it >= MOVING_SPEED } > inside.size * MAX_MOVING_SHARE
     }
 
     /** Walking pace. A standing watch reads well under it: 0 to 1 km/h, with the odd spike. */

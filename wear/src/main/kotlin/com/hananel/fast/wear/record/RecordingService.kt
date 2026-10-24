@@ -17,6 +17,7 @@ import com.hananel.fast.core.data.ActivityKind
 import com.hananel.fast.wear.MainActivity
 import com.hananel.fast.wear.R
 import com.hananel.fast.wear.sensors.hasHeartRatePermission
+import com.hananel.fast.wear.sync.PhoneLink
 
 /**
  * Keeps a training alive, and entitled to the GPS and the heart-rate sensor,
@@ -46,6 +47,7 @@ class RecordingService : Service() {
         RecordingSession.onFinished = { stop() }
         RecordingSession.onIdleTimeout = { stop() }
         RecordingSession.open(applicationContext, kind)
+        PhoneLink.measuringStarted(applicationContext)
         return START_NOT_STICKY
     }
 
@@ -53,6 +55,7 @@ class RecordingService : Service() {
         RecordingSession.onFinished = null
         RecordingSession.onIdleTimeout = null
         RecordingSession.close()
+        PhoneLink.measuringStopped(applicationContext)
         super.onDestroy()
     }
 

@@ -1,5 +1,6 @@
 package com.hananel.fast.core.tracking
 
+import com.hananel.fast.core.model.TrackPoint
 import com.hananel.fast.core.tracking.SegmentKind.REST
 import com.hananel.fast.core.tracking.SegmentKind.WORK
 import org.junit.Assert.assertEquals
@@ -101,6 +102,65 @@ class WorkRestSegmenterTest {
 
         assertEquals(listOf(REST, WORK), segments.map { it.kind })
         assertTrue("rest ended at ${segments[0].endMs}", segments[0].endMs <= 120_000)
+    }
+
+    // --- The heart's last word on long rests (D42)
+
+    private fun withHeart(points: List<TrackPoint>) =
+        WorkRestSegmenter.confirmByHeart(WorkRestSegmenter.segment(points, football), points, football, activeBpm = 115)
+
+    @Test
+    fun aLongRestWithTheHeartStillUpWasPlay() {
+        // Keeping goal: hardly moving, heart at 140 throughout.
+        val points = track {
+            heartRate(150)
+            run(12.0, 120)
+            heartRate(140)
+            stand(600)
+            heartRate(150)
+            run(12.0, 120)
+        }
+
+        assertEquals(listOf(WORK), withHeart(points).map { it.kind })
+    }
+
+    @Test
+    fun aLongRestWithTheHeartComingDownIsARest() {
+        val points = track {
+            heartRate(160)
+            run(12.0, 120)
+            stand(90)
+            heartRate(95)
+            stand(510)
+            heartRate(150)
+            run(12.0, 120)
+        }
+
+        assertEquals(listOf(WORK, REST, WORK), withHeart(points).map { it.kind })
+    }
+
+    @Test
+    fun aShortBreakIsARestWhateverTheHeartSays() {
+        // Ninety seconds after a sprint the heart is always still up.
+        val points = track {
+            heartRate(170)
+            run(12.0, 120)
+            stand(90)
+            run(12.0, 60)
+        }
+
+        assertEquals(listOf(WORK, REST, WORK), withHeart(points).map { it.kind })
+    }
+
+    @Test
+    fun withoutAHeartTheMovementDecides() {
+        val points = track {
+            run(12.0, 120)
+            stand(600)
+            run(12.0, 60)
+        }
+
+        assertEquals(listOf(WORK, REST, WORK), withHeart(points).map { it.kind })
     }
 
     @Test

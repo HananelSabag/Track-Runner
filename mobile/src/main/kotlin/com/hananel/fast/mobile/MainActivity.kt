@@ -1,5 +1,7 @@
 package com.hananel.fast.mobile
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -22,13 +24,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.hananel.fast.mobile.data.PhoneData
 import com.hananel.fast.mobile.demo.DemoSessions
 import com.hananel.fast.mobile.devicecheck.DeviceCheckRoute
 import com.hananel.fast.mobile.home.HomeScreen
+import com.hananel.fast.mobile.reference.ReferenceRecorder
 import com.hananel.fast.mobile.reference.ReferenceScreen
+import com.hananel.fast.mobile.reference.ReferenceService
 import com.hananel.fast.mobile.replay.ReplayRoute
 import com.hananel.fast.mobile.session.SessionRoute
 import com.hananel.fast.mobile.settings.SettingsScreen
@@ -58,6 +63,16 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
+     * "Measure together with the watch" was left on, but the system ended the service
+     * that waits for the watch. It can only be started while the app is in front: now.
+     */
+    private fun rearmMeasuringWithWatch() {
+        val wanted = PhoneData.settings(applicationContext).measureWithWatch
+        val allowed = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (wanted && allowed && !ReferenceRecorder.armed.value) ReferenceService.arm(applicationContext)
+    }
+
+    /**
      * Development only, and deliberately without a button: `am start -n <activity> --es demo add`
      * fills the history with invented sessions so the screens can be looked at on an emulator,
      * and `--es demo remove` takes them away again. Release builds ignore it.
@@ -72,6 +87,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        rearmMeasuringWithWatch()
         // Each time the app comes forward: take in whatever the watch offered meanwhile.
         PhoneSync.onAppOpened(applicationContext)
     }

@@ -110,7 +110,16 @@ class Settings(private val preferences: SharedPreferences) {
         get() = preferences.getBoolean(KEY_ASKED_WATCH, false)
         set(value) = preferences.edit().putBoolean(KEY_ASKED_WATCH, value).apply()
 
+    /**
+     * "Measure together with the watch": while true, the phone keeps a quiet service
+     * waiting, and measures whenever the watch does (D43).
+     */
+    var measureWithWatch: Boolean
+        get() = preferences.getBoolean(KEY_MEASURE_WITH_WATCH, false)
+        set(value) = preferences.edit().putBoolean(KEY_MEASURE_WITH_WATCH, value).apply()
+
     private companion object {
+        const val KEY_MEASURE_WITH_WATCH = "measureWithWatch"
         const val KEY_AGE = "ageYears"
         const val KEY_TOP_SPEED = "topSpeedMps"
         const val KEY_ASKED_WATCH = "askedWatchForHistory"

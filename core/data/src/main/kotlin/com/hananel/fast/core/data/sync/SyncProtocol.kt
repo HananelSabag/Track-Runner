@@ -20,6 +20,14 @@ object SyncProtocol {
      */
     const val RESYNC_PATH = "/fast/resync"
 
+    /**
+     * Messages, not data items: the watch saying it has started or stopped measuring,
+     * so that a phone set to measure together with it does the same (D43).
+     */
+    const val LINK_PREFIX = "/fast/link/"
+    const val LINK_START_PATH = LINK_PREFIX + "start"
+    const val LINK_STOP_PATH = LINK_PREFIX + "stop"
+
     /** The packed session, as an asset. */
     const val KEY_PAYLOAD = "payload"
 

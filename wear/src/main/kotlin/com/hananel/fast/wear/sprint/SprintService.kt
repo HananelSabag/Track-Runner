@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.wear.ongoing.OngoingActivity
 import com.hananel.fast.wear.MainActivity
 import com.hananel.fast.wear.R
+import com.hananel.fast.wear.sync.PhoneLink
 
 /**
  * Keeps a sprint session alive, and entitled to the GPS, while the display is
@@ -32,6 +33,7 @@ class SprintService : Service() {
         startForeground(NOTIFICATION_ID, buildNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
         SprintSession.onIdleTimeout = { stopSelf() }
         SprintSession.open(applicationContext)
+        PhoneLink.measuringStarted(applicationContext)
         // If the system kills the process there is no test worth resuming.
         return START_NOT_STICKY
     }
@@ -39,6 +41,7 @@ class SprintService : Service() {
     override fun onDestroy() {
         SprintSession.onIdleTimeout = null
         SprintSession.close()
+        PhoneLink.measuringStopped(applicationContext)
         super.onDestroy()
     }
 

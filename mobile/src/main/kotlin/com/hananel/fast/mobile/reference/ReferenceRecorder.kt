@@ -93,6 +93,24 @@ object ReferenceRecorder {
     /** Called when a recording has been saved, so whoever keeps it alive can let go. */
     var onStopped: (() -> Unit)? = null
 
+    /** Called when a recording starts or stops, so the notification can say which. */
+    var onRecordingChanged: (() -> Unit)? = null
+
+    private val _armed = MutableStateFlow(false)
+
+    /**
+     * "Measure together with the watch" is on and its service is waiting: the next
+     * time the watch starts measuring, so does the phone (D43).
+     */
+    val armed: StateFlow<Boolean> = _armed.asStateFlow()
+
+    /** Whether the recording now running was started by the watch, which then also ends it. */
+    private var startedByWatch = false
+
+    // The safety net for a measurement nobody stops (one ran for three and a half hours on 2026-10-24).
+    private var lastMovingMs = 0L
+    private var drivingSinceMs: Long? = null
+
     /** The measurement being written right now; the only unfinished file that is not an orphan. */
     private var activeId: String? = null
     private var listening: Job? = null
@@ -168,8 +186,32 @@ object ReferenceRecorder {
         )
     }
 
+    /** Set by [ReferenceService] while it is waiting for the watch, and cleared when it stops waiting. */
+    fun setArmed(armed: Boolean) {
+        _armed.value = armed
+    }
+
+    /** The watch has started measuring. A phone that is waiting for it starts too. Any thread. */
+    fun onWatchStarted(context: Context) {
+        val appContext = context.applicationContext
+        scope.launch {
+            if (!_armed.value || isRecording) return@launch
+            start(appContext)
+            startedByWatch = true
+        }
+    }
+
+    /** The watch has stopped. A measurement it started ends with it; one started by hand does not. Any thread. */
+    fun onWatchStopped(context: Context) {
+        val appContext = context.applicationContext
+        scope.launch {
+            if (isRecording && startedByWatch) stop(appContext)
+        }
+    }
+
     fun start(context: Context) {
         if (isRecording) return
+        startedByWatch = false
         val appContext = context.applicationContext
         startedElapsedMs = SystemClock.elapsedRealtime()
         val header = SessionHeader(
@@ -204,7 +246,10 @@ object ReferenceRecorder {
         // The phone will be in a pocket with its screen off; the fixes must keep their rhythm.
         wakeLock = appContext.getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "fast:reference").apply { acquire(WAKE_LOCK_LIMIT_MS) }
+        lastMovingMs = startedElapsedMs
+        drivingSinceMs = null
         publish()
+        onRecordingChanged?.invoke()
 
         listening = scope.launch {
             launch {
@@ -221,6 +266,7 @@ object ReferenceRecorder {
                 }
             }
             gnssFixes(appContext, intervalMs = FASTEST_INTERVAL_MS).collect { fix ->
+                if (stopsByItself(appContext, fix)) return@collect
                 fixCount++
                 latest = fix
                 recentFixTimes.addLast(fix.sample.timeMs)
@@ -256,10 +302,30 @@ object ReferenceRecorder {
             val durationMs = endMs - startedElapsedMs
             val finished = ReferenceState.Finished(durationMs, count, if (durationMs > 0) count / (durationMs / 1000.0) else 0.0)
             _state.value = ReferenceState.Idle(last = finished.takeIf { count > 0 })
+            startedByWatch = false
+            onRecordingChanged?.invoke()
             onStopped?.invoke()
             // The new measurement takes its place in the list, next to the watch recording it belongs with.
             withContext(disk) { refresh(appContext) }
         }
+    }
+
+    /**
+     * Ends a measurement that has plainly outlived its purpose: the phone is in a car,
+     * or nobody has moved it for twenty minutes. The phone's own speed is believable
+     * (it says how accurate it is, and it is), so it can be trusted for this.
+     */
+    private fun stopsByItself(context: Context, fix: GnssFix): Boolean {
+        val now = fix.sample.timeMs
+        val speed = fix.sample.speed.takeIf { fix.hasSpeed } ?: return false
+        if (speed >= MOVING_SPEED) lastMovingMs = now
+        drivingSinceMs = if (speed >= DRIVING_SPEED) drivingSinceMs ?: now else null
+        val driving = drivingSinceMs?.let { now - it >= DRIVING_HOLD_MS } == true
+        val abandoned = now - lastMovingMs >= STILL_LIMIT_MS
+        if (!driving && !abandoned) return false
+        Log.i(TAG, if (driving) "In a vehicle: measurement stopped" else "Not moved for 20 minutes: measurement stopped")
+        stop(context)
+        return true
     }
 
     private fun publish() {
@@ -288,6 +354,14 @@ object ReferenceRecorder {
     /** Far faster than any phone receiver delivers; it answers with whatever its own best is. */
     private const val FASTEST_INTERVAL_MS = 100L
     private const val RATE_WINDOW_FIXES = 12
+
+    /** Walking pace: anything slower is the phone lying still. */
+    private val MOVING_SPEED = Speed.ofKmh(3.0)
+
+    /** Faster than anyone runs for long; held for a minute, it is a car or a bus. */
+    private val DRIVING_SPEED = Speed.ofKmh(25.0)
+    private const val DRIVING_HOLD_MS = 60_000L
+    private const val STILL_LIMIT_MS = 20 * 60_000L
 
     /** How far around a measurement to look for the watch recording made with it. */
     private const val SEARCH_MARGIN_MS = 60_000L

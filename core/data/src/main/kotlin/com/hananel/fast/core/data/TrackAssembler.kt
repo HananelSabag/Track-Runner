@@ -9,6 +9,9 @@ import kotlin.math.abs
  * one point per usable fix, with the speed cleaned of lone spikes and the
  * nearest heart-rate reading attached.
  *
+ * The speed is the receiver's own, or worked out from positions for a receiver
+ * that smooths it ([Speeds], Q17).
+ *
  * Point times are measured from the start of the session, so the first second
  * of every session is second zero.
  *
@@ -24,16 +27,26 @@ object TrackAssembler {
         val origin = session.header.startedElapsedMs
         val trimAfter = session.effectiveTrimAfterMs
 
-        // A fix without a speed says nothing about how fast the player moved, and a
-        // speed no runner can reach is left out rather than reported as a record.
-        val fixes = buildList {
+        val ordered = buildList {
             var lastTimeMs = Long.MIN_VALUE
             for (fix in session.fixes.sortedBy { it.timeMs }) {
-                if (!fix.hasSpeed || fix.speed > MAX_HUMAN_SPEED) continue
-                if (fix.timeMs < origin || (trimAfter != null && fix.timeMs > trimAfter)) continue
                 if (fix.timeMs <= lastTimeMs) continue
                 lastTimeMs = fix.timeMs
                 add(fix)
+            }
+        }
+        val speeds = Speeds.of(ordered)
+
+        // A fix with no speed to tell says nothing about how fast the player moved, and a
+        // speed no runner can reach — a vehicle, or a position that jumped — is left out
+        // rather than reported as a record.
+        val fixes = buildList {
+            for (i in ordered.indices) {
+                val fix = ordered[i]
+                val speed = speeds[i] ?: continue
+                if (speed > MAX_HUMAN_SPEED) continue
+                if (fix.timeMs < origin || (trimAfter != null && fix.timeMs > trimAfter)) continue
+                add(fix.copy(speed = speed, hasSpeed = true))
             }
         }
 

@@ -15,7 +15,7 @@ import kotlin.math.roundToInt
  * Bumped whenever the way a session is read changes, so every stored summary
  * made by an older reading is thrown away and worked out again from the raw file.
  */
-const val ALGORITHM_VERSION = 4
+const val ALGORITHM_VERSION = 5
 
 /** What the analysis needs to know about the player, beyond the session itself. */
 data class AnalysisContext(
@@ -88,8 +88,12 @@ object SessionInsights {
         if (session.header.kind == ActivityKind.SPRINT_TEST) {
             // The scorer reads the receiver's own readings, not the cleaned track: judging
             // how far to trust them is its whole job.
-            val samples = session.fixes.filter { it.hasSpeed }.map {
-                SpeedSample(it.timeMs, it.speed, it.speedAccuracy, it.position, it.horizontalAccuracyMeters)
+            val ordered = session.fixes.sortedBy { it.timeMs }
+            val speeds = Speeds.of(ordered)
+            val samples = ordered.indices.mapNotNull { i ->
+                val fix = ordered[i]
+                val speed = speeds[i] ?: return@mapNotNull null
+                SpeedSample(fix.timeMs, speed, fix.speedAccuracy, fix.position, fix.horizontalAccuracyMeters)
             }
             val outcome = SprintTestAnalyzer.analyze(samples, satellites = session.satellites.map { it.view })
             return SessionInsight(session, points, null, outcome, maxBpm, profile)

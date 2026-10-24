@@ -9,6 +9,8 @@ import com.hananel.fast.core.model.SpeedSample
 import com.hananel.fast.core.tracking.sprint.AcquisitionStage
 import com.hananel.fast.core.data.ActivityKind
 import com.hananel.fast.core.data.SatelliteRecord
+import com.hananel.fast.core.data.Speeds
+import com.hananel.fast.core.data.SpeedSource
 import com.hananel.fast.core.gnss.GnssFix
 import com.hananel.fast.core.gnss.gnssFixes
 import com.hananel.fast.core.gnss.satelliteViews
@@ -220,11 +222,18 @@ object SprintSession {
         when (phase) {
             Phase.LOCATING -> publishAcquisition()
             Phase.RUNNING -> {
+                val previous = runFixes.lastOrNull()
                 runFixes += fix
-                if (!fix.hasSpeed) return
-                runSamples += fix.sample
+                // The same speed the saved test will be read with: from positions on this watch,
+                // whose receiver smooths the speed it reports (Q17).
+                val record = fix.toRecord()
+                val speed = when (Speeds.sourceFor(record)) {
+                    SpeedSource.RECEIVER -> fix.sample.speed.takeIf { fix.hasSpeed }
+                    SpeedSource.POSITIONS -> Speeds.fromPositions(previous?.toRecord(), record) ?: fix.sample.speed.takeIf { fix.hasSpeed }
+                } ?: return
+                runSamples += fix.sample.copy(speed = speed)
                 val progress = SprintProgress.of(runSamples)
-                _state.value = SprintUiState.Running(fix.sample.speed, progress.peak, progress.started)
+                _state.value = SprintUiState.Running(speed, progress.peak, progress.started)
                 if (progress.finished) finish()
             }
             Phase.COUNTDOWN, Phase.RESULT -> Unit

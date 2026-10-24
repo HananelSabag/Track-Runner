@@ -183,4 +183,10 @@
     <string name="compare_separation">בממוצע %1$s מ׳ בין המקום שבו השעון שם אותך לזה שהטלפון שם אותך, באותה שנייה.</string>
     <string name="compare_none">לא נמצאה הקלטה של השעון מאותו זמן. כדי להשוות, מתחילים בשעון ריצה או בדיקת מהירות בזמן שהמדידה בטלפון פועלת.</string>
     <string name="note_auto_ended_overruled">השעון עצר את האימון לבד, כי חשב שאתה במנוחה כבר 20 דקות. לפי התנועה והדופק עוד שיחקת, אז הזמן הזה נספר. מה שאחרי העצירה לא הוקלט.</string>
+    <string name="link_title">מדידה משותפת עם השעון</string>
+    <string name="link_waiting">מחכה לשעון</string>
+    <string name="link_text">כשזה דולק, כל אימון או בדיקת מהירות שמתחילים בשעון מפעילים גם את המדידה בטלפון, והיא נעצרת יחד איתם. הטלפון צריך להיות עליך ובטווח של השעון. בזמן ההמתנה ה-GPS של הטלפון כבוי.</string>
+    <string name="link_notification_waiting">מחכה לשעון: כשתתחיל בשעון, גם הטלפון ימדוד</string>
+    <string name="link_turn_off">כבה</string>
+    <string name="reference_auto_stop">מדידה נעצרת לבד אחרי 20 דקות בלי תזוזה, או כשהטלפון בנסיעה.</string>
 </resources>

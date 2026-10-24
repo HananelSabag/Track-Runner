@@ -3,7 +3,10 @@ package com.hananel.fast.mobile.sync
 import android.util.Log
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
+import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
+import com.hananel.fast.core.data.sync.SyncProtocol
+import com.hananel.fast.mobile.reference.ReferenceRecorder
 
 /**
  * Woken by Play services whenever the watch offers a session, whether or not
@@ -11,6 +14,14 @@ import com.google.android.gms.wearable.WearableListenerService
  * show up by itself once the two are near each other again.
  */
 class SessionReceiverService : WearableListenerService() {
+
+    /** The watch has started or stopped measuring; a phone set to measure with it follows. */
+    override fun onMessageReceived(event: MessageEvent) {
+        when (event.path) {
+            SyncProtocol.LINK_START_PATH -> ReferenceRecorder.onWatchStarted(applicationContext)
+            SyncProtocol.LINK_STOP_PATH -> ReferenceRecorder.onWatchStopped(applicationContext)
+        }
+    }
 
     // Called on a background thread, and the events are only valid until it returns,
     // so each session is stored and confirmed before moving on.

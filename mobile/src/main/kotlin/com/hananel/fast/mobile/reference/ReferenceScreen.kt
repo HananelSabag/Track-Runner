@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,21 +56,27 @@ import kotlinx.coroutines.withContext
 fun ReferenceScreen(onBack: () -> Unit) {
     val context = LocalContext.current.applicationContext
     val state by ReferenceRecorder.state.collectAsStateWithLifecycle()
+    val armed by ReferenceRecorder.armed.collectAsStateWithLifecycle()
     var denied by remember { mutableStateOf(false) }
+    // What to do once location is allowed: start measuring now, or start waiting for the watch.
+    var afterPermission by remember { mutableStateOf<(() -> Unit)?>(null) }
     val permissionRequest = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
-        if (results[Manifest.permission.ACCESS_FINE_LOCATION] == true) ReferenceService.start(context) else denied = true
+        if (results[Manifest.permission.ACCESS_FINE_LOCATION] == true) afterPermission?.invoke() else denied = true
     }
     LaunchedEffect(Unit) { withContext(Dispatchers.IO) { ReferenceRecorder.refresh(context) } }
 
-    fun start() {
+    fun withLocation(action: () -> Unit) {
         val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         if (granted) {
-            ReferenceService.start(context)
+            action()
         } else {
+            afterPermission = action
             // The notification permission only makes the "measuring" notice visible; location is what matters.
             permissionRequest.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS))
         }
     }
+
+    fun start() = withLocation { ReferenceService.start(context) }
 
     Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
         TopBar(title = stringResource(R.string.reference_title), onBack = onBack)
@@ -77,11 +84,37 @@ fun ReferenceScreen(onBack: () -> Unit) {
             modifier = Modifier.verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            LinkCard(
+                armed = armed,
+                onChange = { on -> if (on) withLocation { ReferenceService.arm(context) } else ReferenceService.disarm(context) },
+            )
             when (val current = state) {
-                is ReferenceState.Recording -> RecordingBody(current, onStop = { ReferenceRecorder.stop(context) })
+                is ReferenceState.Recording -> RecordingBody(current, onStop = { ReferenceService.stop(context) })
                 is ReferenceState.Idle -> IdleBody(current, denied, onStart = ::start)
             }
         }
+    }
+}
+
+/** "Measure together with the watch": one switch, and the phone follows the watch from then on. */
+@Composable
+private fun LinkCard(armed: Boolean, onChange: (Boolean) -> Unit) {
+    Card {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.link_title), style = MaterialTheme.typography.titleMedium)
+                if (armed) {
+                    Text(stringResource(R.string.link_waiting), style = MaterialTheme.typography.labelMedium, color = FastColors.Mint)
+                }
+            }
+            Switch(checked = armed, onCheckedChange = onChange)
+        }
+        Text(
+            text = stringResource(R.string.link_text),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 6.dp),
+        )
     }
 }
 
@@ -108,6 +141,12 @@ private fun IdleBody(state: ReferenceState.Idle, denied: Boolean, onStart: () ->
         )
     }
     Button(onClick = onStart, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.reference_start)) }
+    Text(
+        text = stringResource(R.string.reference_auto_stop),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 4.dp),
+    )
 
     state.last?.let { last ->
         Card {

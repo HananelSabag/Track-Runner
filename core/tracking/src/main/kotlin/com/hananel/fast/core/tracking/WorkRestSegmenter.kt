@@ -14,9 +14,14 @@ data class Segment(val kind: SegmentKind, val startMs: Long, val endMs: Long) {
 /**
  * When does standing around count as a rest?
  *
- * Rest is decided from movement, never from heart rate: after a hard effort the
- * heart stays high for a minute or more while the player is already standing,
- * so heart rate would report "still working" long after the work has stopped.
+ * Movement decides where a rest begins and ends: after a hard effort the heart
+ * stays high for a minute or more while the player is already standing, so heart
+ * rate alone would report "still working" long after the work has stopped.
+ *
+ * But the heart has the last word on a long rest (D42). Past its first
+ * [heartGraceMs], a rest whose heart has not come down was play at a pace the
+ * movement cannot tell from standing — keeping goal, holding a position on a
+ * small pitch. On 2026-10-24 that was most of what was called rest.
  */
 data class RestDetectionConfig(
     /** Staying inside a circle of this radius counts as not going anywhere. GPS drifts 3–5 m while standing, so it cannot be much smaller. */
@@ -39,6 +44,10 @@ data class RestDetectionConfig(
      */
     val relocateMeters: Double = 15.0,
     val relocateWindowMs: Long = 15_000,
+    /** The heart is given this long to come down before it is asked whether this is a rest at all. */
+    val heartGraceMs: Long = 120_000,
+    /** Fewer heart readings than this after the grace, and the movement's verdict stands. */
+    val minHeartReadings: Int = 30,
 ) {
     companion object {
         /** Football training: breaks of a minute or more are rests; shorter pauses are part of the drill. */
@@ -153,6 +162,31 @@ object WorkRestSegmenter {
 
         close(points.last().timeMs, kind)
         return segments
+    }
+
+    /**
+     * Turns back into work every rest longer than [RestDetectionConfig.heartGraceMs] in which,
+     * after that grace, the heart stayed at or above [activeBpm]. Neighbouring work is joined up.
+     */
+    fun confirmByHeart(segments: List<Segment>, points: List<TrackPoint>, config: RestDetectionConfig, activeBpm: Int): List<Segment> {
+        val judged = segments.map { segment ->
+            if (segment.kind != SegmentKind.REST || segment.durationMs <= config.heartGraceMs) return@map segment
+            val after = points
+                .filter { it.timeMs >= segment.startMs + config.heartGraceMs && it.timeMs < segment.endMs }
+                .mapNotNull { it.heartRateBpm }
+                .sorted()
+            val heartStayedUp = after.size >= config.minHeartReadings && after[after.size / 2] >= activeBpm
+            if (heartStayedUp) segment.copy(kind = SegmentKind.WORK) else segment
+        }
+        return judged.fold(mutableListOf()) { merged, segment ->
+            val last = merged.lastOrNull()
+            if (last != null && last.kind == segment.kind && last.endMs == segment.startMs) {
+                merged[merged.lastIndex] = last.copy(endMs = segment.endMs)
+            } else {
+                merged += segment
+            }
+            merged
+        }
     }
 
     /** With no position on either side there is nothing to contradict "has not moved". */
