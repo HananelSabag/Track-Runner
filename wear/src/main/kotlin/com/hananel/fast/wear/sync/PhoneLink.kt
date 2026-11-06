@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.util.concurrent.atomic.AtomicBoolean
 
 /** What the phone said about the measurement the watch just started. */
 enum class PhoneFollow {
@@ -46,16 +47,45 @@ object PhoneLink {
     /** The phone's answer to the latest start; back to UNKNOWN when the watch stops measuring. */
     val phone: StateFlow<PhoneFollow> = _phone.asStateFlow()
 
-    /** The GPS search has begun — a training or a speed test is being prepared. */
+    /** A start went out and its stop has not. */
+    private val active = AtomicBoolean(false)
+
+    /** Since that start, a training was started or a speed test counted down. */
+    private val began = AtomicBoolean(false)
+
+    /** True while the watch is preparing or doing a measurement the phone has been told about. */
+    val isActive: Boolean get() = active.get()
+
+    /**
+     * The GPS search has begun — a training or a speed test is being prepared. Also sent again
+     * for one already under way (its screen reopened, or the phone's invitation arrived during it):
+     * the phone hears the start once more, and what the watch knows about this one is kept.
+     */
     fun measuringStarted(context: Context): Job {
-        _phone.value = PhoneFollow.UNKNOWN
+        if (!active.getAndSet(true)) {
+            began.set(false)
+            _phone.value = PhoneFollow.UNKNOWN
+        }
+        // A run opened from the menu instead of from the phone's invitation answers it all the same.
+        JointRunInvite.dismiss(context)
         return send(context, SyncProtocol.LINK_START_PATH)
     }
 
-    /** The watch has stopped measuring: the session ended, or the screen was left. */
-    fun measuringStopped(context: Context): Job {
+    /** Start was pressed, or a speed test began its countdown: from here the watch is measuring. */
+    fun measuringBegan() {
+        began.set(true)
+    }
+
+    /**
+     * The watch has stopped: the session ended, or the screen was left before Start. The phone
+     * hears which, so a joint run started there keeps measuring after a search that was only
+     * left (D47). Said once per start: the end of a session and its service both report it.
+     */
+    fun measuringStopped(context: Context): Job? {
+        if (!active.getAndSet(false)) return null
         _phone.value = PhoneFollow.UNKNOWN
-        return send(context, SyncProtocol.LINK_STOP_PATH)
+        val measured = if (began.getAndSet(false)) SyncProtocol.STOP_MEASURED else SyncProtocol.STOP_SEARCH_ONLY
+        return send(context, SyncProtocol.LINK_STOP_PATH, byteArrayOf(measured))
     }
 
     /** The phone's answer arrived ([PhoneListenerService]). */
@@ -67,12 +97,12 @@ object PhoneLink {
         }
     }
 
-    private fun send(context: Context, path: String): Job {
+    private fun send(context: Context, path: String, payload: ByteArray = ByteArray(0)): Job {
         val appContext = context.applicationContext
         return scope.launch {
             try {
                 val phones = Wearable.getNodeClient(appContext).connectedNodes.await().filter { it.isNearby }
-                for (phone in phones) Wearable.getMessageClient(appContext).sendMessage(phone.id, path, ByteArray(0)).await()
+                for (phone in phones) Wearable.getMessageClient(appContext).sendMessage(phone.id, path, payload).await()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

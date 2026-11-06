@@ -19,7 +19,10 @@ class SessionReceiverService : WearableListenerService() {
     override fun onMessageReceived(event: MessageEvent) {
         when (event.path) {
             SyncProtocol.LINK_START_PATH -> ReferenceRecorder.onWatchStarted(applicationContext, event.sourceNodeId)
-            SyncProtocol.LINK_STOP_PATH -> ReferenceRecorder.onWatchStopped(applicationContext)
+            SyncProtocol.LINK_STOP_PATH -> ReferenceRecorder.onWatchStopped(
+                applicationContext,
+                measured = event.data.firstOrNull() != SyncProtocol.STOP_SEARCH_ONLY,
+            )
         }
     }
 

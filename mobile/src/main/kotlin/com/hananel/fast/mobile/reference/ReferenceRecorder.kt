@@ -121,6 +121,9 @@ object ReferenceRecorder {
 
     /** A joint run started on the phone, before the watch has started its run. */
     private var waitingForWatch = false
+
+    /** This measurement is a joint run started on the phone, not one that followed the watch. */
+    private var jointFromPhone = false
     private var watchReached: Boolean? = null
 
     // The safety net for a measurement nobody stops (one ran for three and a half hours on 2026-10-24).
@@ -270,6 +273,7 @@ object ReferenceRecorder {
             if (!isRecording) start(appContext)
             if (!isRecording) return@launch
             startedByWatch = true
+            jointFromPhone = true
             waitingForWatch = true
             watchReached = null
             publish()
@@ -304,17 +308,28 @@ object ReferenceRecorder {
         }
     }
 
-    /** The watch has stopped. A measurement it started ends with it; one started by hand does not. Any thread. */
-    fun onWatchStopped(context: Context) {
+    /**
+     * The watch has stopped. A measurement it started ends with it; one started by hand does not.
+     * A joint run started here outlives a watch that only searched for GPS and was left (D47):
+     * it goes back to waiting for the watch's run. Any thread.
+     */
+    fun onWatchStopped(context: Context, measured: Boolean) {
         val appContext = context.applicationContext
         scope.launch {
-            if (isRecording && startedByWatch) stop(appContext, StopReason.WITH_WATCH)
+            if (!isRecording || !startedByWatch) return@launch
+            if (jointFromPhone && !measured) {
+                waitingForWatch = true
+                publish()
+                return@launch
+            }
+            stop(appContext, StopReason.WITH_WATCH)
         }
     }
 
     fun start(context: Context) {
         if (isRecording) return
         startedByWatch = false
+        jointFromPhone = false
         waitingForWatch = false
         watchReached = null
         generation++
@@ -426,6 +441,7 @@ object ReferenceRecorder {
             val finished = ReferenceState.Finished(durationMs, count, if (durationMs > 0) count / (durationMs / 1000.0) else 0.0, reason)
             _state.value = ReferenceState.Idle(last = finished.takeIf { count > 0 || reason != StopReason.BY_HAND })
             startedByWatch = false
+            jointFromPhone = false
             waitingForWatch = false
             onRecordingChanged?.invoke()
             onStopped?.invoke()

@@ -32,7 +32,12 @@ class PhoneListenerService : WearableListenerService() {
 
     override fun onMessageReceived(event: MessageEvent) {
         when (event.path) {
-            SyncProtocol.LINK_INVITE_PATH -> JointRunInvite.show(applicationContext)
+            // Already in a run or a test: the phone only needs to hear the start it missed.
+            SyncProtocol.LINK_INVITE_PATH -> if (PhoneLink.isActive) {
+                PhoneLink.measuringStarted(applicationContext)
+            } else {
+                JointRunInvite.show(applicationContext)
+            }
             else -> PhoneLink.onPhoneAnswered(event.path)
         }
     }

@@ -22,6 +22,7 @@ import com.hananel.fast.core.tracking.sprint.SprintTestAnalyzer
 import com.hananel.fast.core.tracking.sprint.SprintTestOutcome
 import com.hananel.fast.wear.data.WearData
 import com.hananel.fast.wear.gnss.AcquisitionTracker
+import com.hananel.fast.wear.sync.PhoneLink
 import com.hananel.fast.wear.sync.SyncEngine
 import com.hananel.fast.wear.ui.Haptics
 import java.io.IOException
@@ -173,6 +174,7 @@ object SprintSession {
         val tools = tools ?: return
         if (phase != Phase.LOCATING || !currentAcquisition().canStart) return
         phase = Phase.COUNTDOWN
+        PhoneLink.measuringBegan()
         // Released when the test ends; the timeout is only a backstop against a leak.
         tools.wakeLock.acquire(WAKE_LOCK_LIMIT_MS)
         test = scope.launch {

@@ -211,6 +211,7 @@ object RecordingSession {
         // Released when the session ends; the limit is only a backstop against a leak.
         tools.wakeLock.acquire(WAKE_LOCK_LIMIT_MS)
         tools.haptics.go()
+        PhoneLink.measuringBegan()
         _state.value = RecordingUiState.Recording(kind, LiveState.EMPTY, tracker.current().bars)
     }
 
@@ -430,7 +431,7 @@ object RecordingSession {
             // and the phone told, or after a while if Play services does not answer.
             withTimeoutOrNull(HAND_OFF_LIMIT_MS) {
                 SyncEngine.syncPending(tools.context).join()
-                PhoneLink.measuringStopped(tools.context).join()
+                PhoneLink.measuringStopped(tools.context)?.join()
             }
             onFinished?.invoke()
         }

@@ -29,6 +29,14 @@ object SyncProtocol {
     const val LINK_STOP_PATH = LINK_PREFIX + "stop"
 
     /**
+     * The one byte a stop carries: whether the watch really measured (a training was started,
+     * a speed test counted down) or only searched for GPS and was left. A stop without it comes
+     * from a watch older than 0.6.2 and counts as measured.
+     */
+    const val STOP_MEASURED: Byte = 1
+    const val STOP_SEARCH_ONLY: Byte = 0
+
+    /**
      * The phone inviting the watch to a joint run (D47): the phone is already measuring, and
      * the watch shows a notice that opens a run with one tap.
      */
