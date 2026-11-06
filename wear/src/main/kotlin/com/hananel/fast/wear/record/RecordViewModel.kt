@@ -45,7 +45,8 @@ class RecordViewModel(application: Application) : AndroidViewModel(application) 
         combine(gate, RecordingSession.state) { gate, session ->
             when {
                 // A session already under way is shown whatever else is true.
-                session is RecordingUiState.Recording || session is RecordingUiState.Finished -> RecordScreenState.Session(session)
+                session is RecordingUiState.Recording || session is RecordingUiState.Finished || session is RecordingUiState.TimedOut ->
+                    RecordScreenState.Session(session)
                 gate == Gate.PERMISSION -> RecordScreenState.NeedsPermission(denied = false)
                 gate == Gate.PERMISSION_DENIED -> RecordScreenState.NeedsPermission(denied = true)
                 gate == Gate.AGE -> RecordScreenState.AskAge
@@ -85,6 +86,9 @@ class RecordViewModel(application: Application) : AndroidViewModel(application) 
 
     fun dismiss() = RecordingSession.dismiss()
 
+    /** After a timed-out search: switch the receiver on and search again. */
+    fun searchAgain() = proceed()
+
     private fun proceed() {
         if (kind == ActivityKind.FOOTBALL && !settings.ageAsked) {
             gate.value = Gate.AGE
@@ -101,7 +105,7 @@ class RecordViewModel(application: Application) : AndroidViewModel(application) 
     override fun onCleared() {
         when (RecordingSession.state.value) {
             is RecordingUiState.Locating -> RecordingService.stop(getApplication<Application>())
-            is RecordingUiState.Finished -> RecordingSession.dismiss()
+            is RecordingUiState.Finished, is RecordingUiState.TimedOut -> RecordingSession.dismiss()
             else -> Unit
         }
     }

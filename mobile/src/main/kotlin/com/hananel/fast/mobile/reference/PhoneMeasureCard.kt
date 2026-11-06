@@ -42,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hananel.fast.mobile.R
 import com.hananel.fast.mobile.theme.FastColors
 import com.hananel.fast.mobile.ui.Card
+import com.hananel.fast.mobile.ui.StatusColors
 import com.hananel.fast.mobile.ui.formatClock
 import com.hananel.fast.mobile.ui.formatKmh
 
@@ -82,9 +83,13 @@ fun PhoneMeasureCard(onOpenMeasurements: () -> Unit, modifier: Modifier = Modifi
                 LiveDot()
                 Column(Modifier.weight(1f)) {
                     Text(
-                        text = stringResource(R.string.reference_recording) + " · " + formatClock(current.elapsedMs),
+                        text = if (current.withWatch) {
+                            stringResource(R.string.measure_with_watch) + " · " + formatClock(current.elapsedMs)
+                        } else {
+                            stringResource(R.string.reference_recording) + " · " + formatClock(current.elapsedMs)
+                        },
                         style = MaterialTheme.typography.labelLarge,
-                        color = FastColors.Mint,
+                        color = StatusColors.Live,
                     )
                     Text(
                         text = current.speed?.let { stringResource(R.string.value_kmh, it.formatKmh()) } ?: stringResource(R.string.reference_waiting),
@@ -96,19 +101,42 @@ fun PhoneMeasureCard(onOpenMeasurements: () -> Unit, modifier: Modifier = Modifi
                     colors = ButtonDefaults.buttonColors(containerColor = FastColors.RoseDeep, contentColor = FastColors.Ice),
                 ) { Text(stringResource(R.string.reference_stop)) }
             }
-            is ReferenceState.Idle -> Button(
-                onClick = { withLocation { ReferenceService.start(context) } },
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-            ) { Text(stringResource(R.string.measure_start)) }
+            is ReferenceState.Idle -> Column {
+                Button(
+                    onClick = { withLocation { ReferenceService.start(context) } },
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                ) { Text(stringResource(R.string.measure_start)) }
+                // A stop the user did not make is said, so it is never a mystery.
+                current.last?.reason?.takeIf { it != StopReason.BY_HAND }?.let { reason ->
+                    Text(
+                        text = stringResource(reason.textRes()),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = StatusColors.Waiting,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
+            }
         }
         HorizontalDivider(Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.link_title), style = MaterialTheme.typography.bodyLarge)
+                val following = (state as? ReferenceState.Recording)?.withWatch == true
                 Text(
-                    text = stringResource(if (armed) R.string.link_waiting else R.string.link_off),
+                    text = stringResource(
+                        when {
+                            following -> R.string.link_following
+                            armed -> R.string.link_waiting
+                            else -> R.string.link_off
+                        },
+                    ),
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (armed) FastColors.Mint else MaterialTheme.colorScheme.onSurfaceVariant,
+                    // Measuring along: green. Ready and waiting for the watch: blue. Off: grey.
+                    color = when {
+                        following -> StatusColors.Live
+                        armed -> StatusColors.Ready
+                        else -> StatusColors.Waiting
+                    },
                 )
             }
             Switch(
@@ -119,10 +147,19 @@ fun PhoneMeasureCard(onOpenMeasurements: () -> Unit, modifier: Modifier = Modifi
     }
 }
 
+private fun StopReason.textRes(): Int = when (this) {
+    StopReason.BY_HAND -> R.string.reference_stop
+    StopReason.WITH_WATCH -> R.string.stop_reason_with_watch
+    StopReason.NOT_MOVED -> R.string.stop_reason_not_moved
+    StopReason.DRIVING -> R.string.stop_reason_driving
+    StopReason.NO_GPS -> R.string.stop_reason_no_gps
+    StopReason.TOO_LONG -> R.string.stop_reason_too_long
+}
+
 /** A dot that breathes while something is being recorded. */
 @Composable
 private fun LiveDot() {
     val pulse = rememberInfiniteTransition(label = "live")
     val alpha by pulse.animateFloat(0.35f, 1f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "live dot")
-    Box(Modifier.size(12.dp).alpha(alpha).background(FastColors.Mint, CircleShape))
+    Box(Modifier.size(12.dp).alpha(alpha).background(StatusColors.Live, CircleShape))
 }

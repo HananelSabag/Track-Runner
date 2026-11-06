@@ -1,6 +1,7 @@
 package com.hananel.fast.mobile
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
@@ -48,6 +49,11 @@ import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
 
+    companion object {
+        /** Set by the "join the watch" notice. */
+        const val EXTRA_JOIN_WATCH = "com.hananel.fast.JOIN_WATCH"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // The app is dark-only, so the system bars always carry light icons.
         enableEdgeToEdge(
@@ -57,6 +63,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         PhoneData.refresh(applicationContext)
         loadDemoIfAsked()
+        joinWatchIfAsked(intent)
         setContent {
             FastTheme {
                 FastApp()
@@ -85,6 +92,19 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             if (wanted == DEMO_REMOVE) DemoSessions.remove(applicationContext) else DemoSessions.add(applicationContext)
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        joinWatchIfAsked(intent)
+    }
+
+    /** Opened from "the phone did not join": join now that the app is in front. */
+    private fun joinWatchIfAsked(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_JOIN_WATCH, false) != true) return
+        intent.removeExtra(EXTRA_JOIN_WATCH)
+        val allowed = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (allowed) ReferenceService.join(applicationContext)
     }
 
     override fun onStart() {

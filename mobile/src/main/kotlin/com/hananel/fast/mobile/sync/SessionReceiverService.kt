@@ -18,7 +18,7 @@ class SessionReceiverService : WearableListenerService() {
     /** The watch has started or stopped measuring; a phone set to measure with it follows. */
     override fun onMessageReceived(event: MessageEvent) {
         when (event.path) {
-            SyncProtocol.LINK_START_PATH -> ReferenceRecorder.onWatchStarted(applicationContext)
+            SyncProtocol.LINK_START_PATH -> ReferenceRecorder.onWatchStarted(applicationContext, event.sourceNodeId)
             SyncProtocol.LINK_STOP_PATH -> ReferenceRecorder.onWatchStopped(applicationContext)
         }
     }

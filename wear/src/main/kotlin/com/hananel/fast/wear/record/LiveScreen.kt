@@ -68,6 +68,7 @@ import com.hananel.fast.wear.theme.FastTheme
 import com.hananel.fast.wear.ui.Ambient
 import com.hananel.fast.wear.ui.AmbientReadout
 import com.hananel.fast.wear.ui.HeroNumber
+import com.hananel.fast.wear.ui.PhoneFollowLine
 import com.hananel.fast.wear.ui.SpeedGauge
 import com.hananel.fast.wear.ui.formatClock
 import com.hananel.fast.wear.ui.formatKmh
@@ -263,6 +264,7 @@ private fun ControlsPage(kind: ActivityKind, live: LiveState, onFinish: () -> Un
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        PhoneFollowLine(Modifier.padding(top = 6.dp))
         HoldToFinishButton(onFinish, Modifier.padding(top = 8.dp, bottom = 6.dp))
         Text(
             text = stringResource(R.string.controls_hold),

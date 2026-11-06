@@ -4,17 +4,17 @@ import android.content.Context
 import android.os.PowerManager
 import android.os.SystemClock
 import android.util.Log
-import com.hananel.fast.core.model.Speed
-import com.hananel.fast.core.model.SpeedSample
-import com.hananel.fast.core.tracking.sprint.AcquisitionStage
 import com.hananel.fast.core.data.ActivityKind
 import com.hananel.fast.core.data.SatelliteRecord
-import com.hananel.fast.core.data.Speeds
 import com.hananel.fast.core.data.SpeedSource
+import com.hananel.fast.core.data.Speeds
 import com.hananel.fast.core.gnss.GnssFix
 import com.hananel.fast.core.gnss.gnssFixes
 import com.hananel.fast.core.gnss.satelliteViews
 import com.hananel.fast.core.gnss.toRecord
+import com.hananel.fast.core.model.Speed
+import com.hananel.fast.core.model.SpeedSample
+import com.hananel.fast.core.tracking.sprint.AcquisitionStage
 import com.hananel.fast.core.tracking.sprint.GnssAcquisition
 import com.hananel.fast.core.tracking.sprint.SatelliteView
 import com.hananel.fast.core.tracking.sprint.SprintProgress
@@ -24,6 +24,7 @@ import com.hananel.fast.wear.data.WearData
 import com.hananel.fast.wear.gnss.AcquisitionTracker
 import com.hananel.fast.wear.sync.SyncEngine
 import com.hananel.fast.wear.ui.Haptics
+import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -34,7 +35,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.io.IOException
 
 sealed interface SprintUiState {
     /** [denied] is true once the runner has turned the request down. */
@@ -48,6 +48,9 @@ sealed interface SprintUiState {
     data class Running(val speed: Speed, val peak: Speed, val started: Boolean) : SprintUiState
 
     data class Result(val outcome: SprintTestOutcome) : SprintUiState
+
+    /** Left alone for ten minutes, searching or on a result: the receiver was switched off. */
+    data object TimedOut : SprintUiState
 }
 
 /**
@@ -94,6 +97,9 @@ object SprintSession {
 
     private val tracker = AcquisitionTracker()
     private var searchStartedMs = 0L
+
+    /** Set when the idle limit, not the runner, is what closed the session. */
+    private var idleExpired = false
     private var idleSinceMs = 0L
 
     // Each milestone of a search is logged, and signalled on the wrist, once.
@@ -135,7 +141,10 @@ object SprintSession {
                     delay(1_000)
                     if (phase == Phase.LOCATING) publishAcquisition()
                     val waiting = phase == Phase.LOCATING || phase == Phase.RESULT
-                    if (waiting && SystemClock.elapsedRealtime() - idleSinceMs >= IDLE_LIMIT_MS) onIdleTimeout?.invoke()
+                    if (waiting && SystemClock.elapsedRealtime() - idleSinceMs >= IDLE_LIMIT_MS) {
+                        idleExpired = true
+                        onIdleTimeout?.invoke()
+                    }
                 }
             }
             launch { satelliteViews(appContext).collect(::onSatellites) }
@@ -156,7 +165,8 @@ object SprintSession {
         phase = Phase.LOCATING
         clearReceiverState()
         tools = null
-        _state.value = idle()
+        _state.value = if (idleExpired) SprintUiState.TimedOut else idle()
+        idleExpired = false
     }
 
     fun start() {
@@ -252,7 +262,10 @@ object SprintSession {
             )
         }
         // The search can take minutes and nobody watches a watch that long: say when it is done.
-        if (acquisition.canStart && !announcedReady) {
+        // Only a ready signal earns the double tap; a weak one is said in words. If it is lost
+        // before the start, the next one is announced again.
+        if (acquisition.stage != AcquisitionStage.READY && !acquisition.canStart) announcedReady = false
+        if (acquisition.stage == AcquisitionStage.READY && !announcedReady) {
             announcedReady = true
             tools?.haptics?.ready()
         }

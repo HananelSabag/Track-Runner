@@ -52,6 +52,7 @@ import com.hananel.fast.core.tracking.sprint.SprintIssue
 import com.hananel.fast.core.tracking.sprint.SprintRejection
 import com.hananel.fast.core.tracking.sprint.SprintTestOutcome
 import com.hananel.fast.wear.R
+import com.hananel.fast.wear.record.TimedOutScreen
 import com.hananel.fast.wear.theme.FastColors
 import com.hananel.fast.wear.theme.FastTheme
 import com.hananel.fast.wear.ui.Ambient
@@ -60,6 +61,7 @@ import com.hananel.fast.wear.ui.DetailRow
 import com.hananel.fast.wear.ui.GnssStatus
 import com.hananel.fast.wear.ui.HeroNumber
 import com.hananel.fast.wear.ui.KeepScreenOn
+import com.hananel.fast.wear.ui.PhoneFollowLine
 import com.hananel.fast.wear.ui.SpeedGauge
 import com.hananel.fast.wear.ui.edgeMorphing
 import com.hananel.fast.wear.ui.formatKmh
@@ -108,6 +110,7 @@ fun SprintTestRoute(viewModel: SprintTestViewModel = viewModel()) {
             is SprintUiState.Countdown -> CountdownScreen(current.secondsLeft)
             is SprintUiState.Running -> RunningScreen(current, onStop = viewModel::stop)
             is SprintUiState.Result -> ResultScreen(current.outcome, onRetry = viewModel::retry)
+            SprintUiState.TimedOut -> TimedOutScreen(onSearchAgain = viewModel::searchAgain)
         }
     }
 }
@@ -166,6 +169,9 @@ private fun ReadyScreen(acquisition: GnssAcquisition, searchingForMs: Long, onSt
             }
             item {
                 GnssStatus(acquisition, searchingForMs, modifier = edgeMorphing(spec))
+            }
+            item {
+                PhoneFollowLine(edgeMorphing(spec).padding(top = 4.dp))
             }
             if (hint != null) {
                 item(key = "hint") {

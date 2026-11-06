@@ -149,9 +149,10 @@ fun GnssStatus(acquisition: GnssAcquisition, searchingForMs: Long, modifier: Mod
 
 @Composable
 fun gnssStatusColor(stage: AcquisitionStage): Color = when (stage) {
-    AcquisitionStage.READY -> FastColors.Mint
+    AcquisitionStage.READY -> StatusColors.Ready
     AcquisitionStage.WEAK_FIX, AcquisitionStage.FIX_WITHOUT_SPEED -> MaterialTheme.colorScheme.error
-    else -> MaterialTheme.colorScheme.primary
+    // Still working on it, nothing for the player to do: grey, not the blue that means "ready".
+    else -> StatusColors.Waiting
 }
 
 /**

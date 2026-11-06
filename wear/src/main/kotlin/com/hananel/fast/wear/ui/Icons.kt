@@ -51,6 +51,20 @@ object FastIcons {
         }
     }
 
+    /** Blocked: something needs the user. */
+    val Lock: ImageVector by lazy {
+        icon("Lock") {
+            stroked(width = 2f) {
+                moveTo(8f, 11f); lineTo(8f, 8f)
+                arcToRelative(4f, 4f, 0f, isMoreThanHalf = false, isPositiveArc = true, dx1 = 8f, dy1 = 0f)
+                lineTo(16f, 11f)
+            }
+            filled {
+                moveTo(6f, 11f); lineTo(18f, 11f); lineTo(18f, 20f); lineTo(6f, 20f); close()
+            }
+        }
+    }
+
     /** Run: a figure in mid-stride, facing the way the language reads. */
     val Runner: ImageVector by lazy {
         icon("Runner", autoMirror = true) {

@@ -48,6 +48,11 @@ class ReferenceService : Service() {
                 if (!ReferenceRecorder.isRecording) finish()
             }
             ACTION_STOP -> if (ReferenceRecorder.isRecording) ReferenceRecorder.stop(applicationContext) else if (!ReferenceRecorder.armed.value) finish()
+            ACTION_JOIN -> {
+                PhoneData.settings(applicationContext).measureWithWatch = true
+                ReferenceRecorder.setArmed(true)
+                ReferenceRecorder.joinWatch(applicationContext)
+            }
             else -> ReferenceRecorder.start(applicationContext)
         }
         refreshNotification()
@@ -110,6 +115,7 @@ class ReferenceService : Service() {
         private const val ACTION_ARM = "com.hananel.fast.reference.ARM"
         private const val ACTION_DISARM = "com.hananel.fast.reference.DISARM"
         private const val ACTION_STOP = "com.hananel.fast.reference.STOP"
+        private const val ACTION_JOIN = "com.hananel.fast.reference.JOIN"
 
         /** Starts a measurement now, by hand. */
         fun start(context: Context) = send(context, null)
@@ -120,6 +126,9 @@ class ReferenceService : Service() {
         fun arm(context: Context) = send(context, ACTION_ARM)
 
         fun disarm(context: Context) = send(context, ACTION_DISARM)
+
+        /** Join a measurement the watch has already started. Only while the app is in front. */
+        fun join(context: Context) = send(context, ACTION_JOIN)
 
         private fun send(context: Context, action: String?) {
             ContextCompat.startForegroundService(context, Intent(context, ReferenceService::class.java).setAction(action))

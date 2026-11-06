@@ -45,10 +45,12 @@ import com.hananel.fast.core.tracking.sprint.GnssAcquisition
 import com.hananel.fast.wear.R
 import com.hananel.fast.wear.gnss.AcquisitionTracker
 import com.hananel.fast.wear.history.SessionSummaryScreen
+import com.hananel.fast.wear.sync.SyncEngine
 import com.hananel.fast.wear.theme.FastTheme
 import com.hananel.fast.wear.ui.GnssStatus
 import com.hananel.fast.wear.ui.HeroNumber
 import com.hananel.fast.wear.ui.KeepScreenOn
+import com.hananel.fast.wear.ui.PhoneFollowLine
 import com.hananel.fast.wear.ui.edgeMorphing
 import com.hananel.fast.wear.ui.rememberKeepScreenOnSetting
 import com.hananel.fast.wear.ui.stageTransition
@@ -100,6 +102,7 @@ fun RecordRoute(kind: ActivityKind, onDone: () -> Unit, viewModel: RecordViewMod
                         viewModel.dismiss()
                         onDone()
                     })
+                is RecordingUiState.TimedOut -> TimedOutScreen(onSearchAgain = viewModel::searchAgain)
                 RecordingUiState.Idle -> Unit
             }
         }
@@ -192,6 +195,7 @@ private fun ReadyScreen(kind: ActivityKind, acquisition: GnssAcquisition, search
                 ) { Text(stringResource(kind.titleRes())) }
             }
             item { GnssStatus(acquisition, searchingForMs, modifier = edgeMorphing(spec)) }
+            item { PhoneFollowLine(edgeMorphing(spec).padding(top = 4.dp)) }
             item {
                 // A training may start before the GPS is ready — on the way out of the changing
                 // room, say. The track then begins with the first fix, and the button says so.
@@ -228,12 +232,47 @@ private fun ReadyScreen(kind: ActivityKind, acquisition: GnssAcquisition, search
     }
 }
 
+/** The search was switched off after ten minutes: say so, and offer to search again. */
+@Composable
+internal fun TimedOutScreen(onSearchAgain: () -> Unit) {
+    val listState = rememberTransformingLazyColumnState()
+    val spec = rememberTransformationSpec()
+    ScreenScaffold(scrollState = listState) { contentPadding ->
+        TransformingLazyColumn(state = listState, contentPadding = contentPadding.withSideMargins()) {
+            item {
+                ListHeader(
+                    modifier = Modifier.fillMaxWidth().transformedHeight(this, spec),
+                    transformation = SurfaceTransformation(spec),
+                ) { Text(stringResource(R.string.timeout_title), textAlign = TextAlign.Center) }
+            }
+            item {
+                Text(
+                    text = stringResource(R.string.timeout_text),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = edgeMorphing(spec).padding(bottom = 8.dp),
+                )
+            }
+            item {
+                Button(
+                    onClick = onSearchAgain,
+                    label = { Text(stringResource(R.string.timeout_search_again), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+                    modifier = Modifier.fillMaxWidth().transformedHeight(this, spec),
+                    transformation = SurfaceTransformation(spec),
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun FinishedScreen(finished: RecordingUiState.Finished, onDone: () -> Unit) {
     val summary = finished.summary
     if (summary != null) {
-        // It was saved a moment ago, so the phone cannot have confirmed it yet.
-        SessionSummaryScreen(summary, synced = false, autoEnded = finished.autoEnded, onDone = onDone)
+        // Saved a moment ago; the phone usually confirms within seconds, and the line changes when it does.
+        val confirmed by SyncEngine.confirmed.collectAsStateWithLifecycle()
+        SessionSummaryScreen(summary, synced = summary.id in confirmed, autoEnded = finished.autoEnded, onDone = onDone)
         return
     }
     val listState = rememberTransformingLazyColumnState()

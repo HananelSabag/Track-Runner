@@ -186,4 +186,9 @@
     <string name="settings_about">אודות</string>
     <string name="about_tagline">כמה אתה מהיר?</string>
     <string name="about_device_check_hint">מה השעון הזה יודע למדוד</string>
+    <string name="timeout_title">ה-GPS כובה</string>
+    <string name="timeout_text">עברו 10 דקות בלי התחלה, אז הוא כובה כדי לחסוך סוללה. מה שכבר נמדד נשמר בהיסטוריה.</string>
+    <string name="timeout_search_again">חפש שוב</string>
+    <string name="phone_following">הטלפון מודד איתך</string>
+    <string name="phone_not_following">הטלפון לא הצטרף · פתח את FAST בטלפון</string>
 </resources>

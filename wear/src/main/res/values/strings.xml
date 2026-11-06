@@ -186,4 +186,9 @@
     <string name="settings_about">About</string>
     <string name="about_tagline">How fast are you?</string>
     <string name="about_device_check_hint">What this watch can measure</string>
+    <string name="timeout_title">GPS switched off</string>
+    <string name="timeout_text">Ten minutes passed without a start, so it was switched off to save the battery. Anything already measured is in the history.</string>
+    <string name="timeout_search_again">Search again</string>
+    <string name="phone_following">The phone is measuring with you</string>
+    <string name="phone_not_following">The phone did not join · open FAST on the phone</string>
 </resources>

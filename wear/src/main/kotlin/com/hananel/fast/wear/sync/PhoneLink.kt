@@ -7,32 +7,69 @@ import com.hananel.fast.core.data.sync.SyncProtocol
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
+/** What the phone said about the measurement the watch just started. */
+enum class PhoneFollow {
+    /** No answer: the phone is out of reach, or "measure together" is off there. Nothing is shown. */
+    UNKNOWN,
+
+    /** The phone is measuring alongside the watch. */
+    FOLLOWING,
+
+    /** "Measure together" is on, but the phone could not join: its app has to be opened. */
+    NOT_FOLLOWING,
+}
+
 /**
  * Tells the phone when the watch starts and stops measuring, so a phone set to
- * "measure together with the watch" can do the same (D43).
+ * "measure together with the watch" does the same (D43) — and hears back
+ * whether it did, so the watch can say so instead of leaving it to luck.
  *
  * Messages, not data items: they matter only now, and only to a phone within
- * reach. One that is out of reach is not alongside the player either, and has
- * nothing to measure. The watch does not wait for an answer and does not care
- * whether the phone acts on it.
+ * reach. They go out one at a time, in the order they were sent, so a stop
+ * can never overtake the start before it.
  */
 object PhoneLink {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    /** One message at a time, in order. */
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
+
+    private val _phone = MutableStateFlow(PhoneFollow.UNKNOWN)
+
+    /** The phone's answer to the latest start; back to UNKNOWN when the watch stops measuring. */
+    val phone: StateFlow<PhoneFollow> = _phone.asStateFlow()
 
     /** The GPS search has begun — a training or a speed test is being prepared. */
-    fun measuringStarted(context: Context) = send(context, SyncProtocol.LINK_START_PATH)
+    fun measuringStarted(context: Context): Job {
+        _phone.value = PhoneFollow.UNKNOWN
+        return send(context, SyncProtocol.LINK_START_PATH)
+    }
 
     /** The watch has stopped measuring: the session ended, or the screen was left. */
-    fun measuringStopped(context: Context) = send(context, SyncProtocol.LINK_STOP_PATH)
+    fun measuringStopped(context: Context): Job {
+        _phone.value = PhoneFollow.UNKNOWN
+        return send(context, SyncProtocol.LINK_STOP_PATH)
+    }
 
-    private fun send(context: Context, path: String) {
+    /** The phone's answer arrived ([PhoneListenerService]). */
+    fun onPhoneAnswered(path: String) {
+        _phone.value = when (path) {
+            SyncProtocol.LINK_FOLLOWING_PATH -> PhoneFollow.FOLLOWING
+            SyncProtocol.LINK_NOT_FOLLOWING_PATH -> PhoneFollow.NOT_FOLLOWING
+            else -> return
+        }
+    }
+
+    private fun send(context: Context, path: String): Job {
         val appContext = context.applicationContext
-        scope.launch {
+        return scope.launch {
             try {
                 val phones = Wearable.getNodeClient(appContext).connectedNodes.await().filter { it.isNearby }
                 for (phone in phones) Wearable.getMessageClient(appContext).sendMessage(phone.id, path, ByteArray(0)).await()

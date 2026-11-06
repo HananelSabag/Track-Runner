@@ -27,6 +27,9 @@ class Haptics(context: Context) {
     /** A minute of standing has been recognised as a rest. One soft tap: noticed, nothing to do. */
     fun restStarted() = play(VibrationEffect.createOneShot(TICK_MS, SOFT_AMPLITUDE))
 
+    /** The GPS has stopped answering mid-training: two long buzzes, unlike anything that means "good". */
+    fun signalLost() = play(VibrationEffect.createWaveform(LOST_PATTERN, NO_REPEAT))
+
     /** A sprint has begun. */
     fun sprint() = play(VibrationEffect.createOneShot(SPRINT_MS, VibrationEffect.DEFAULT_AMPLITUDE))
 
@@ -46,6 +49,7 @@ class Haptics(context: Context) {
         val DONE_PATTERN = longArrayOf(0, 120, 110, 120)
         val WORK_PATTERN = longArrayOf(0, 90, 70, 180)
         val RECORD_PATTERN = longArrayOf(0, 60, 60, 60, 60, 220)
+        val LOST_PATTERN = longArrayOf(0, 300, 150, 300)
         const val NO_REPEAT = -1
     }
 }

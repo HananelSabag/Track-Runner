@@ -208,4 +208,15 @@
     <string name="measure_saved">המדידות</string>
     <string name="measure_start">התחל מדידה</string>
     <string name="link_off">כבוי</string>
+    <string name="link_notice_channel">מדידה משותפת</string>
+    <string name="link_notice_title">השעון התחיל למדוד</string>
+    <string name="link_notice_text">הטלפון לא הצטרף, כי האפליקציה נסגרה ברקע. לחץ כדי למדוד יחד.</string>
+    <string name="link_notice_join">מדוד יחד</string>
+    <string name="link_following">עוקב אחרי השעון</string>
+    <string name="measure_with_watch">מודד עם השעון · ייעצר איתו</string>
+    <string name="stop_reason_with_watch">נעצרה יחד עם השעון</string>
+    <string name="stop_reason_not_moved">נעצרה לבד: הטלפון לא זז 20 דקות</string>
+    <string name="stop_reason_driving">נעצרה לבד: הטלפון בנסיעה</string>
+    <string name="stop_reason_no_gps">נעצרה לבד: 20 דקות בלי GPS</string>
+    <string name="stop_reason_too_long">נעצרה לבד אחרי 4 שעות</string>
 </resources>

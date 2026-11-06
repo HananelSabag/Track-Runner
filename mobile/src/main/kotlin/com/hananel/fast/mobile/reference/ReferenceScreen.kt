@@ -39,6 +39,7 @@ import com.hananel.fast.mobile.ui.Card
 import com.hananel.fast.mobile.ui.HeroNumber
 import com.hananel.fast.mobile.ui.SectionTitle
 import com.hananel.fast.mobile.ui.StatTile
+import com.hananel.fast.mobile.ui.StatusColors
 import com.hananel.fast.mobile.ui.TopBar
 import com.hananel.fast.mobile.ui.formatClock
 import com.hananel.fast.mobile.ui.formatDateTime
@@ -104,7 +105,7 @@ private fun LinkCard(armed: Boolean, onChange: (Boolean) -> Unit) {
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.link_title), style = MaterialTheme.typography.titleMedium)
                 if (armed) {
-                    Text(stringResource(R.string.link_waiting), style = MaterialTheme.typography.labelMedium, color = FastColors.Mint)
+                    Text(stringResource(R.string.link_waiting), style = MaterialTheme.typography.labelMedium, color = StatusColors.Ready)
                 }
             }
             Switch(checked = armed, onCheckedChange = onChange)

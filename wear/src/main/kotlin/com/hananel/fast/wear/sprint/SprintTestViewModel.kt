@@ -38,6 +38,9 @@ class SprintTestViewModel(application: Application) : AndroidViewModel(applicati
 
     fun start() = SprintSession.start()
 
+    /** After a timeout: switch the receiver on and search again. */
+    fun searchAgain() = SprintService.start(getApplication<Application>())
+
     fun stop() = SprintSession.stop()
 
     fun retry() = SprintSession.retry()

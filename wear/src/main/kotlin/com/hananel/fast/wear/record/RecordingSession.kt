@@ -26,12 +26,15 @@ import com.hananel.fast.core.tracking.HeartRateZones
 import com.hananel.fast.core.tracking.SegmentKind
 import com.hananel.fast.core.tracking.live.LiveAnalyzer
 import com.hananel.fast.core.tracking.live.LiveState
+import com.hananel.fast.core.tracking.sprint.AcquisitionStage
 import com.hananel.fast.core.tracking.sprint.GnssAcquisition
 import com.hananel.fast.wear.data.WearData
 import com.hananel.fast.wear.gnss.AcquisitionTracker
 import com.hananel.fast.wear.sensors.heartRates
+import com.hananel.fast.wear.sync.PhoneLink
 import com.hananel.fast.wear.sync.SyncEngine
 import com.hananel.fast.wear.ui.Haptics
+import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -43,7 +46,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.IOException
+import kotlinx.coroutines.withTimeoutOrNull
 
 sealed interface RecordingUiState {
     data object Idle : RecordingUiState
@@ -52,6 +55,13 @@ sealed interface RecordingUiState {
     data class Locating(val kind: ActivityKind, val acquisition: GnssAcquisition, val searchingForMs: Long) : RecordingUiState
 
     data class Recording(val kind: ActivityKind, val live: LiveState, val signalBars: Int) : RecordingUiState
+
+    /**
+     * The search was left alone for ten minutes and the receiver was switched off to
+     * save the battery. Said so on screen, with a way to search again — not left
+     * looking like a search that never ends.
+     */
+    data class TimedOut(val kind: ActivityKind) : RecordingUiState
 
     /**
      * [summary] is null when the session produced no speed at all and so was not kept.
@@ -100,6 +110,9 @@ object RecordingSession {
 
     private var tools: Tools? = null
     private var phase = Phase.IDLE
+
+    /** Set when the warm-up limit, not the player, is what ended a search. */
+    private var warmUpExpired = false
     private var kind = ActivityKind.RUN
     private var listening: Job? = null
     private val tracker = AcquisitionTracker()
@@ -204,8 +217,12 @@ object RecordingSession {
     /** Ends the session on purpose. */
     fun finish() = end(autoEnded = false, trimAfterMs = null)
 
-    /** Leaves the summary: there is nothing more to show. */
+    /** Leaves the summary, or the note that the search timed out: there is nothing more to show. */
     fun dismiss() {
+        if (_state.value is RecordingUiState.TimedOut) {
+            _state.value = RecordingUiState.Idle
+            return
+        }
         if (phase != Phase.FINISHED) return
         phase = Phase.IDLE
         _state.value = RecordingUiState.Idle
@@ -218,7 +235,8 @@ object RecordingSession {
             Phase.LOCATING -> {
                 stopSensors()
                 phase = Phase.IDLE
-                _state.value = RecordingUiState.Idle
+                _state.value = if (warmUpExpired) RecordingUiState.TimedOut(kind) else RecordingUiState.Idle
+                warmUpExpired = false
             }
             Phase.IDLE, Phase.FINISHING, Phase.FINISHED -> Unit
         }
@@ -231,7 +249,10 @@ object RecordingSession {
             when (phase) {
                 Phase.LOCATING -> {
                     publishLocating()
-                    if (SystemClock.elapsedRealtime() - searchStartedMs >= WARM_UP_LIMIT_MS) onIdleTimeout?.invoke()
+                    if (SystemClock.elapsedRealtime() - searchStartedMs >= WARM_UP_LIMIT_MS) {
+                        warmUpExpired = true
+                        onIdleTimeout?.invoke()
+                    }
                 }
                 Phase.RECORDING -> {
                     recordHeartRate()
@@ -285,7 +306,10 @@ object RecordingSession {
     private fun publishLocating() {
         val acquisition = tracker.current()
         // The warm-up can take minutes and nobody watches a watch that long: say when it is done.
-        if (acquisition.canStart && !announcedReady) {
+        // Only a ready signal earns the double tap; a weak one is said in words. If it is lost
+        // before the start, the next one is announced again.
+        if (acquisition.stage != AcquisitionStage.READY && !acquisition.canStart) announcedReady = false
+        if (acquisition.stage == AcquisitionStage.READY && !announcedReady) {
             announcedReady = true
             tools?.haptics?.ready()
         }
@@ -336,6 +360,8 @@ object RecordingSession {
             // The first sprint of a session is a "record" by default, which is not news.
             before.sprinting && !now.sprinting && now.sprintCount > 1 && (now.lastSprint?.peak ?: Speed.ZERO) > peakBeforeSprint ->
                 haptics.record()
+            !before.signalLost && now.signalLost -> haptics.signalLost()
+            before.signalLost && !now.signalLost -> haptics.ready()
             before.segment == SegmentKind.REST && now.segment == SegmentKind.WORK -> haptics.workStarted()
             before.segment == SegmentKind.WORK && now.segment == SegmentKind.REST -> haptics.restStarted()
         }
@@ -400,7 +426,12 @@ object RecordingSession {
             tools.haptics.done()
             phase = Phase.FINISHED
             _state.value = RecordingUiState.Finished(kind, summary, autoEnded)
-            SyncEngine.syncPending(tools.context)
+            // The service keeps the process alive; it is let go only once the session is offered
+            // and the phone told, or after a while if Play services does not answer.
+            withTimeoutOrNull(HAND_OFF_LIMIT_MS) {
+                SyncEngine.syncPending(tools.context).join()
+                PhoneLink.measuringStopped(tools.context).join()
+            }
             onFinished?.invoke()
         }
     }
@@ -412,6 +443,9 @@ object RecordingSession {
 
     private const val TAG = "FastRecording"
     private const val TICK_MS = 1_000L
+
+    /** How long a finished session waits for its hand-off to the phone before the service stops anyway. */
+    private const val HAND_OFF_LIMIT_MS = 20_000L
     private const val HEART_RATE_MIN_INTERVAL_MS = 900L
 
     /**

@@ -206,4 +206,15 @@
     <string name="measure_saved">Measurements</string>
     <string name="measure_start">Start measuring</string>
     <string name="link_off">Off</string>
+    <string name="link_notice_channel">Measure together</string>
+    <string name="link_notice_title">The watch started measuring</string>
+    <string name="link_notice_text">The phone did not join: its app was closed in the background. Tap to measure together.</string>
+    <string name="link_notice_join">Measure together</string>
+    <string name="link_following">Following the watch</string>
+    <string name="measure_with_watch">Measuring with the watch · stops with it</string>
+    <string name="stop_reason_with_watch">Stopped together with the watch</string>
+    <string name="stop_reason_not_moved">Stopped by itself: the phone did not move for 20 minutes</string>
+    <string name="stop_reason_driving">Stopped by itself: the phone was in a vehicle</string>
+    <string name="stop_reason_no_gps">Stopped by itself: 20 minutes without GPS</string>
+    <string name="stop_reason_too_long">Stopped by itself after 4 hours</string>
 </resources>

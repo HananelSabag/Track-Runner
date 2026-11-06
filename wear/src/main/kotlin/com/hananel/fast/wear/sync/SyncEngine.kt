@@ -12,6 +12,7 @@ import com.hananel.fast.wear.data.WearData
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,10 +40,15 @@ object SyncEngine {
     /** How many sessions the phone has not confirmed yet. */
     val pendingCount: StateFlow<Int> = _pendingCount.asStateFlow()
 
+    private val _confirmed = MutableStateFlow<Set<String>>(emptySet())
+
+    /** Sessions the phone confirmed while this process ran: a summary on screen turns to "on the phone" with it. */
+    val confirmed: StateFlow<Set<String>> = _confirmed.asStateFlow()
+
     /** Offers every unconfirmed session again. Cheap when there is nothing to do, so call it freely. */
-    fun syncPending(context: Context) {
+    fun syncPending(context: Context): Job {
         val appContext = context.applicationContext
-        scope.launch {
+        return scope.launch {
             mutex.withLock {
                 val store = WearData.store(appContext)
                 val client = Wearable.getDataClient(appContext)
@@ -68,12 +74,13 @@ object SyncEngine {
     }
 
     /** The phone has confirmed it holds [id]: the heavy copy in the Data Layer can go. */
-    fun onAck(context: Context, id: String) {
+    fun onAck(context: Context, id: String): Job {
         val appContext = context.applicationContext
-        scope.launch {
+        return scope.launch {
             mutex.withLock {
                 val store = WearData.store(appContext)
                 store.markSynced(id)
+                _confirmed.value = _confirmed.value + id
                 _pendingCount.value = store.unsyncedIds().size
                 val client = Wearable.getDataClient(appContext)
                 try {
@@ -92,11 +99,11 @@ object SyncEngine {
      * The phone has lost its copies (reinstalled, data cleared) and asks for
      * everything again. Sending a session it still has is harmless: it keeps one copy.
      */
-    fun onResyncRequested(context: Context) {
+    fun onResyncRequested(context: Context): Job {
         val appContext = context.applicationContext
-        scope.launch {
+        return scope.launch {
             mutex.withLock { WearData.store(appContext).forgetSynced() }
-            syncPending(appContext)
+            syncPending(appContext).join()
         }
     }
 
@@ -108,6 +115,7 @@ object SyncEngine {
             val store = WearData.store(context)
             for (id in ids) {
                 store.markSynced(id)
+                _confirmed.value = _confirmed.value + id
                 client.deleteDataItems(wearUri(SyncProtocol.sessionPath(id))).await()
                 client.deleteDataItems(wearUri(SyncProtocol.ackPath(id))).await()
             }

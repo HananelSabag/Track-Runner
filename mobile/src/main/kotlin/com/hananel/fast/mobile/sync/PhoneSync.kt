@@ -92,7 +92,15 @@ object PhoneSync {
      * Stores one offered session and confirms it. Safe to call for a session
      * already held: nothing is stored twice, and the confirmation is repeated.
      */
-    fun receive(context: Context, item: DataItem) {
+    fun receive(context: Context, item: DataItem) = synchronized(receiving) { receiveOne(context, item) }
+
+    /**
+     * The listener and the app opening can both be handed the same session at once; one at
+     * a time, so the second finds it stored instead of writing the same file alongside.
+     */
+    private val receiving = Any()
+
+    private fun receiveOne(context: Context, item: DataItem) {
         val id = SyncProtocol.idFrom(item.uri.path.orEmpty(), SyncProtocol.SESSION_PREFIX) ?: return
         val store = PhoneData.store(context)
         val client = Wearable.getDataClient(context)

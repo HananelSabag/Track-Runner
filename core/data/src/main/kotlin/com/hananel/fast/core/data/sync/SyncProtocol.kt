@@ -28,6 +28,10 @@ object SyncProtocol {
     const val LINK_START_PATH = LINK_PREFIX + "start"
     const val LINK_STOP_PATH = LINK_PREFIX + "stop"
 
+    /** The phone's answers to a start: it is measuring too, or it wanted to and could not. */
+    const val LINK_FOLLOWING_PATH = LINK_PREFIX + "following"
+    const val LINK_NOT_FOLLOWING_PATH = LINK_PREFIX + "not-following"
+
     /** The packed session, as an asset. */
     const val KEY_PAYLOAD = "payload"
 
