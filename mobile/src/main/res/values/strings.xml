@@ -183,7 +183,7 @@
     <string name="compare_separation">On average %1$s m between where the watch and the phone placed you at the same second.</string>
     <string name="compare_none">No watch recording from the same time. To compare, start a run or a speed test on the watch while the phone is measuring.</string>
     <string name="note_auto_ended_overruled">The watch stopped this session by itself, believing you had been resting for 20 minutes. Your movement and heart rate say you were still playing, so that time counts. Nothing after the stop was recorded.</string>
-    <string name="link_title">Measure together with the watch</string>
+    <string name="link_title">Join by itself when the watch starts</string>
     <string name="link_waiting">Waiting for the watch</string>
     <string name="link_text">While this is on, every training or speed test started on the watch also starts a measurement on the phone, and it stops with them. The phone has to be on you and within reach of the watch. While waiting, the phone\'s GPS is off.</string>
     <string name="link_notification_waiting">Waiting for the watch: start on the watch and the phone measures too</string>
@@ -217,4 +217,10 @@
     <string name="stop_reason_driving">Stopped by itself: the phone was in a vehicle</string>
     <string name="stop_reason_no_gps">Stopped by itself: 20 minutes without GPS</string>
     <string name="stop_reason_too_long">Stopped by itself after 4 hours</string>
+    <string name="joint_start">Joint run with the watch</string>
+    <string name="joint_how">The phone starts measuring and invites the watch. On the watch: tap the \"Joint run\" notice, wait for the blue GPS ready, and press Start. At the end press Finish on the watch, and the phone stops by itself. Keep the phone on you, in a hand or a tight pocket.</string>
+    <string name="measure_alone">Measure with the phone only</string>
+    <string name="joint_measuring">Joint run · the phone is measuring</string>
+    <string name="joint_waiting_watch">On the watch: tap the \"Joint run\" notice (or open a run), wait for the blue GPS ready, and press Start.</string>
+    <string name="joint_watch_unreachable">The watch is out of the phone\'s reach. Open a run on the watch yourself; once it starts, the phone carries on with it.</string>
 </resources>

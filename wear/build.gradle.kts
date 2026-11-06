@@ -14,8 +14,8 @@ android {
         minSdk = libs.versions.minSdkWear.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         // Offset from the phone's versionCode: Play rejects two APKs of one app with the same code.
-        versionCode = 1_000_010
-        versionName = "0.6.1"
+        versionCode = 1_000_011
+        versionName = "0.6.2"
     }
 
     buildTypes {

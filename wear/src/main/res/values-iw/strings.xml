@@ -191,4 +191,8 @@
     <string name="timeout_search_again">חפש שוב</string>
     <string name="phone_following">הטלפון מודד איתך</string>
     <string name="phone_not_following">הטלפון לא הצטרף · פתח את FAST בטלפון</string>
+    <string name="joint_channel">ריצה משותפת</string>
+    <string name="joint_title">ריצה משותפת</string>
+    <string name="joint_text">הטלפון כבר מודד. לחץ כדי לפתוח ריצה.</string>
+    <string name="joint_open">פתח ריצה</string>
 </resources>

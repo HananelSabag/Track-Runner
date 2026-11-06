@@ -1,5 +1,6 @@
 package com.hananel.fast.wear
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -31,15 +32,25 @@ import com.hananel.fast.wear.settings.SettingsRoute
 import com.hananel.fast.wear.sprint.SprintSession
 import com.hananel.fast.wear.sprint.SprintTestRoute
 import com.hananel.fast.wear.sprint.SprintUiState
+import com.hananel.fast.wear.sync.JointRunInvite
 import com.hananel.fast.wear.sync.SyncEngine
 import com.hananel.fast.wear.theme.FastTheme
 import com.hananel.fast.wear.ui.Ambient
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+
+    companion object {
+        /** Set by the joint-run notice: open a run straight away. */
+        const val EXTRA_OPEN_RUN = "com.hananel.fast.OPEN_RUN"
+
+        /** A run the joint-run notice asked for, waiting for the screen to open it. */
+        val openRunRequested = MutableStateFlow(false)
+    }
 
     /** Present only while something is being measured; see [stayInFrontWhileMeasuring]. */
     private var ambientObserver: AmbientLifecycleObserver? = null
@@ -58,6 +69,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        takeOpenRunRequest(intent)
         stayInFrontWhileMeasuring()
         lifecycleScope.launch(Dispatchers.IO) {
             // A recording whose process died is adopted here, then everything unconfirmed is offered to the phone.
@@ -69,6 +81,18 @@ class MainActivity : ComponentActivity() {
                 FastWearApp()
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        takeOpenRunRequest(intent)
+    }
+
+    private fun takeOpenRunRequest(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_OPEN_RUN, false) != true) return
+        intent.removeExtra(EXTRA_OPEN_RUN)
+        JointRunInvite.dismiss(applicationContext)
+        openRunRequested.value = true
     }
 
     /**
@@ -129,6 +153,15 @@ private fun FastWearApp() {
         (RecordingSession.state.value as? RecordingUiState.Recording)?.let {
             navController.navigate(Route.record(it.kind)) { launchSingleTop = true }
         }
+    }
+
+    // Opened from the phone's joint-run invitation: straight to a run, unless one is already going.
+    val openRun by MainActivity.openRunRequested.collectAsStateWithLifecycle()
+    LaunchedEffect(openRun) {
+        if (!openRun) return@LaunchedEffect
+        MainActivity.openRunRequested.value = false
+        val going = RecordingSession.state.value as? RecordingUiState.Recording
+        navController.navigate(Route.record(going?.kind ?: ActivityKind.RUN)) { launchSingleTop = true }
     }
 
     AppScaffold {

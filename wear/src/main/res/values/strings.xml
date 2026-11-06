@@ -191,4 +191,8 @@
     <string name="timeout_search_again">Search again</string>
     <string name="phone_following">The phone is measuring with you</string>
     <string name="phone_not_following">The phone did not join · open FAST on the phone</string>
+    <string name="joint_channel">Joint run</string>
+    <string name="joint_title">Joint run</string>
+    <string name="joint_text">The phone is already measuring. Tap to open a run.</string>
+    <string name="joint_open">Open a run</string>
 </resources>

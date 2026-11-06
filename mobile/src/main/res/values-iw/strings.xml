@@ -183,7 +183,7 @@
     <string name="compare_separation">בממוצע %1$s מ׳ בין המקום שבו השעון שם אותך לזה שהטלפון שם אותך, באותה שנייה.</string>
     <string name="compare_none">לא נמצאה הקלטה של השעון מאותו זמן. כדי להשוות, מתחילים בשעון ריצה או בדיקת מהירות בזמן שהמדידה בטלפון פועלת.</string>
     <string name="note_auto_ended_overruled">השעון עצר את האימון לבד, כי חשב שאתה במנוחה כבר 20 דקות. לפי התנועה והדופק עוד שיחקת, אז הזמן הזה נספר. מה שאחרי העצירה לא הוקלט.</string>
-    <string name="link_title">מדידה משותפת עם השעון</string>
+    <string name="link_title">הצטרפות לבד כשמתחילים בשעון</string>
     <string name="link_waiting">מחכה לשעון</string>
     <string name="link_text">כשזה דולק, כל אימון או בדיקת מהירות שמתחילים בשעון מפעילים גם את המדידה בטלפון, והיא נעצרת יחד איתם. הטלפון צריך להיות עליך ובטווח של השעון. בזמן ההמתנה ה-GPS של הטלפון כבוי.</string>
     <string name="link_notification_waiting">מחכה לשעון: כשתתחיל בשעון, גם הטלפון ימדוד</string>
@@ -219,4 +219,10 @@
     <string name="stop_reason_driving">נעצרה לבד: הטלפון בנסיעה</string>
     <string name="stop_reason_no_gps">נעצרה לבד: 20 דקות בלי GPS</string>
     <string name="stop_reason_too_long">נעצרה לבד אחרי 4 שעות</string>
+    <string name="joint_start">ריצה משותפת עם השעון</string>
+    <string name="joint_how">הטלפון מתחיל למדוד ומזמין את השעון. בשעון: לחץ על ההתראה \"ריצה משותפת\", חכה ש-GPS מוכן יהיה כחול, ולחץ התחל. בסוף לחץ סיום בשעון, והטלפון ייעצר לבד. הטלפון צמוד אליך, ביד או בכיס הדוק.</string>
+    <string name="measure_alone">מדידה מהטלפון בלבד</string>
+    <string name="joint_measuring">ריצה משותפת · הטלפון מודד</string>
+    <string name="joint_waiting_watch">בשעון: לחץ על ההתראה \"ריצה משותפת\" (או פתח ריצה), חכה ל-GPS כחול ולחץ התחל.</string>
+    <string name="joint_watch_unreachable">השעון לא בטווח של הטלפון. פתח ריצה בשעון בעצמך; כשהשעון יתחיל, הטלפון ימשיך איתו.</string>
 </resources>

@@ -54,8 +54,12 @@ sealed interface ReferenceState {
         val speedAccuracy: Speed?,
         val positionAccuracyMeters: Double?,
         val satellites: SatelliteView?,
-        /** Started by the watch, and so stops with it. */
+        /** Started by the watch, or as a joint run: either way it stops with the watch. */
         val withWatch: Boolean = false,
+        /** A joint run started on the phone, and the watch has not started yet. */
+        val waitingForWatch: Boolean = false,
+        /** Null until known: whether the invitation reached a watch at all. */
+        val watchReached: Boolean? = null,
     ) : ReferenceState
 
     data class Finished(val durationMs: Long, val fixes: Int, val fixesPerSecond: Double, val reason: StopReason = StopReason.BY_HAND)
@@ -114,6 +118,10 @@ object ReferenceRecorder {
 
     /** Whether the recording now running was started by the watch, which then also ends it. */
     private var startedByWatch = false
+
+    /** A joint run started on the phone, before the watch has started its run. */
+    private var waitingForWatch = false
+    private var watchReached: Boolean? = null
 
     // The safety net for a measurement nobody stops (one ran for three and a half hours on 2026-10-24).
     private var lastMovingMs = 0L
@@ -208,6 +216,14 @@ object ReferenceRecorder {
         val appContext = context.applicationContext
         scope.launch {
             val following = when {
+                // Already measuring — a joint run waiting for this start, or a measurement by hand.
+                isRecording -> {
+                    if (waitingForWatch) {
+                        waitingForWatch = false
+                        publish()
+                    }
+                    true
+                }
                 _armed.value -> {
                     if (!isRecording) {
                         start(appContext)
@@ -244,6 +260,36 @@ object ReferenceRecorder {
         }
     }
 
+    /**
+     * A joint run, started on the phone (D47): measure now, and invite the watch, which shows
+     * a notice that opens a run. It stops when the watch's run ends. Only while the app is in front.
+     */
+    fun startJoint(context: Context) {
+        val appContext = context.applicationContext
+        scope.launch {
+            if (!isRecording) start(appContext)
+            if (!isRecording) return@launch
+            startedByWatch = true
+            waitingForWatch = true
+            watchReached = null
+            publish()
+            watchReached = sendToWatch(appContext, SyncProtocol.LINK_INVITE_PATH)
+            publish()
+        }
+    }
+
+    /** Sends one message to every watch within reach. False when there was none, or it failed. */
+    private suspend fun sendToWatch(context: Context, path: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val watches = Wearable.getNodeClient(context).connectedNodes.await().filter { it.isNearby }
+            for (watch in watches) Wearable.getMessageClient(context).sendMessage(watch.id, path, ByteArray(0)).await()
+            watches.isNotEmpty()
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not reach the watch: ${e.message}")
+            false
+        }
+    }
+
     /** Tells the watch whether the phone is measuring alongside it; the watch shows it. */
     private fun answerWatch(context: Context, watchNode: String?, following: Boolean) {
         val path = if (following) SyncProtocol.LINK_FOLLOWING_PATH else SyncProtocol.LINK_NOT_FOLLOWING_PATH
@@ -269,6 +315,8 @@ object ReferenceRecorder {
     fun start(context: Context) {
         if (isRecording) return
         startedByWatch = false
+        waitingForWatch = false
+        watchReached = null
         generation++
         val appContext = context.applicationContext
         startedElapsedMs = SystemClock.elapsedRealtime()
@@ -378,6 +426,7 @@ object ReferenceRecorder {
             val finished = ReferenceState.Finished(durationMs, count, if (durationMs > 0) count / (durationMs / 1000.0) else 0.0, reason)
             _state.value = ReferenceState.Idle(last = finished.takeIf { count > 0 || reason != StopReason.BY_HAND })
             startedByWatch = false
+            waitingForWatch = false
             onRecordingChanged?.invoke()
             onStopped?.invoke()
             // The new measurement takes its place in the list, next to the watch recording it belongs with.
@@ -415,6 +464,8 @@ object ReferenceRecorder {
             positionAccuracyMeters = fix?.sample?.horizontalAccuracyMeters,
             satellites = satellites,
             withWatch = startedByWatch,
+            waitingForWatch = waitingForWatch,
+            watchReached = watchReached,
         )
     }
 

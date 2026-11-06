@@ -75,37 +75,61 @@ fun PhoneMeasureCard(onOpenMeasurements: () -> Unit, modifier: Modifier = Modifi
             TextButton(onClick = onOpenMeasurements) { Text(stringResource(R.string.measure_saved)) }
         }
         when (val current = state) {
-            is ReferenceState.Recording -> Row(
-                modifier = Modifier.padding(top = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                LiveDot()
-                Column(Modifier.weight(1f)) {
+            is ReferenceState.Recording -> Column {
+                Row(
+                    modifier = Modifier.padding(top = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    LiveDot()
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            text = if (current.withWatch && current.waitingForWatch) {
+                                stringResource(R.string.joint_measuring) + " · " + formatClock(current.elapsedMs)
+                            } else if (current.withWatch) {
+                                stringResource(R.string.measure_with_watch) + " · " + formatClock(current.elapsedMs)
+                            } else {
+                                stringResource(R.string.reference_recording) + " · " + formatClock(current.elapsedMs)
+                            },
+                            style = MaterialTheme.typography.labelLarge,
+                            color = StatusColors.Live,
+                        )
+                        Text(
+                            text = current.speed?.let { stringResource(R.string.value_kmh, it.formatKmh()) } ?: stringResource(R.string.reference_waiting),
+                            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                        )
+                    }
+                    Button(
+                        onClick = { ReferenceService.stop(context) },
+                        colors = ButtonDefaults.buttonColors(containerColor = FastColors.RoseDeep, contentColor = FastColors.Ice),
+                    ) { Text(stringResource(R.string.reference_stop)) }
+                }
+                // A joint run before the watch has started: what to do there, or why it cannot happen.
+                if (current.waitingForWatch) {
+                    val reached = current.watchReached
                     Text(
-                        text = if (current.withWatch) {
-                            stringResource(R.string.measure_with_watch) + " · " + formatClock(current.elapsedMs)
-                        } else {
-                            stringResource(R.string.reference_recording) + " · " + formatClock(current.elapsedMs)
-                        },
-                        style = MaterialTheme.typography.labelLarge,
-                        color = StatusColors.Live,
-                    )
-                    Text(
-                        text = current.speed?.let { stringResource(R.string.value_kmh, it.formatKmh()) } ?: stringResource(R.string.reference_waiting),
-                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                        text = stringResource(if (reached == false) R.string.joint_watch_unreachable else R.string.joint_waiting_watch),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (reached == false) StatusColors.Blocked else StatusColors.Ready,
+                        modifier = Modifier.padding(top = 8.dp),
                     )
                 }
-                Button(
-                    onClick = { ReferenceService.stop(context) },
-                    colors = ButtonDefaults.buttonColors(containerColor = FastColors.RoseDeep, contentColor = FastColors.Ice),
-                ) { Text(stringResource(R.string.reference_stop)) }
             }
             is ReferenceState.Idle -> Column {
                 Button(
-                    onClick = { withLocation { ReferenceService.start(context) } },
+                    onClick = { withLocation { ReferenceService.startJoint(context) } },
                     modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                ) { Text(stringResource(R.string.measure_start)) }
+                ) { Text(stringResource(R.string.joint_start)) }
+                Text(
+                    text = stringResource(R.string.joint_how),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+                TextButton(
+                    onClick = { withLocation { ReferenceService.start(context) } },
+                    modifier = Modifier.padding(top = 2.dp),
+                ) { Text(stringResource(R.string.measure_alone)) }
                 // A stop the user did not make is said, so it is never a mystery.
                 current.last?.reason?.takeIf { it != StopReason.BY_HAND }?.let { reason ->
                     Text(
@@ -121,7 +145,8 @@ fun PhoneMeasureCard(onOpenMeasurements: () -> Unit, modifier: Modifier = Modifi
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.link_title), style = MaterialTheme.typography.bodyLarge)
-                val following = (state as? ReferenceState.Recording)?.withWatch == true
+                // This row is about the switch: a joint run started by its button says so above, not here.
+                val following = armed && (state as? ReferenceState.Recording)?.withWatch == true
                 Text(
                     text = stringResource(
                         when {

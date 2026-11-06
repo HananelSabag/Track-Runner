@@ -31,6 +31,9 @@ class PhoneListenerService : WearableListenerService() {
     }
 
     override fun onMessageReceived(event: MessageEvent) {
-        PhoneLink.onPhoneAnswered(event.path)
+        when (event.path) {
+            SyncProtocol.LINK_INVITE_PATH -> JointRunInvite.show(applicationContext)
+            else -> PhoneLink.onPhoneAnswered(event.path)
+        }
     }
 }

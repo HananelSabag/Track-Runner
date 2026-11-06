@@ -28,6 +28,12 @@ object SyncProtocol {
     const val LINK_START_PATH = LINK_PREFIX + "start"
     const val LINK_STOP_PATH = LINK_PREFIX + "stop"
 
+    /**
+     * The phone inviting the watch to a joint run (D47): the phone is already measuring, and
+     * the watch shows a notice that opens a run with one tap.
+     */
+    const val LINK_INVITE_PATH = LINK_PREFIX + "invite"
+
     /** The phone's answers to a start: it is measuring too, or it wanted to and could not. */
     const val LINK_FOLLOWING_PATH = LINK_PREFIX + "following"
     const val LINK_NOT_FOLLOWING_PATH = LINK_PREFIX + "not-following"
