@@ -36,3 +36,7 @@ Thumbs.db
 
 # Recordings pulled from the real devices. They hold real positions and stay on this machine.
 field-data/
+
+# Local-only: AI-agent notes, IDE settings and build outputs
+CLAUDE.md
+.claude/
